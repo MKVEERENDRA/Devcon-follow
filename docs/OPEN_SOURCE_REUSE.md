@@ -83,3 +83,17 @@ have no published patched versions at this review. This observation is not a
 reachability waiver: untrusted development patterns and cryptographic inputs
 remain risks. Native release security stays failing. No audit suppression,
 package renaming, fake patched version or forced Expo downgrade was applied.
+
+
+## Native runtime reachability evidence
+
+Android and iOS Hermes exports with source maps were generated locally after the
+UUID fix. Their maps contain 991 and 992 source entries respectively. Neither map
+contains a source from the audited npm packages `node_modules/braces/`,
+`node_modules/node-forge/` or `node_modules/uuid/`. Expo's separate
+`expo-modules-core/build/uuid/` implementation is present and is not the vulnerable
+xcode dependency. This narrows the observed exposure to the build/development
+chain; it does not prove build-tool inputs safe or waive the failing security gate.
+The source maps remain local under ignored `mobile/artifacts/security-export/`.
+
+Remote CI for `a87b59a` completed: `test-build` PASS, `native-security` FAIL.
