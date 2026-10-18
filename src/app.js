@@ -94,7 +94,7 @@ export async function buildServer({db,config}){
     const status=Number.isInteger(err.statusCode)&&err.statusCode>=400&&err.statusCode<600?err.statusCode:500;
     reply.code(status).send({error:status===500?'Internal server error':err.message});
   });
-  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authReady:Boolean(config.OIDC_ISSUER&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL&&config.WEB_OIDC_CLIENT_ID),ticketReady:ticketVerifier.configured,communityReady:access.enabled,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
+  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authReady:config.REGISTRATION_ENABLED!=='false'&&Boolean(config.OIDC_ISSUER&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL&&config.WEB_OIDC_CLIENT_ID),ticketReady:ticketVerifier.configured,communityReady:access.enabled,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
   app.get('/health/live',async()=>({ok:true,service:'devcon-follow-api'}));
   app.get('/health/release',async(req,reply)=>{
     await db.command({ping:1});

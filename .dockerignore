@@ -13,3 +13,6 @@ mobile/ios
 artifacts
 test-results
 playwright-report
+
+.mcp.json
+.codex
