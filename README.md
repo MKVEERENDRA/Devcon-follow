@@ -6,6 +6,8 @@ The web and API run from one origin. The Expo client contains foreground GPS and
 
 Current product/build and release limits: [19 October update](docs/PRODUCT_BUILD_2026-10-19.md). Live-app testing is stopped at the owner’s request; local verification uses disposable data.
 
+Latest reliability work: [v1 evidence](docs/V1_RELIABILITY_EVIDENCE_2026-10-19.md), [five-screen audit](docs/FIVE_SCREEN_AUDIT_2026-10-19.md), [native security investigation](docs/NATIVE_SECURITY_2026-10-19.md), and [owner acceptance checklist](docs/PILOT_ACCEPTANCE_CHECKLIST.md). Live-app acceptance and deployment remain frozen.
+
 ## Run and verify
 
 Use Node 24 (Node 22.13+ also meets the native dependencies' requirements).
@@ -20,6 +22,7 @@ npm run build:web
 npm --prefix mobile run typecheck
 npx playwright install chromium
 npm run test:browser
+npm run test:browser:reliability
 cd mobile
 npx expo install --check
 npx expo-doctor

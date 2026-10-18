@@ -43,3 +43,29 @@ staging workaround, not durable production networking.
 Further live probes/redeploys are paused by the owner's latest instruction to
 focus on building. This document records the investigation, not an implemented
 static-egress solution.
+
+## Budget-conscious alternative (design only, not provisioned)
+
+An owner-operated fixed-IP VM can run the **same existing Docker image** instead
+of adding a second NAT/proxy layer to Railway. As a concrete price reference,
+[AWS Lightsail bundles](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-bundles.html)
+listed the 1 GB Linux public-IPv4 bundle at $7/month on 19 October 2026. This is a
+pilot sizing candidate, not a tested capacity promise. Region, transfer overage,
+backups, taxes and operator time affect actual cost; avoid assuming promotional
+credits. A smaller $5 bundle exists, but memory headroom is unverified for this app.
+
+Attach a reserved IPv4 to the instance and prove it is the actual outbound source
+before Atlas allowlisting. Lightsail documents
+[static IPv4 networking](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-faq-networking.html).
+Allowlist only that verified /32. Use a domain with TLS termination, expose HTTPS
+only (and tightly restricted operator SSH), run the existing app as its non-root
+container user, store secrets in protected server configuration and keep MongoDB
+hosted in the existing Atlas cluster. Build the image in CI rather than on a tiny
+VM. Pin the deployed digest and define patching, backups, restart and rollback.
+
+This trades managed Railway operations for VM maintenance and a single-host
+failure risk. It also changes hosting, HTTPS origins and Auth0 callback settings;
+all need explicit owner approval and a staged cutover. It has **not** been tested,
+purchased or selected. Pro static egress remains the least disruptive option for
+retaining Railway. A free, durable restricted route on the present trial has not
+been established; repeatedly adding arbitrary pod IPs is not the recommended plan.

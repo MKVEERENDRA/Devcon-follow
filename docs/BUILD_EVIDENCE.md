@@ -1,3 +1,5 @@
+> Latest reliability verification: 63/63 local tests and both sandbox browser journeys pass. See [v1 reliability evidence](V1_RELIABILITY_EVIDENCE_2026-10-19.md) for exact source revisions and current CI results; no live acceptance or deployment was performed.
+
 > Current status (19 October): staging database readiness recovered; one real pending Auth0 identity was validated before the owner stopped live testing. New product changes are local source, not a deployment. See [current build report](PRODUCT_BUILD_2026-10-19.md) and [restricted networking](RESTRICTED_NETWORKING.md). Older entries below are historical, not instructions to repeat completed setup.
 
 ## Verification — 19 October product build
