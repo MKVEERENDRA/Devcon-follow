@@ -23,6 +23,8 @@ function App({config}){if(!config?.authReady)return <Landing config={config}/>;r
 function ConnectedApp({config}){
  const auth=useAuth();const [view,setView]=useState('discover'),[me,setMe]=useState(null),[people,setPeople]=useState([]),[following,setFollowing]=useState([]),[requests,setRequests]=useState([]),[outgoing,setOutgoing]=useState([]),[filter,setFilter]=useState('All'),[search,setSearch]=useState(''),[selected,setSelected]=useState(null),[toast,setToast]=useState(''),[busy,setBusy]=useState(false),[verifiedInput,setVerifiedInput]=useState(''),[clockNow,setClockNow]=useState(Date.now()),[share,setShare]=useState(false),[barcode,setBarcode]=useState(''),[pendingInstall,setPendingInstall]=useState(false),[isAdmin,setIsAdmin]=useState(false),[stopPending,setStopPending]=useState(false);
  const stopRequested=useRef(false);
+ const stopKey=auth.user?.profile?.sub?'devcon-follow:pending-stop:'+auth.user.profile.sub:null;
+ useEffect(()=>{if(!stopKey)return;const restore=()=>{try{const pending=localStorage.getItem(stopKey)==='true';stopRequested.current=pending;setStopPending(pending);if(pending)setMe(m=>m?{...m,locationSharing:false,sharingExpiresAt:null}:m)}catch{}};restore();const changed=e=>{if(e.key===stopKey&&e.newValue==='true')restore()};window.addEventListener('storage',changed);return()=>window.removeEventListener('storage',changed)},[stopKey]);
  useEffect(()=>{window.scrollTo({top:0,behavior:'instant'})},[view]);
  const token=auth.user?.access_token;
  const alert=(msg)=>{setToast(msg);window.setTimeout(()=>setToast(''),5500)};
@@ -40,8 +42,8 @@ function ConnectedApp({config}){
  const checkIn=()=>run(async()=>{const pos=await withPosition();const x=await api('/presence/check-in','POST',pos);alert('Checked in at '+x.venueName)});
  const startShare=()=>run(async()=>{if(stopRequested.current)throw Error('Finish stopping the previous session before starting again');const position=await withPosition();await api('/presence/check-in','POST',position);await api('/location/share','POST',{durationMinutes:DISCOVERY_DURATION_MINUTES,audience:'verified'});try{await api('/location/sample','POST',position)}catch(e){await api('/location/share','DELETE');throw e}alert('Approximate discovery enabled for 30 minutes')});
  const signOut=async()=>{try{await api('/presence','DELETE')}finally{await auth.signoutRedirect()}};
- const finishStop=useCallback(async()=>{await api('/location/share','DELETE');stopRequested.current=false;setStopPending(false);await refresh()},[api,refresh]);
- const stopShare=()=>{stopRequested.current=true;setStopPending(true);setMe(m=>m?{...m,locationSharing:false,sharingExpiresAt:null}:m);return run(async()=>{await finishStop();alert('Location sharing stopped')})};
+ const finishStop=useCallback(async()=>{await api('/location/share','DELETE');stopRequested.current=false;try{if(stopKey)localStorage.removeItem(stopKey)}catch{}setStopPending(false);await refresh()},[api,refresh,stopKey]);
+ const stopShare=()=>{stopRequested.current=true;try{if(stopKey)localStorage.setItem(stopKey,'true')}catch{}setStopPending(true);setMe(m=>m?{...m,locationSharing:false,sharingExpiresAt:null}:m);return run(async()=>{await finishStop();alert('Location sharing stopped')})};
  useEffect(()=>{if(!stopPending)return;const retry=()=>{void finishStop().catch(()=>{})};window.addEventListener('online',retry);return()=>window.removeEventListener('online',retry)},[stopPending,finishStop]);
  // One foreground heartbeat refreshes venue and location from the SAME GPS sample.
  // Avoid overlapping geolocation requests, stale-on-site races and duplicate failures.

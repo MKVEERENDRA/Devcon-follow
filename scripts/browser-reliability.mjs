@@ -29,6 +29,7 @@ try{
  let writes=0;await page.route('**/v1/location/sample',route=>{writes++;return route.continue()});
  await page.route('**/v1/location/share',route=>route.request().method()==='DELETE'?route.abort('failed'):route.continue());
  await page.getByRole('button',{name:'Stop location sharing'}).click();await page.getByText('Discovery stopped on this device',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Enable sharing'}).isEnabled(),false);
+ await page.reload();await page.getByText('Discovery stopped on this device',{exact:true}).waitFor();await page.getByRole('button',{name:'Nearby',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Enable sharing'}).isEnabled(),false);
  // Run a full heartbeat interval; pending Stop must suppress subsequent GPS writes.
  await page.clock.install();await page.clock.fastForward(46000);assert.equal(writes,0);
  await page.screenshot({path:new URL('offline-stop.png',evidence).pathname,fullPage:true});
