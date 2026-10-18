@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Devcon Follow",
+    "slug": "devcon-follow",
+    "scheme": "devconfollow",
+    "version": "0.3.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.proofofaudits.devconfollow",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scan a Devcon Follow social profile QR code.",
+        "NSLocationWhenInUseUsageDescription": "Check in to an organizer-approved Devcon venue and share an optional, temporary location reading.",
+        "NSBluetoothAlwaysUsageDescription": "Share a short-lived anonymous Bluetooth token with nearby opted-in Devcon Follow attendees while discovery is on."
+      }
+    },
+    "android": {
+      "package": "com.proofofaudits.devconfollow",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_ADVERTISE",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Devcon Follow to scan social profile QR codes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow a temporary venue check-in and optional nearby discovery."
+        }
+      ],
+      "expo-secure-store",
+      "./plugins/withBluetoothPermissions"
+    ]
+  }
+}

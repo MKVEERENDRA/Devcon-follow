@@ -1,0 +1,15 @@
+node_modules/
+web/node_modules/
+web/dist/
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+*.log
+mobile/dist/
+mobile/android/
+mobile/ios/
+artifacts/
+test-results/
+playwright-report/

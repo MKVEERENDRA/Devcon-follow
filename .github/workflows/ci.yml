@@ -1,0 +1,69 @@
+name: Devcon Follow CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+            mobile/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install PWA dependencies
+        run: npm ci --prefix web --no-audit --no-fund
+      - name: Backend unit tests
+        run: npm test
+      - name: Node syntax checks
+        run: npm run check
+      - name: Compile production PWA
+        run: npm run build:web
+      - name: Install native client dependencies
+        run: npm ci --prefix mobile --no-audit --no-fund
+      - name: Expo packaging diagnostics
+        working-directory: mobile
+        run: npx --yes expo-doctor
+      - name: Native TypeScript typecheck
+        run: npm --prefix mobile run typecheck
+      - name: Browser journey with two sandbox identities and real MongoDB
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - name: Export native JavaScript bundles
+        working-directory: mobile
+        run: npx expo export --platform android --platform ios
+      - name: Verify Bluetooth autolinking
+        working-directory: mobile
+        run: |
+          npx expo-modules-autolinking resolve --platform apple
+          npx expo-modules-autolinking resolve --platform android
+      - name: Backend and web dependency audit
+        run: |
+          npm audit --audit-level=high
+          npm --prefix web audit --audit-level=high
+      - name: Build deployment container
+        run: docker build -t devcon-follow:test .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: artifacts/browser/
+  native-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --prefix mobile --no-audit --no-fund
+      - name: Native release vulnerability gate
+        run: npm --prefix mobile audit --audit-level=high

@@ -1,0 +1,15 @@
+node_modules
+web/node_modules
+web/dist
+.env
+.env.*
+.git
+coverage
+*.zip
+mobile/node_modules
+mobile/dist
+mobile/android
+mobile/ios
+artifacts
+test-results
+playwright-report
