@@ -73,8 +73,10 @@
   deployed welcome with disabled sign-in. No console errors reported in inspected
   browser sessions. Fresh foreground GPS remains opt-in; no browser permission was
   granted just to manufacture a nearby attendee screenshot.
-- Backend: 52 tests, zero failures; syntax checks pass. Earlier two-context full
-  browser acceptance evidence predates this design pass and was not rerun here.
+- Backend: 52 tests, zero failures; syntax checks pass. The full two-context browser journey also passed remotely after publication in
+  GitHub Actions run 39116335304. The remote test-build job additionally passed
+  both native exports, both autolinking checks, backend/web audits and Docker build.
+  The separate native-security job failed on the documented mobile advisories.
 - Web production build passes. Mobile TypeScript passes, Android/iOS Hermes exports
   pass, Expo dependency compatibility check passes. Exports are not signed apps.
 

@@ -2,7 +2,7 @@
 
 **Updated outcome: redesigned frontend hosted at https://devcon-follow.vercel.app with registration disabled. Complete application launch remains BLOCKED; no signed APK or IPA exists.**
 
-The later design pass recovered all nine original ChatGPT images, updated web/native presentation, and deployed only static frontend files through the connected Vercel account. Backend tests remain 52/52 passing; web build, native TypeScript, Android/iOS Hermes exports and Expo dependency checks pass. GitHub writes still return 403. Real OIDC and backend deployment remain required. Native rendered QA is pending; see `design-qa.md` and `docs/design/README.md`. The verification table below also includes earlier acceptance evidence; the complete two-context browser journey predates the redesign.
+The later design pass recovered all nine original ChatGPT images, updated web/native presentation, and deployed only static frontend files through the connected Vercel account. Backend tests remain 52/52 passing; web build, native TypeScript, Android/iOS Hermes exports and Expo dependency checks pass. Source is now published to `MKVEERENDRA/Devcon-follow` on `main` via the existing SSH key, which authenticates as `MKVEERENDRA`. The connected App still returns 403, but that no longer blocks publishing. Real OIDC and backend deployment remain required. Native rendered QA is pending; see `design-qa.md` and `docs/design/README.md`. The verification table below also includes earlier acceptance evidence; the earlier local two-context browser journey predates the redesign; the new remote CI run has now also passed the full journey after redesign.
 
 Source was recovered from `/home/vamshi/Downloads/devcon-follow-codex-ready-2026-10-18.zip` into the initially empty workspace. No replacement template or fake production attendees were created. Tests ran using the bundled **Node 24.19.0** runtime; the shell's original Node 20 was too old for the declared stack.
 
@@ -23,14 +23,14 @@ Source was recovered from `/home/vamshi/Downloads/devcon-follow-codex-ready-2026
 | Backend dependency audit | PASS | Zero reported vulnerabilities after updating `@fastify/static` to 10.1.6 |
 | Web dependency audit | PASS | Zero reported vulnerabilities |
 | Mobile dependency audit | FAIL | 22 findings: 15 high, 7 moderate, inherited through Expo build tooling. Nonbreaking `npm audit fix` did not resolve them. |
-| Docker build | BLOCKED | Docker executable is unavailable on this machine; CI contains the build step but was not run remotely |
+| Docker build | PASS REMOTE CI | GitHub Actions test-build job built the Docker deployment container successfully after the full two-account journey, native exports, autolinking and backend/web audit. |
 | Kotlin/Swift native compilation | BLOCKED | No Java/Android SDK/adb or Xcode compiler available here |
 | Signed APK / iOS build | BLOCKED | No production API URL or configured EAS project/signing workflow; build-tool vulnerabilities also unresolved |
 | Physical BLE matrix | UNVERIFIED | No Android–Android, Android–iPhone or iPhone–iPhone device tests performed |
 | Production OIDC + two real people | BLOCKED | User confirmed no identity provider exists. Sandbox results do not prove real-provider/device operation. |
 | Atlas connectivity/index bootstrap | BLOCKED | Live Atlas allowlist is empty. Only disposable MongoDB was used. |
 | Railway deployment | BLOCKED | Existing service is still `staged-create`, with no source, domain or deployed instance |
-| GitHub publication | BLOCKED | Connected App write returned 403 `Resource not accessible by integration`; local `Proofofaudit` has `push:false` on target repository |
+| GitHub publication | PASS | Existing SSH key authenticates as `MKVEERENDRA`; pushed `3681040` to `main` and fetched it back. Connector writes still return 403; the local `gh` identity is read-only. |
 
 Full command output is retained locally in `artifacts/logs/` (ignored by git). Browser screenshots are in `artifacts/browser/accepted-meetup.png` and `artifacts/browser/private-chat.png`. Older failed browser runs were retained separately in `artifacts/debug/`; the final browser journey passes.
 
@@ -60,10 +60,10 @@ Full command output is retained locally in `artifacts/logs/` (ignored by git). B
 
 ## Exact external blockers
 
-1. **Repository ownership:** grant write access to local GitHub account `Proofofaudit` on `MKVEERENDRA/Devcon-follow`, or sign Codex's Git CLI into an account with write access. The connected App additionally lacks contents-write permission. No duplicate repository was created.
+1. **Repository publication — resolved:** the existing `~/.ssh/id_ed25519` authenticates as `MKVEERENDRA`. Source was pushed without force to the previously empty repository. `origin` now uses SSH and tracks `origin/main`. No new credentials or repository were created.
 2. **Real identity:** create/configure an OIDC provider; supply HTTPS issuer/JWKS, API audience, separate web/native public client IDs, callback allowlists, verified email and refresh policy. Choose the actual administrator subject after signing in. Secrets stay in the service secret manager.
 3. **Access and venues:** authorize a community pilot explicitly in service configuration and issue invitations, or obtain the organizer's read-only ownership verifier. Supply approved venue/landmark coordinates and event windows. Official verification is unavailable and remains fail-closed.
-4. **Network and deployment:** configure restricted Railway egress access in Atlas, reconcile the existing staged service, configure required secrets/source in staging, then test before production. No global Atlas allowlist was opened and no staged infrastructure was activated.
+4. **Network and deployment:** configure restricted Railway egress access in Atlas, reconcile the existing staged service, configure required secrets/source in staging, then test before production. Attempting to stage the now-published GitHub source returned `No GitHub account linked`; Railway needs its own GitHub connection. The saved Vercel CLI identity (`founder-5419`) cannot access the connector's `mkveerendras-projects` scope; no auth provider was provisioned into a different account. No global Atlas allowlist was opened and no staged infrastructure was activated.
 5. **Native release:** remediate high-severity build dependencies, configure EAS/signing and an actual API origin, compile and sign both apps, then test the full phone matrix and interruption/expiry behavior.
 6. **Operational release:** finalize privacy/support/retention ownership, restore/backup evidence, monitoring/alerts and real-provider two-account acceptance.
 
@@ -74,9 +74,13 @@ The high-severity underlying mobile advisories are [braces stack exhaustion](htt
 | Component | Implemented | Tests | Deployed | Remaining |
 | --- | --- | --- | --- | --- |
 | API + database rules | Yes | PASS locally, real disposable MongoDB | No | Atlas networking, real OIDC, operator setup |
-| Website | Yes | PASS production build + two-account sandbox browser journey | No | Writable GitHub and configured Railway staging |
+| Website | Yes | PASS production build; latest remote two-account browser journey PASS | Static frontend only at devcon-follow.vercel.app | Configured Railway staging and real OIDC |
 | Community access | Yes, disabled by default | PASS replay/email/expiry/privacy checks | No | Administrator identity and explicit pilot configuration |
 | Official ticket verification | Adapter only | Fail-closed tests PASS | No | Organizer authorization/provider |
 | Android/iOS | Source + JS exports | Typecheck/export/autolink PASS | No | Dependency remediation, native compilation/signing, phones |
 
 No production feature is marked PASS solely because a unit test or JavaScript bundle succeeded. Obtain the local source revision with `git rev-parse HEAD`; the final chat records that revision after committing this report.
+
+## Access recheck and source publication
+
+The existing SSH credential was overlooked in the earlier access assessment. The user was correct that a working owner credential existed locally. GitHub publication is no longer blocked. Initial published revision: `36810402e61f43e54d25e97ad6acc52765a240db`. Remote workflow: https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39116335304. Its native vulnerability gate fails on the previously documented dependency advisories; this gate has not been disabled. The test-build job completed successfully, including the full browser journey, Android/iOS exports, both autolinking checks, backend/web dependency audits and Docker image build. Overall CI remains failed because native-security correctly rejects the unresolved mobile dependency advisories.
