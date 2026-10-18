@@ -93,3 +93,42 @@ the connector twice rejected applying them. No CLI upload is used to indirectly
 commit that rejected pending patch. Once the operator applies it, local uploads
 can target this exact service and environment without a GitHub source link.
 Production remains unchanged until release checks pass.
+
+
+## Tenant configuration completed — 18 October 2026
+
+The owner authorized Auth0 management access. The existing tenant is
+`dev-xs1kh1yit6q5g3ph.us.auth0.com`. Public deployment settings are tracked in
+`deploy/auth0/public-settings.json`; they contain no tokens or client secrets.
+
+- Web client `gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9`, type SPA.
+- Native client `rpuStYOg5xnK645nPJvn7R8JUYtkBljZ`, type Native.
+- Both public clients: authorization-code/refresh grants only, token endpoint
+  authentication `none`, RS256 ID tokens with 600-second expiry. Read-back confirms
+  rotating refresh tokens, seven-day absolute and one-day idle expiry, no infinite
+  lifetime and zero reuse leeway. The API uses a 600-second RS256 access token.
+- API ID `6ad4e39d0cbf88ba0828d734`, identifier
+  `https://devcon-follow.vercel.app/api`, offline access enabled. Explicit consent
+  remains required. API identifiers are audiences, not deployed API URLs.
+- Verified-email Action `c1fd0877-b5c6-4d12-913b-381db683d743`, version
+  `a9e17ef6-6a10-443f-b62b-20eb20340cc5`, built/deployed and bound to `post-login`.
+  Binding was read back through the authenticated Management SDK; the initially
+  empty flow was preserved and the Action appended.
+- Web callbacks/logout allow only `https://devcon-follow.vercel.app/` and
+  `http://localhost:4173/`. Native allows only `devconfollow://callback`.
+  Add the actual Railway staging origin after it exists, then retest. These
+  callback entries do not enable registration on the static preview.
+- The MCP package automatically set
+  `skip_non_verifiable_callback_uri_confirmation_prompt=true` at creation.
+  Both clients were explicitly restored to `false` and read back. No callback
+  confirmation protection remains disabled by this setup.
+- Client secrets were redacted by MCP and are not required by either public
+  client. They were not saved into app configuration. Settings can be reviewed in
+  [web client](https://manage.auth0.com/dashboard/us/dev-xs1kh1yit6q5g3ph/applications/gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9/settings)
+  and [native client](https://manage.auth0.com/dashboard/us/dev-xs1kh1yit6q5g3ph/applications/rpuStYOg5xnK645nPJvn7R8JUYtkBljZ/settings).
+
+HTTPS discovery successfully advertises the expected issuer/JWKS, authorization,
+token, revocation and OIDC logout endpoints, and S256 support. This establishes
+provider configuration/reachability, not a successful attendee sign-in. No real
+provider account exchange, email delivery, Google production connection, refresh
+reuse test or two-attendee staging journey has passed yet.

@@ -131,3 +131,31 @@ runners. These are build evidence only; no signed release or hardware result is
 claimed. Existing native-security remains unchanged and failing on the 15 high
 upstream tooling findings. Railway's same three prepared staging settings remain
 pending manual apply; production is still unchanged.
+
+## Auth0 tenant and native compiler evidence — 18 October 2026
+
+Source tested remotely: `9727baa770ee294efe2ff7ebf7ac7104cc29ea98` (confirmed as
+GitHub main before these evidence updates). Existing source was preserved.
+
+| Check | Result | Evidence / limit |
+| --- | --- | --- |
+| Main `test-build` job | PASS | [CI run 39137626975](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626975); API/browser/web/native-export/Docker checks |
+| Android native compilation | PASS | [Native run 39137626955](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626955); `:app:assembleDebug`, including Kotlin BLE module |
+| iOS simulator compilation | PASS | Same run; CocoaPods + `xcodebuild`, Swift BLE module, signing disabled |
+| Android compiler reports | PASS | [Artifact 12140207837](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626955/artifacts/12140207837), 40,915 bytes; reports only, no APK distribution |
+| Native dependency audit | FAIL | Current `npm --prefix mobile audit --json`: 15 high, 0 moderate, 0 critical; offered Expo 44 downgrade rejected as incompatible |
+| Real Auth0 public clients | CONFIGURED | Separate web/native IDs and policy read-back in `AUTH_PROVIDER_DECISION.md` |
+| Auth0 API / verified-email Action | CONFIGURED | RS256 API, offline access, 600-second token expiry; Action built/deployed and post-login binding read back |
+| Auth0 public discovery + signing keys | PASS | Expected HTTPS issuer, JWKS URI, RSA signing key, S256, logout and revocation endpoints |
+| Focused provider regressions | PASS | `node --test test/auth-provider.test.js`: 4 passed, 0 failed/skipped, disposable MongoDB + independent test issuer |
+| Live static preview guard | PASS | `https://devcon-follow.vercel.app/client-config`: authReady/ticketReady/communityReady all false |
+| Railway staging | BLOCKED | Authenticated CLI; no service instance; same three pending settings preserved after rejected approval, awaiting manual apply |
+| Atlas readiness | BLOCKED | Existing Mumbai FREE cluster IDLE/running; access list empty; no app DB read/write/index proof |
+| Real-provider two-attendee journey | BLOCKED | No running staging API/Atlas path; provider setup and synthetic-token tests are not genuine attendee acceptance |
+| Native signing and phone radio tests | UNVERIFIED | No signed release, APK/IPA distribution or Android↔Android/Android↔iOS/iOS↔iOS physical evidence |
+
+No new project/service/cluster, paid plan, blanket database access rule, fake
+attendee or official verification flag was created. Auth0 client secrets remain
+redacted and are not required by these public clients. Provider email delivery
+and owned production Google credentials still need verification; the app remains
+closed until the real backend and release checks pass.

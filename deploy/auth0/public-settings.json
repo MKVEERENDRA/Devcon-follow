@@ -1,0 +1,8 @@
+{
+  "OIDC_ISSUER": "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/",
+  "OIDC_JWKS_URL": "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/.well-known/jwks.json",
+  "OIDC_AUDIENCE": "https://devcon-follow.vercel.app/api",
+  "WEB_OIDC_CLIENT_ID": "gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9",
+  "NATIVE_OIDC_CLIENT_ID": "rpuStYOg5xnK645nPJvn7R8JUYtkBljZ",
+  "OIDC_EMAIL_CLAIM_NAMESPACE": "https://devcon-follow.vercel.app/claims"
+}

@@ -1,6 +1,6 @@
 # Devcon Follow
 
-Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **It is not deployed or approved for production.**
+Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the API is not deployed or approved for production.**
 
 The web and API run from one origin. The Expo client contains foreground GPS and native Bluetooth source. No public posts, feeds or likes are exposed. Community invitations never claim official Devcon ticket ownership or event admission.
 
@@ -34,7 +34,7 @@ For the actual application, configure environment variables from `.env.example` 
 - **Community:** explicitly enable `COMMUNITY_ACCESS_ENABLED=true` with a separate random `COMMUNITY_INVITE_HMAC_KEY` of at least 32 characters. Named OIDC administrators may issue email-bound, single-use, expiring invitations. Redemption requires the matching verified email. Approval permits profiles, discovery at approved venues, meetups, connections and chat; it never grants admission or an official ticket badge. Revocation is checked on protected API reads.
 - **Pending:** sign-in and account deletion work; protected networking stays locked.
 
-Configure separate web and native OIDC public clients. Use code + PKCE, verified email, an API audience, HTTPS issuer/JWKS, exact callback allowlists, and native refresh-token rotation with `offline_access`. Web callback: `https://YOUR_ORIGIN/`. Native callback: `devconfollow://callback`. Recovery and social identity choices belong to your real identity provider. No provider has been configured yet.
+Configure separate web and native OIDC public clients. Use code + PKCE, verified email, an API audience, HTTPS issuer/JWKS, exact callback allowlists, and native refresh-token rotation with `offline_access`. Web callback: `https://YOUR_ORIGIN/`. Native callback: `devconfollow://callback`. Recovery and social identity choices belong to your real identity provider. Auth0 now has separate public web/native clients, an RS256 API audience and the deployed verified-email Login Action. Public settings are in `deploy/auth0/public-settings.json`. Production email/Google connections and real-provider acceptance remain unverified; the hosted preview does not enable registration.
 
 ## Privacy and safety
 
@@ -44,7 +44,7 @@ Stop revokes samples, shares, GPS grants and radio tokens. Connections persist a
 
 ## Existing deployment infrastructure
 
-Preserve the existing Railway `Devcon Follow` project/service and Atlas `DevconFollow` cluster identified in `WORK_HANDOFF.md`. Railway was inspected and remains **staged-create**, with no source or deployment. Atlas has no access-list entries. Configure restricted egress access; do not use a blanket `0.0.0.0/0` allowlist. No infrastructure settings were changed during this work.
+Preserve the existing Railway `Devcon Follow` project/service and Atlas `DevconFollow` cluster identified in `WORK_HANDOFF.md`. Railway staging remains **staged-create**, with three pending settings and no source or deployment. CLI authentication works. Applying these settings requires the operator because automatic approval rejected the action twice. Atlas is running but has no access-list entries. Configure restricted egress access; do not use a blanket `0.0.0.0/0` allowlist. See `docs/PRODUCTION_INPUTS.md` for current blockers.
 
 The root Dockerfile builds same-origin web + API. `/health/live` checks process health; `/health/ready` checks database connectivity; `/health/release` returns 503 until authentication, an access policy, an administrator and an approved venue are configured. A healthy process alone is not release approval.
 

@@ -12,14 +12,12 @@ request is superseded.
    `Dockerfile`, start `node src/server.js`, healthcheck `/health/live`. The apply
    connector rejected the operation twice, even after explicit user approval.
    It has not been bypassed through another tool. Production is still unchanged.
-2. Complete the Auth0 account step in the open browser. The provider setup uses
-   two public clients and a custom API; the required resulting values are the
-   **issuer URL**, **web public client ID**, **native public client ID**, and
-   **API audience**. Deploy the checked-in Post Login Action as documented in
-   `AUTH_PROVIDER_DECISION.md`. These are public
-   application settings. Keep client secrets, passwords, access tokens and MongoDB
-   credentials in the relevant secret manager, never chat or GitHub. An existing
-   configured application may be used; no duplicate identity account is needed.
+2. Auth0 account, public clients, API audience and verified-email Login Action
+   are now configured. Public values are in `deploy/auth0/public-settings.json`.
+   No further public client identifiers are needed from the operator. Production
+   email delivery and owned Google connection credentials still need verification
+   in Auth0, followed by two genuine test-account sign-ins. Never send secrets in
+   chat or commit them.
 
 ## Work remaining after those inputs
 
@@ -34,7 +32,7 @@ request is superseded.
   event dates and public meeting landmark before attendee discovery is enabled.
 - Keep official ticket verification disabled until an organizer-authorized
   read-only verifier exists. Community invitations remain a distinct access path.
-- Resolve the remaining native security gate and compile/sign/test real phones
+- Resolve the remaining native security gate and sign/test real phones
   before claiming the Android/iOS release complete.
 
 ## Evidence available
@@ -56,3 +54,15 @@ namespaced-token invitation checks), the existing two-context browser journey,
 web production build and native typecheck. These tests still use isolated test
 issuers, not a configured Auth0 tenant. Native compile-only CI is prepared for
 Android and iOS simulator; it does not distribute APKs/IPAs or bypass security.
+
+
+Latest remote results for `9727baa770ee294efe2ff7ebf7ac7104cc29ea98`:
+[main CI](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626975)
+`test-build` PASS, `native-security` FAIL;
+[native compilation](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626955)
+Android and iOS simulator PASS. The 15 high findings remain in the current audit.
+The existing Atlas cluster is running in Mumbai, but its access list is empty
+and no Railway service instance exists. Database read/write/index readiness is
+BLOCKED, not proven by successful disposable-database tests. Railway's trial does
+not provide the Pro static-egress feature previously evaluated; a restricted
+networking path must be established without assuming a paid upgrade.
