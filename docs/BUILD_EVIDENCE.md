@@ -84,3 +84,31 @@ No production feature is marked PASS solely because a unit test or JavaScript bu
 ## Access recheck and source publication
 
 The existing SSH credential was overlooked in the earlier access assessment. The user was correct that a working owner credential existed locally. GitHub publication is no longer blocked. Initial published revision: `36810402e61f43e54d25e97ad6acc52765a240db`. Remote workflow: https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39116335304. Its native vulnerability gate fails on the previously documented dependency advisories; this gate has not been disabled. The test-build job completed successfully, including the full browser journey, Android/iOS exports, both autolinking checks, backend/web dependency audits and Docker image build. Overall CI remains failed because native-security correctly rejects the unresolved mobile dependency advisories.
+
+## Latest continuation — reuse, CLI access and security
+
+- Railway CLI authentication completed through the user's existing account; no
+  GitHub linkage is required for future local source uploads.
+- Created only the `staging` environment (`7377c9c3-4384-401d-bbb6-4fde0347fa73`)
+  inside the existing project. The existing API service has three staged settings:
+  Dockerfile, `node src/server.js`, `/health/live`. Two connector apply attempts
+  returned "Cancelled — the user did not approve this action", including after
+  the user explicitly approved staging changes. They were not applied by a
+  different route. Production's seven original staged changes remain untouched.
+- ZITADEL cloud signup was completed by the user. This proves account access,
+  not the web/native application client configuration or a passing real-provider
+  journey. At the user's later request, no further login/account setup is attempted.
+- Scoped `xcode`'s uuid dependency to 11.1.1; its UUID generation smoke check
+  passes. Mobile audit is now 15 high, zero moderate, zero critical. The remaining
+  high findings still prevent native security acceptance.
+- Latest local API suite: 52/52 PASS. Syntax checks, production web build, mobile
+  TypeScript, Expo version compatibility and both native Hermes exports PASS.
+- See `docs/OPEN_SOURCE_REUSE.md` for versions, licenses, reuse decisions and
+  authoritative upstream sources. Native builds and phone tests remain unverified.
+
+Production prerequisites still missing from the deployed service: configured
+HTTPS OIDC issuer/JWKS, API audience and separate web/native client IDs; an actual
+administrator subject; enabled community invitation policy/secrets; an approved
+venue/landmark and event window; restricted Atlas egress connectivity with verified
+indexes. Existing database credentials must stay in Railway, not chat or git.
+No production API URL or signed native artifact exists.
