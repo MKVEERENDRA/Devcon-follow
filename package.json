@@ -14,7 +14,8 @@
     "build": "npm --prefix web ci --no-audit --no-fund && npm run build:web",
     "build:web": "npm --prefix web run build",
     "test:browser": "node scripts/browser-journey.mjs",
-    "preview:staging": "node scripts/staging-preview.mjs"
+    "preview:staging": "node scripts/staging-preview.mjs",
+    "test:browser:reliability": "node scripts/browser-reliability.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
