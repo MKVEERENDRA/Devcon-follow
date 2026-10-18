@@ -5,7 +5,7 @@
     "scheme": "devconfollow",
     "version": "0.3.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.proofofaudits.devconfollow",
@@ -44,7 +44,8 @@
         }
       ],
       "expo-secure-store",
-      "./plugins/withBluetoothPermissions"
+      "./plugins/withBluetoothPermissions",
+      "expo-font"
     ]
   }
 }

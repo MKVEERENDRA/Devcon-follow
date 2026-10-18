@@ -1,3 +1,4 @@
+import {CalendarDays,MapPin,Users} from 'lucide-react';
 import React,{useCallback,useEffect,useState} from 'react';
 
 export function MeetupComposer({api,targetId,onSent}){
@@ -12,12 +13,13 @@ export function MeetupComposer({api,targetId,onSent}){
   </form>;
 }
 export function MeetupsPanel({api}){
+  const [tab,setTab]=useState('pending');
   const [meetups,setMeetups]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const load=useCallback(async()=>{try{const r=await api('/meetups');setMeetups(r.meetups);setError('')}catch(e){setMeetups([]);setError(e.message)}},[api]);
   useEffect(()=>{load();const timer=setInterval(load,15000);return()=>clearInterval(timer)},[load]);
-  const decide=async(id,decision)=>{setBusy(true);try{await api('/meetups/'+encodeURIComponent(id)+'/decision','POST',{decision});await load()}catch(e){setError(e.message)}finally{setBusy(false)}};
-  return <section><h2>Landmark meetups</h2><p>Agree on a public place and time without sharing your live location.</p>{error&&<p role="alert">{error}</p>}{!meetups.length&&<p>No meeting invitations yet. Open an attendee profile to invite them.</p>}
-    {meetups.map(m=><div className="panel" key={m.meetupId}><h3>{m.otherName} · {m.landmark.name}</h3><p>{new Date(m.startsAt).toLocaleString()} · {m.status}</p>{m.status==='accepted'&&Date.parse(m.startsAt)>Date.now()&&Date.parse(m.startsAt)-Date.now()<=300000&&<p role="status">Your meeting starts within five minutes.</p>}<div className="cta-row">
+  const decide=async(id,decision)=>{setBusy(true);try{await api('/meetups/'+encodeURIComponent(id)+'/decision','POST',{decision});if(decision==='accepted')setTab('accepted');await load()}catch(e){setError(e.message)}finally{setBusy(false)}};
+  return <section><div className="page-hero"><h1>Meetups</h1><p>Make time for a good conversation.</p></div><div className="segmented">{[['pending','Pending'],['accepted','Confirmed'],['past','History']].map(([key,label])=><button key={key} aria-pressed={tab===key} onClick={()=>setTab(key)}>{label}</button>)}</div>{error&&<p role="alert">{error}</p>}{!meetups.some(m=>tab==='past'?!['pending','accepted'].includes(m.status)||Date.parse(m.startsAt)<Date.now():m.status===tab&&Date.parse(m.startsAt)>=Date.now())&&<div className="empty"><Users/><h3>No {tab==='accepted'?'confirmed':tab==='past'?'past':'pending'} meetups</h3><p>Open an attendee profile to invite them to a public landmark.</p></div>}
+    {meetups.filter(m=>tab==='past'?!['pending','accepted'].includes(m.status)||Date.parse(m.startsAt)<Date.now():m.status===tab&&Date.parse(m.startsAt)>=Date.now()).map(m=><div className="panel meetup-card" key={m.meetupId}><div className="meeting-heading"><h3>{m.otherName}</h3><span className="status-pill muted">{m.status}</span></div><p className="meta"><CalendarDays/>{new Date(m.startsAt).toLocaleString()}</p><p className="meta"><MapPin/>{m.landmark.name}</p>{m.status==='accepted'&&Date.parse(m.startsAt)>Date.now()&&Date.parse(m.startsAt)-Date.now()<=300000&&<p role="status">Your meeting starts within five minutes.</p>}<div className="cta-row">
       {m.incoming&&m.status==='pending'&&<><button className="button primary" disabled={busy} onClick={()=>decide(m.meetupId,'accepted')}>Accept meeting</button><button className="button secondary" disabled={busy} onClick={()=>decide(m.meetupId,'declined')}>Decline meeting</button></>}
       {['pending','accepted'].includes(m.status)&&<button className="button secondary" disabled={busy} onClick={()=>decide(m.meetupId,'cancelled')}>Cancel meeting</button>}
       {m.status==='accepted'&&<a className="button secondary" target="_blank" rel="noopener noreferrer" href={'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(m.landmark.lat+','+m.landmark.lon)+'&travelmode=walking'}>Directions to public landmark</a>}

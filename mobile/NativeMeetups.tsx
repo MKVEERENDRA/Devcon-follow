@@ -1,10 +1,11 @@
+import {theme} from './theme';
 import React,{useCallback,useEffect,useState} from 'react';
 import {Linking,Pressable,Text,TextInput,View} from 'react-native';
 type Api=(path:string,method?:string,body?:unknown)=>Promise<any>;
 type Landmark={landmarkId:string;name:string;lat:number;lon:number};
 type Meeting={meetupId:string;otherName:string;incoming:boolean;status:string;startsAt:string;landmark:Landmark};
-const text={color:'#f4f7fb',marginVertical:8},input={color:'#f4f7fb',borderColor:'#9aa9bc',borderWidth:1,padding:12};
-function Action({title,run,disabled=false}:{title:string;run:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" disabled={disabled} onPress={run} style={{padding:12,backgroundColor:disabled?'#25354c':'#1f483b',marginVertical:4,borderRadius:8}}><Text style={text}>{title}</Text></Pressable>}
+const text={color:theme.ink,marginVertical:8},input={color:theme.ink,borderColor:theme.line,borderWidth:1,padding:12};
+function Action({title,run,disabled=false}:{title:string;run:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" disabled={disabled} onPress={run} style={{padding:12,backgroundColor:disabled?'#edf0f2':theme.blue,marginVertical:4,borderRadius:8}}><Text style={[text,{color:'white',fontSize:12}]}>{title}</Text></Pressable>}
 export function NativeMeetupComposer({api,targetId,onSent}:{api:Api;targetId:string;onSent:()=>void}){
  const [places,setPlaces]=useState<Landmark[]>([]),[place,setPlace]=useState(''),[minutes,setMinutes]=useState('15'),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  useEffect(()=>{let alive=true;api('/landmarks').then(r=>{if(alive)setPlaces(r.landmarks)}).catch(e=>{if(alive)setError(e.message)});return()=>{alive=false}},[api]);

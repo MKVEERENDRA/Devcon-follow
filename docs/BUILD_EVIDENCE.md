@@ -1,6 +1,8 @@
 # Build and release evidence — 18 October 2026 (IST)
 
-**Outcome: locally implemented and tested; production launch BLOCKED. No public deployment URL, APK or IPA exists.**
+**Updated outcome: redesigned frontend hosted at https://devcon-follow.vercel.app with registration disabled. Complete application launch remains BLOCKED; no signed APK or IPA exists.**
+
+The later design pass recovered all nine original ChatGPT images, updated web/native presentation, and deployed only static frontend files through the connected Vercel account. Backend tests remain 52/52 passing; web build, native TypeScript, Android/iOS Hermes exports and Expo dependency checks pass. GitHub writes still return 403. Real OIDC and backend deployment remain required. Native rendered QA is pending; see `design-qa.md` and `docs/design/README.md`. The verification table below also includes earlier acceptance evidence; the complete two-context browser journey predates the redesign.
 
 Source was recovered from `/home/vamshi/Downloads/devcon-follow-codex-ready-2026-10-18.zip` into the initially empty workspace. No replacement template or fake production attendees were created. Tests ran using the bundled **Node 24.19.0** runtime; the shell's original Node 20 was too old for the declared stack.
 
