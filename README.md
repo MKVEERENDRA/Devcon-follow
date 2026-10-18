@@ -1,8 +1,10 @@
 # Devcon Follow
 
-Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed but database readiness is blocked. Production is not deployed.**
+Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed and its last database-readiness check passed. Production is not deployed.**
 
 The web and API run from one origin. The Expo client contains foreground GPS and native Bluetooth source. No public posts, feeds or likes are exposed. Community invitations never claim official Devcon ticket ownership or event admission.
+
+Current product/build and release limits: [19 October update](docs/PRODUCT_BUILD_2026-10-19.md). Live-app testing is stopped at the owner’s request; local verification uses disposable data.
 
 ## Run and verify
 

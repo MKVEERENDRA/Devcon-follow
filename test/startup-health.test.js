@@ -20,6 +20,6 @@ test('Staging registration switch hides login despite valid configured identity 
   const app=await startTestRuntime({config:{REGISTRATION_ENABLED:'false',WEB_OIDC_CLIENT_ID:'configured-public-client'}});
   try{
     const response=await fetch(app.origin+'/client-config');
-    assert.equal(response.status,200);assert.equal((await response.json()).authReady,false);
+    const cfg=await response.json();assert.equal(response.status,200);assert.equal(cfg.authReady,false);assert.equal(cfg.authConfigured,true);assert.equal(cfg.registrationEnabled,false);
   }finally{await app.close()}
 });

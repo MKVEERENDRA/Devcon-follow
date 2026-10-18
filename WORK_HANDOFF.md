@@ -1,3 +1,5 @@
+> Current status (19 October): staging database readiness recovered; one real pending Auth0 identity was validated before the owner stopped live testing. New product changes are local source, not a deployment. See [current build report](docs/PRODUCT_BUILD_2026-10-19.md) and [restricted networking](docs/RESTRICTED_NETWORKING.md). Older entries below are historical, not instructions to repeat completed setup.
+
 # Devcon Follow — Work mode engineering handoff (2026-10-17)
 
 ## Mission

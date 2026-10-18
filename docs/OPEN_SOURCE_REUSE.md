@@ -1,3 +1,5 @@
+> 19 October update: the existing staging service is running with database readiness recovered. The staged-settings approval described below is historical and complete. Current product work reuses existing components without adding dependencies; see [current build report](PRODUCT_BUILD_2026-10-19.md).
+
 # Open-source reuse review — 18 October 2026
 
 This application already composes established libraries. No event-management

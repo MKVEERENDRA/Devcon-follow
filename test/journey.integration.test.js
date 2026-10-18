@@ -20,10 +20,11 @@ test('real Mongo + signed sandbox identities: access, discovery, landmark meetup
   const bob=await call('admin','/v1/admin/invitations','POST',{email:'bob@example.test'},201);await call('bob','/v1/access/redeem','POST',{code:bob.code});
   const me=await call('alice','/v1/me');assert.equal(me.ticketVerified,false);assert.equal(me.officiallyVerified,false);assert.equal(me.accessTier,'community');
   await call('eve','/v1/profile','PUT',{handle:'eve',displayName:'Eve',roles:['Builder']},403);
-  for(const id of ['alice','bob'])await call(id,'/v1/profile','PUT',{handle:id,displayName:id,roles:['Builder'],discoverable:true});
+  for(const id of ['alice','bob'])await call(id,'/v1/profile','PUT',{handle:id,displayName:id,roles:['Builder'],lookingFor:'Protocol security researchers',openToMeet:id==='bob',discoverable:true});
   const {venueId}=await call('admin','/v1/admin/venues','POST',{name:'SANDBOX venue',...point,radiusMeters:300,startAt:new Date(Date.now()-60000).toISOString(),endAt:new Date(Date.now()+3600000).toISOString(),enabled:true},201);
   const {landmark}=await call('admin','/v1/admin/landmarks','POST',{venueId,name:'SANDBOX public meeting point',lat:point.lat,lon:point.lon},201);
   for(const id of ['alice','bob'])await call(id,'/v1/presence/check-in','POST',point);
+  const directory=await call('alice','/v1/directory');assert.equal(directory.attendees[0].lookingFor,'Protocol security researchers');assert.equal(directory.attendees[0].openToMeet,true);assert.equal((await call('bob','/v1/profiles/alice')).profile.openToMeet,false);
   const sessions=await Promise.all([app.request('alice','/v1/location/share','POST',{durationMinutes:30,audience:'verified'}),app.request('alice','/v1/location/share','POST',{durationMinutes:30,audience:'verified'})]);
   assert.deepEqual(sessions.map(r=>r.status).sort(),[200,409]);
   const session=sessions.find(r=>r.status===200).body;assert(Math.abs(Date.parse(session.expiresAt)-Date.now()-1800000)<5000);
@@ -34,7 +35,11 @@ test('real Mongo + signed sandbox identities: access, discovery, landmark meetup
   assert.equal((await call('alice','/v1/nearby')).attendees.length,0,'expiry must revoke visibility before TTL cleanup');
   await app.db.collection('shares').updateOne({userId:'bob'},{$set:{expiresAt:new Date(Date.now()+1800000)}});
   const map=await call('alice','/v1/venue/map');assert.equal(map.kind,'public_venue_only');
-  const meeting=await call('alice','/v1/meetups','POST',{targetId:'bob',landmarkId:landmark.landmarkId,startsAt:new Date(Date.now()+600000).toISOString()},201);
+  await call('alice','/v1/meetups','POST',{targetId:'bob',reason:'x'.repeat(281)},400);
+  await call('alice','/v1/meetups','POST',{targetId:'bob',reason:{text:'invalid'}},400);
+  const meeting=await call('alice','/v1/meetups','POST',{targetId:'bob',landmarkId:landmark.landmarkId,reason:' Compare protocol audit evidence over coffee? ',startsAt:new Date(Date.now()+600000).toISOString()},201);
+  assert.equal((await call('bob','/v1/meetups')).meetups[0].reason,'Compare protocol audit evidence over coffee?');
+  await call('eve','/v1/meetups',undefined,undefined,403);
   await call('eve','/v1/meetups/'+meeting.meetupId+'/decision','POST',{decision:'accepted'},403);
   await call('alice','/v1/meetups/'+meeting.meetupId+'/decision','POST',{decision:'accepted'},409);
   await call('bob','/v1/meetups/'+meeting.meetupId+'/decision','POST',{decision:'accepted'});

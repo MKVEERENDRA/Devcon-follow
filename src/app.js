@@ -94,12 +94,23 @@ export async function buildServer({db,config}){
     const status=Number.isInteger(err.statusCode)&&err.statusCode>=400&&err.statusCode<600?err.statusCode:500;
     reply.code(status).send({error:status===500?'Internal server error':err.message});
   });
-  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authReady:config.REGISTRATION_ENABLED!=='false'&&Boolean(config.OIDC_ISSUER&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL&&config.WEB_OIDC_CLIENT_ID),ticketReady:ticketVerifier.configured,communityReady:access.enabled,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
+  const authConfigured=Boolean(config.OIDC_ISSUER&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL&&config.WEB_OIDC_CLIENT_ID);
+  const registrationEnabled=config.REGISTRATION_ENABLED!=='false';
+  const httpsEndpoint=value=>{try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.hash}catch{return false}};
+  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authConfigured,registrationEnabled,authReady:registrationEnabled&&authConfigured,ticketReady:ticketVerifier.configured,communityReady:access.enabled,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
   app.get('/health/live',async()=>({ok:true,service:'devcon-follow-api'}));
   app.get('/health/release',async(req,reply)=>{
     await db.command({ping:1});
-    const checks={auth:Boolean(config.OIDC_ISSUER?.startsWith('https://')&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL?.startsWith('https://')&&config.WEB_OIDC_CLIENT_ID),access:ticketVerifier.configured||access.enabled,administrator:admins.size>0,approvedVenue:Boolean(await col('venues').findOne({enabled:true,endAt:{$gt:new Date().toISOString()}}))};
-    const ok=Object.values(checks).every(Boolean);return reply.code(ok?200:503).send({ok,checks});
+    const now=Date.now();
+    const venues=(await col('venues').find({enabled:true}).limit(100).toArray()).filter(v=>
+      typeof v.venueId==='string'&&v.venueId.length>0&&validLocation({...v.center,accuracyMeters:0})&&typeof v.name==='string'&&v.name.trim()&&
+      Number.isFinite(v.radiusMeters)&&v.radiusMeters>=50&&v.radiusMeters<=2500&&
+      Number.isFinite(Date.parse(v.startAt))&&Date.parse(v.endAt)>now&&Date.parse(v.startAt)<Date.parse(v.endAt));
+    const landmarks=venues.length?await col('landmarks').find({venueId:{$in:venues.map(v=>v.venueId)},enabled:true}).limit(1000).toArray():[];
+    const hasLandmark=landmarks.some(l=>typeof l.landmarkId==='string'&&l.landmarkId.length>0&&typeof l.name==='string'&&l.name.trim()&&validLocation({...l,accuracyMeters:0})&&
+      venues.some(v=>v.venueId===l.venueId&&haversineMeters(l,v.center)<=v.radiusMeters));
+    const checks={auth:Boolean(httpsEndpoint(config.OIDC_ISSUER)&&config.OIDC_AUDIENCE&&httpsEndpoint(config.OIDC_JWKS_URL)&&config.WEB_OIDC_CLIENT_ID),access:ticketVerifier.configured||access.enabled,administrator:admins.size>0,approvedVenue:venues.length>0,approvedLandmark:hasLandmark};
+    const ok=Object.values(checks).every(Boolean);return reply.code(ok?200:503).send({ok,scope:'service-configuration',checks});
   });
   app.get('/health/ready',async()=>{await db.command({ping:1});return {ok:true,ticketVerifierConfigured:ticketVerifier.configured}});
   app.get('/v1/me',async(req)=>{
@@ -139,7 +150,7 @@ export async function buildServer({db,config}){
       catch{throw jsonError(400,`Invalid ${key} link`)}
     }
     if(b.avatar&& !safeAvatar(b.avatar))throw jsonError(400,'Invalid avatar image. Use a small JPEG, PNG or WebP.');
-    const update={handle,displayName,bio,roles,interests,socials,avatar:safeAvatar(b.avatar),discoverable:b.discoverable===true,updatedAt:DATE()};
+    const update={handle,displayName,bio,lookingFor:safeText(b.lookingFor,280),openToMeet:b.openToMeet===true,roles,interests,socials,avatar:safeAvatar(b.avatar),discoverable:b.discoverable===true,updatedAt:DATE()};
     try{await col('profiles').updateOne({userId:actor.userId},{$set:update,$setOnInsert:{userId:actor.userId,createdAt:DATE()}},{upsert:true});}
     catch(e){if(e.code===11000)throw jsonError(409,'Handle already taken');throw e;}
     if(!update.discoverable){

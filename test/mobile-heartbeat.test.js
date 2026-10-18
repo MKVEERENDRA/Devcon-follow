@@ -12,9 +12,10 @@ test('native BLE session refreshes venue presence and foreground GPS sampling',(
   assert.match(code,/Date\.now\(\)>=discoveryExpiresAt\.current/);
 });
 
-test('native social profile edits preserve existing photo, interests and social links',()=>{
+test('native profile edits preserve photo and social links and allow interests to be edited',()=>{
   const code=readFileSync(new URL('../mobile/App.tsx',import.meta.url),'utf8');
-  assert.match(code,/interests:me\?\.profile\?\.interests\|\|\[\]/);
+  assert.match(code,/setInterestText\(\(p\?\.interests\|\|\[\]\)\.join/);
+  assert.match(code,/interests:interestText\.split/);
   assert.match(code,/socials:me\?\.profile\?\.socials\|\|\{\}/);
   assert.match(code,/avatar:me\?\.profile\?\.avatar\|\|null/);
   assert.match(code,/tab==='connections'/);

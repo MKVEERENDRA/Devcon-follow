@@ -21,7 +21,8 @@ export function registerMeetups(app,{col,authenticate,admins,requireUser,require
     return {landmarks:await col('landmarks').find({venueId:actor.venue.venueId,enabled:true},{projection:{_id:0}}).limit(100).toArray()};
   });
   app.post('/v1/meetups',{config:{rateLimit:{max:8,timeWindow:'1 hour'}}},async(req,reply)=>{
-    const actor=await requireOnSite(req),{targetId,landmarkId,startsAt}=req.body||{};
+    const actor=await requireOnSite(req),{targetId,landmarkId,startsAt,reason}=req.body||{};
+    if(reason!==undefined&&(typeof reason!=='string'||reason.trim().length>280))throw fail(400,'Meeting reason must be text of at most 280 characters');
     await requireAllowedPerson(actor,targetId);
     if(!(await col('profiles').findOne({userId:targetId,discoverable:true})))throw fail(404,'Profile not discoverable');
     const target=await currentVenue(targetId);
@@ -30,7 +31,7 @@ export function registerMeetups(app,{col,authenticate,admins,requireUser,require
     const landmark=await col('landmarks').findOne({landmarkId,venueId:actor.venue.venueId,enabled:true});
     const time=Date.parse(startsAt),now=Date.now();
     if(!landmark||!Number.isFinite(time)||time<now||time>now+86_400_000||time>Date.parse(actor.venue.endAt))throw fail(400,'Choose an approved landmark and a future time within the event and next 24 hours');
-    const meetup={meetupId:randomUUID(),requesterId:actor.userId,targetId,venueId:actor.venue.venueId,landmarkId,status:'pending',startsAt:new Date(time),expiresAt:new Date(time+30*60_000),createdAt:new Date()};
+    const meetup={meetupId:randomUUID(),requesterId:actor.userId,targetId,venueId:actor.venue.venueId,landmarkId,reason:safeText(reason,280),status:'pending',startsAt:new Date(time),expiresAt:new Date(time+30*60_000),createdAt:new Date()};
     await col('meetups').insertOne(meetup);
     notify(targetId,'meetup:requested',{meetupId:meetup.meetupId});
     return reply.code(201).send({meetupId:meetup.meetupId,status:meetup.status});

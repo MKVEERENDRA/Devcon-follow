@@ -1,3 +1,14 @@
+> Current status (19 October): staging database readiness recovered; one real pending Auth0 identity was validated before the owner stopped live testing. New product changes are local source, not a deployment. See [current build report](PRODUCT_BUILD_2026-10-19.md) and [restricted networking](RESTRICTED_NETWORKING.md). Older entries below are historical, not instructions to repeat completed setup.
+
+## Verification — 19 October product build
+
+60/60 local tests pass (zero failures/skips), along with API syntax, web build,
+native TypeScript, Android/iOS Hermes exports and the extended two-context local
+browser journey. The browser journey also covers profile goals, explicit profile
+visibility, meetup reasons and owner-only notes. This used disposable MongoDB and
+loopback sandbox authentication, never the live API. See the current build report
+linked above for the release checklist and unchanged external blockers.
+
 # Build and release evidence — 18 October 2026 (IST)
 
 **Updated outcome: redesigned frontend hosted at https://devcon-follow.vercel.app with registration disabled. Complete application launch remains BLOCKED; no signed APK or IPA exists.**

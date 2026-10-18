@@ -20,22 +20,26 @@ try{
     await page.goto(app.origin);await page.getByRole('button',{name:'Get started'}).click();
     await page.getByLabel('Email').fill(id+'@example.test');await page.getByLabel('Password').fill('sandbox-'+id);await page.getByRole('button',{name:'Sign in',exact:true}).click();
     await page.getByLabel('Invitation code').fill(invites[id]);await page.getByRole('button',{name:'Accept community invitation'}).click();
-    await page.getByLabel('Display name',{exact:true}).fill(id);await page.getByLabel('Username',{exact:true}).fill(id);await page.getByRole('button',{name:'Save profile'}).click();
+    await page.getByLabel('Display name',{exact:true}).fill(id);await page.getByLabel('Username',{exact:true}).fill(id);await page.getByLabel('Who would you like to meet?').fill(id==='bob'?'Protocol security researchers':'Founders building developer tools');if(id==='bob')await page.getByLabel('Open to meetup requests',{exact:true}).check();await page.getByLabel('Make my profile discoverable').check();await page.getByRole('button',{name:'Save profile'}).click();
     await page.getByRole('button',{name:'Check in with location'}).click();await page.getByText('Venue check-in active',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Nearby',exact:true}).click();await page.getByRole('button',{name:'Enable sharing'}).click();await page.getByRole('button',{name:'Stop location sharing'}).waitFor();
     console.log(id+': browser OIDC authorization-code + PKCE, community access, profile, GPS discovery PASS');
   }
   const alice=pages.alice,bob=pages.bob;
   await alice.getByRole('button',{name:'Refresh nearby'}).click();await alice.getByRole('button').filter({hasText:'bob'}).last().click();
-  await alice.getByRole('button',{name:'Arrange a meetup'}).click();await alice.getByLabel('Meeting place').selectOption(landmark.body.landmark.landmarkId);
+  await alice.getByText('Looking to meet:',{exact:false}).waitFor();await alice.getByText('Open to meetup requests',{exact:true}).waitFor();
+  await alice.screenshot({path:new URL('profile-intent.png',evidence).pathname,fullPage:true});
+  await alice.getByRole('button',{name:'Arrange a meetup'}).click();await alice.getByLabel('Why would you like to meet?').fill('Compare protocol audit evidence over coffee?');await alice.getByLabel('Meeting place').selectOption(landmark.body.landmark.landmarkId);
   const future=await alice.evaluate(()=>{const d=new Date(Date.now()+600000);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)});await alice.getByLabel(/^Time/).fill(future);await alice.getByRole('button',{name:'Send meeting invitation'}).click();
-  await bob.getByRole('button',{name:'Meetups',exact:true}).click();await bob.getByRole('button',{name:'Accept meeting'}).click();await bob.getByRole('link',{name:'Directions to public landmark'}).waitFor();
+  await bob.getByRole('button',{name:'Meetups',exact:true}).click();await bob.getByText('Compare protocol audit evidence over coffee?',{exact:true}).waitFor();await bob.screenshot({path:new URL('meetup-reason.png',evidence).pathname,fullPage:true});await bob.getByRole('button',{name:'Accept meeting'}).click();await bob.getByRole('link',{name:'Directions to public landmark'}).waitFor();
   await bob.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));await bob.screenshot({path:new URL('accepted-meetup.png',evidence).pathname,fullPage:true});
   for(const [id,target] of [['alice','bob'],['bob','alice']]){
     const page=pages[id];await page.getByRole('button',{name:'Me',exact:true}).click();
     await page.getByRole('button',{name:"Scan someone's profile QR"}).click();await page.getByLabel('Paste a Devcon Follow profile link').fill(app.origin+'/?profile='+target);await page.getByRole('button',{name:'Open profile',exact:true}).click();
     await page.getByRole('button',{name:'Follow',exact:true}).click();await page.getByRole('button',{name:'Following',exact:true}).waitFor();
   }
+  await alice.getByLabel('Private connection note').fill('Met at the sandbox entrance');await alice.getByRole('button',{name:'Save private note'}).click();await alice.getByText('Private note saved',{exact:true}).waitFor();
+  assert.equal((await app.request('alice','/v1/connections/bob/note')).body.note,'Met at the sandbox entrance');assert.equal((await app.request('bob','/v1/connections/alice/note')).body.note,'');
   await alice.getByRole('button',{name:'Message',exact:true}).click();
   await alice.getByRole('textbox',{name:'Message',exact:true}).fill('See you at the entrance');await alice.getByRole('button',{name:'Send',exact:true}).click();
   await bob.getByRole('button',{name:'Message',exact:true}).click();await bob.getByText('See you at the entrance',{exact:true}).waitFor();
