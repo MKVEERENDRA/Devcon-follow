@@ -5,19 +5,46 @@ account-login flow is needed for the next step. Auth0 Free is now selected; see 
 alone does not configure this application's OIDC clients. The older ZITADEL
 request is superseded.
 
-## Required from the operator now
+## Current staging deployment
 
-1. In [Railway staging](https://railway.com/project/2bc6b37c-697d-4077-a23b-503ee588d595?environmentId=7377c9c3-4384-401d-bbb6-4fde0347fa73),
-   manually apply the three pending settings for `devcon-follow-api`: Dockerfile
-   `Dockerfile`, start `node src/server.js`, healthcheck `/health/live`. The apply
-   connector rejected the operation twice, even after explicit user approval.
-   It has not been bypassed through another tool. Production is still unchanged.
-2. Auth0 account, public clients, API audience and verified-email Login Action
-   are now configured. Public values are in `deploy/auth0/public-settings.json`.
-   No further public client identifiers are needed from the operator. Production
-   email delivery and owned Google connection credentials still need verification
-   in Auth0, followed by two genuine test-account sign-ins. Never send secrets in
-   chat or commit them.
+The operator applied the three Railway settings. That step is complete and must
+not be requested again. The authorized CLI uploaded source `8ac1514` to the existing
+service in staging. Deployment `b9c3a460-f5fc-41ff-b3e7-be1899d58891` reports SUCCESS,
+with zero pending staging changes.
+
+Staging HTTPS: https://devcon-follow-api-staging.up.railway.app
+
+Public Auth0 variables, server port/origin, database name `devcon_follow_staging`
+and explicit `REGISTRATION_ENABLED=false` / `COMMUNITY_ACCESS_ENABLED=false` are
+configured. The exact staging callback/logout/origin was added to the existing
+Auth0 web client. No production deployment or variable change was made.
+
+## Current networking blocker
+
+The owner completed the scoped database user and saved `MONGODB_URI` securely.
+Read-back confirms the staging username/host/database structure without printing
+credentials. Atlas permits only the initial deployment IP `34.186.54.95/32`.
+
+Reloading the existing image to pick up the secret created deployment
+`57e8baab-b82b-408a-81c2-f624d1cf1f1c`. Its observed egress changed to
+`152.55.180.192`. Add only `152.55.180.192/32` in Atlas, preferably temporarily;
+the running process retries database startup without another deployment. Do not
+broaden the range. The original allowlist entry does not cover the current pod.
+Remove/revalidate old deployment entries after confirming they are no longer used.
+
+The scoped Atlas user is `devcon_follow_staging_api`, with `readWrite` only on
+`devcon_follow_staging`, restricted to `DevconFollow`. The original production
+user/database were preserved. Do not recreate or request the DB secret again.
+
+Both Atlas mutations originally returned an approval rejection, so the agent did
+not bypass them through another tool. The owner completed them externally. The
+current-IP follow-up remains the exact owner action requested, not another
+Railway settings-apply request. Dynamic egress is a staging-only limitation;
+a stable restricted production network path remains required.
+
+Auth0 identifiers are already configured; none need to be supplied again.
+Production email delivery and owned Google connection credentials still need
+verification in Auth0, followed by two genuine attendee/test-account sign-ins.
 
 ## Work remaining after those inputs
 
@@ -26,8 +53,8 @@ request is superseded.
 - Configure the existing Atlas cluster and restricted Railway egress; prove
   connectivity and bootstrap/verify indexes. Existing credentials and data must
   be preserved. No `0.0.0.0/0` allowlist has been added.
-- Upload local code to the existing service with the authorized Railway CLI,
-  verify HTTPS health/release endpoints and run the real-provider staging journey.
+- After the current-IP network action, verify database connectivity and
+  indexes, then run the real-provider staging journey against the uploaded code.
 - Configure the actual administrator identity and organizer-approved venue,
   event dates and public meeting landmark before attendee discovery is enabled.
 - Keep official ticket verification disabled until an organizer-authorized
@@ -61,8 +88,14 @@ Latest remote results for `9727baa770ee294efe2ff7ebf7ac7104cc29ea98`:
 `test-build` PASS, `native-security` FAIL;
 [native compilation](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39137626955)
 Android and iOS simulator PASS. The 15 high findings remain in the current audit.
-The existing Atlas cluster is running in Mumbai, but its access list is empty
-and no Railway service instance exists. Database read/write/index readiness is
+The existing Atlas cluster is running in Mumbai, but its access list now contains the previous staging IP only. Database read/write/index readiness is
 BLOCKED, not proven by successful disposable-database tests. Railway's trial does
 not provide the Pro static-egress feature previously evaluated; a restricted
 networking path must be established without assuming a paid upgrade.
+
+
+Live HTTPS checks after the staging upload: `/health/live` 200 with
+`phase=initializing`; `/health/ready`, `/health/release`, `/client-config` and
+`/v1/me` 503. The startup gate makes process health observable but does not serve
+attendee routes until database connection/index initialization succeeds. A Railway
+SUCCESS deployment is not an application-readiness or release PASS.

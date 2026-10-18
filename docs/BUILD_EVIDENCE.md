@@ -159,3 +159,70 @@ attendee or official verification flag was created. Auth0 client secrets remain
 redacted and are not required by these public clients. Provider email delivery
 and owned production Google credentials still need verification; the app remains
 closed until the real backend and release checks pass.
+
+
+## Actual Railway staging source upload
+
+Source revision: `8ac1514` (startup readiness and explicit registration guard).
+The operator's settings application was independently confirmed: service live,
+Dockerfile/start/healthcheck correct, zero pending changes. The existing project,
+service and staging environment were explicitly selected for every mutation.
+
+- Authorized CLI upload: `railway up --project 2bc6b37c-697d-4077-a23b-503ee588d595
+  --service a9000893-59e1-48d7-8c0e-bf0b9a1c6c88
+  --environment 7377c9c3-4384-401d-bbb6-4fde0347fa73 --detach`.
+- [Deployment b9c3a460-f5fc-41ff-b3e7-be1899d58891](https://railway.com/project/2bc6b37c-697d-4077-a23b-503ee588d595/service/a9000893-59e1-48d7-8c0e-bf0b9a1c6c88?id=b9c3a460-f5fc-41ff-b3e7-be1899d58891): SUCCESS. Remote Docker/Vite build and liveness check passed.
+- Container image digest:
+  `sha256:be5c1c23b8943e91739eb56927403ff6b610059ed605152fbb5f803eef415747`.
+- HTTPS: https://devcon-follow-api-staging.up.railway.app
+- Public OIDC settings, exact staging web callback/origin/logout, app origin,
+  production runtime mode and isolated staging database name configured.
+  Registration and community access explicitly false.
+- Local syntax and **58/58 API tests PASS**, zero failures/skips, including startup
+  readiness/attendee-route fail-closed and registration-off regression tests.
+- Existing local two-browser-context PKCE/community/discovery/meetup/QR/chat/Stop
+  regression PASS after the change. Disposable MongoDB and sandbox issuer only.
+- Live `/health/live`: **200** `{ok:true,phase:"initializing"}`.
+- Live `/health/ready`, `/health/release`, `/client-config`, `/v1/me`: **503**;
+  no attendee/auth app routes available while database startup is incomplete.
+- Container egress observed `34.186.54.95`; not reserved/static. Atlas user creation
+  and narrow /32 allowlist attempts were rejected for lack of confirmation.
+  No DB user or network access entry was created. Owner actions requested through
+  secure service settings; no production secret reset/copy was attempted.
+- Atlas access list remains empty; `MONGODB_URI` absent in staging at this check.
+  Real Atlas read/write/index readiness and real-provider two-account acceptance
+  remain **BLOCKED**. No success was inferred from the deployment's SUCCESS state.
+- Production independently inspected: original seven pending changes, no live
+  service/deployment. No production deployment or configuration mutation occurred.
+
+Next acceptance gates after DB/network setup: actual administrator subject,
+approved venue/landmark/window, separately authorized community pilot policy,
+real verified-email sign-ins for two accounts, and the full privacy journey.
+Official ticket verification remains disabled. Native security/signing/phone gates
+remain unchanged from the previous evidence.
+
+
+### Staging secret reload and changed egress
+
+The owner subsequently created the scoped staging DB user, saved `MONGODB_URI`
+in Railway and permitted only `34.186.54.95/32` in Atlas. These were verified
+through account inventories; no secret was printed or written into the repo.
+A structure check confirms expected Atlas host, staging username, password
+presence, `MONGODB_DB=devcon_follow_staging` and registration disabled.
+
+Reloading the existing image created deployment
+`57e8baab-b82b-408a-81c2-f624d1cf1f1c`. The current container reported egress
+`152.55.180.192`, outside the earlier /32 entry. Readiness/release remain 503.
+The exact new /32 owner action was requested; the process can retry without
+another deployment after it is applied. This observed IP change is direct
+evidence that the trial network path is not stable production networking.
+
+A direct read/write/index probe over SSH did not execute: the host key was not
+already trusted. No host-key validation bypass was used. A temporary diagnostic
+SSH key was registered, then removed successfully; all local copies were deleted.
+No probe data or passing DB/index result is claimed. The deployment's SUCCESS
+status and process liveness still do not establish application readiness.
+
+Remote CI for source `8ac15146001306f95971684dda2c25defebebf80`:
+[run 39154232935](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39154232935).
+`test-build` PASS; `native-security` FAIL (unchanged 15 high tooling findings).

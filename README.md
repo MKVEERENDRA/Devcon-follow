@@ -1,6 +1,6 @@
 # Devcon Follow
 
-Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the API is not deployed or approved for production.**
+Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed but database readiness is blocked. Production is not deployed.**
 
 The web and API run from one origin. The Expo client contains foreground GPS and native Bluetooth source. No public posts, feeds or likes are exposed. Community invitations never claim official Devcon ticket ownership or event admission.
 
@@ -44,9 +44,9 @@ Stop revokes samples, shares, GPS grants and radio tokens. Connections persist a
 
 ## Existing deployment infrastructure
 
-Preserve the existing Railway `Devcon Follow` project/service and Atlas `DevconFollow` cluster identified in `WORK_HANDOFF.md`. Railway staging remains **staged-create**, with three pending settings and no source or deployment. CLI authentication works. Applying these settings requires the operator because automatic approval rejected the action twice. Atlas is running but has no access-list entries. Configure restricted egress access; do not use a blanket `0.0.0.0/0` allowlist. See `docs/PRODUCTION_INPUTS.md` for current blockers.
+Preserve the existing Railway `Devcon Follow` project/service and Atlas `DevconFollow` cluster identified in `WORK_HANDOFF.md`. Railway staging is deployed at `https://devcon-follow-api-staging.up.railway.app`, with zero pending settings. Process liveness passes; database readiness and release checks return 503, with registration disabled. The staging secret and scoped Atlas user exist. Atlas currently permits the previous deployment IP; the current container uses a different egress IP, so database readiness remains blocked. Configure restricted egress access; do not use a blanket `0.0.0.0/0` allowlist. See `docs/PRODUCTION_INPUTS.md` for current blockers.
 
-The root Dockerfile builds same-origin web + API. `/health/live` checks process health; `/health/ready` checks database connectivity; `/health/release` returns 503 until authentication, an access policy, an administrator and an approved venue are configured. A healthy process alone is not release approval.
+The root Dockerfile builds same-origin web + API. During database startup, only liveness returns 200; readiness, release and attendee routes return 503. Initialization errors are logged without driver messages or connection strings. The staging-only optional egress probe sends no credentials or attendee data.  `/health/live` checks process health; `/health/ready` checks database connectivity; `/health/release` returns 503 until authentication, an access policy, an administrator and an approved venue are configured. A healthy process alone is not release approval.
 
 - [Build evidence and release blockers](docs/BUILD_EVIDENCE.md)
 - [Operations and API permissions](docs/OPERATIONS.md)

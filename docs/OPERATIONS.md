@@ -55,3 +55,30 @@ Posting/likes/comments endpoints are not registered. Historical stored content i
 - Meeting reminders appear in the foreground meeting list within five minutes of an accepted meeting. Invitation/decision events also notify signed-in web clients; background push notifications and delivery guarantees are not implemented.
 - Internet loss can prevent immediate delivery of Stop/logout. Local radio stops; server-side freshness/expiry still bounds visibility. Verify this on actual devices and document it to operators.
 - Publish a finalized privacy/support/retention policy before public registration. The included privacy summary remains a draft. Audit and abuse-report retention still require an owner-approved policy.
+
+
+## Staging initialization and recovery
+
+`REGISTRATION_ENABLED=false` keeps the hosted login UI disabled even with public
+OIDC settings present. Keep it false until real authentication and access-policy
+acceptance pass; it does not replace API JWT/access authorization.
+
+At process start, a minimal HTTP listener serves `/health/live` 200 with
+`phase=initializing`. All other paths return 503/no-store. Database initialization
+retries every ten seconds; raw MongoDB exceptions/URIs are never logged. Once
+connection and index initialization succeed, the real Fastify server takes over
+and exposes its database-backed readiness/release checks. An initialization-only
+response is not evidence that the attendee application is ready.
+
+For Railway staging only, `STAGING_EGRESS_DIAGNOSTIC=true` makes one HTTPS request
+to `https://api.ipify.org?format=json` and logs only a validated observed IPv4 address.
+No secrets, locations or attendee data are sent. Disable the diagnostic after
+networking validation. The address may change and is not a static IP guarantee.
+An Atlas /32 entry for that observed address is a provisional staging path only;
+remove/revalidate stale entries after redeploy and never broaden to all Internet
+addresses as a fallback. Durable production networking remains a separate gate.
+
+The existing staging service/domain is used; production is untouched. When saving
+`MONGODB_URI`, use Railway's secret input (or CLI `variable set MONGODB_URI --stdin`)
+without echoing the value. No URI belongs in source, shell history, screenshots,
+logs or chat. Staging uses `devcon_follow_staging`, not the production database.
