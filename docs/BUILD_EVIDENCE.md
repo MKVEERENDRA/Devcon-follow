@@ -112,3 +112,22 @@ administrator subject; enabled community invitation policy/secrets; an approved
 venue/landmark and event window; restricted Atlas egress connectivity with verified
 indexes. Existing database credentials must stay in Railway, not chat or git.
 No production API URL or signed native artifact exists.
+
+## Auth0 continuation
+
+Auth0 Free selected after checking official pricing/documentation for Auth0,
+Clerk and WorkOS. See `docs/AUTH_PROVIDER_DECISION.md`; no paid plan was enabled.
+Added the Auth0 Post Login Action and strict namespaced verified-email handling
+for API access tokens. Web requests rotating-refresh capability and revokes on
+signout; native requires a separate client ID and clears local credentials before
+bounded network cleanup and provider OIDC logout. No Auth0 tenant credentials
+or real-provider acceptance result has been invented.
+
+Latest local API suite: **56/56 PASS**. The full two-context PKCE/community/
+meetup/QR/follow/chat/Stop journey also passes after these changes. Syntax checks,
+web production build and mobile TypeScript pass. Native compile-only CI now
+requests Android Debug and unsigned iOS simulator builds on supported hosted
+runners. These are build evidence only; no signed release or hardware result is
+claimed. Existing native-security remains unchanged and failing on the 15 high
+upstream tooling findings. Railway's same three prepared staging settings remain
+pending manual apply; production is still unchanged.

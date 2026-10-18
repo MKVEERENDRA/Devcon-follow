@@ -26,7 +26,7 @@ const isString=x=>typeof x==='string'&&x.length>0;
 export async function buildServer({db,config}){
   const allowedOrigins=(config.WEB_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
   // Same-origin PWA works without CORS; cross-origin clients require explicit allowlisting.
-  const auth=createAuth({issuer:config.OIDC_ISSUER,audience:config.OIDC_AUDIENCE,jwksUrl:config.OIDC_JWKS_URL});
+  const auth=createAuth({issuer:config.OIDC_ISSUER,audience:config.OIDC_AUDIENCE,jwksUrl:config.OIDC_JWKS_URL,emailClaimNamespace:config.OIDC_EMAIL_CLAIM_NAMESPACE});
   const ticketVerifier=createTicketVerifier({url:config.TICKET_VERIFY_URL,token:config.TICKET_VERIFY_TOKEN,hmacKey:config.TICKET_BINDING_HMAC_KEY});
   const admins=new Set((config.ADMIN_SUBJECTS||'').split(',').map(s=>s.trim()).filter(Boolean));
   const app=Fastify({logger:{level:config.LOG_LEVEL||'info',redact:['req.headers.authorization','req.headers.cookie','req.body.ticketSecret','req.body.lat','req.body.lon']},bodyLimit:200_000,trustProxy:config.TRUST_PROXY==='true'});

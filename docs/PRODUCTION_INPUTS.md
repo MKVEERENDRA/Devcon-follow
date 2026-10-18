@@ -1,8 +1,9 @@
 # Immediate deployment requirements
 
 The GitHub source is published and Railway CLI is authenticated. No further
-account-login flow is needed for the next step. Creating a ZITADEL cloud account
-does not by itself configure this application's OIDC clients.
+account-login flow is needed for the next step. Auth0 Free is now selected; see `AUTH_PROVIDER_DECISION.md`. An account
+alone does not configure this application's OIDC clients. The older ZITADEL
+request is superseded.
 
 ## Required from the operator now
 
@@ -11,8 +12,11 @@ does not by itself configure this application's OIDC clients.
    `Dockerfile`, start `node src/server.js`, healthcheck `/health/live`. The apply
    connector rejected the operation twice, even after explicit user approval.
    It has not been bypassed through another tool. Production is still unchanged.
-2. Provide the real ZITADEL **issuer URL**, **web public client ID**, **native
-   public client ID**, and **API audience / project ID**. These are public
+2. Complete the Auth0 account step in the open browser. The provider setup uses
+   two public clients and a custom API; the required resulting values are the
+   **issuer URL**, **web public client ID**, **native public client ID**, and
+   **API audience**. Deploy the checked-in Post Login Action as documented in
+   `AUTH_PROVIDER_DECISION.md`. These are public
    application settings. Keep client secrets, passwords, access tokens and MongoDB
    credentials in the relevant secret manager, never chat or GitHub. An existing
    configured application may be used; no duplicate identity account is needed.
@@ -35,7 +39,7 @@ does not by itself configure this application's OIDC clients.
 
 ## Evidence available
 
-Source commit `a87b59a12a04451c1067c4c17799fc6c58d936fe`:
+Previous published baseline `a87b59a12a04451c1067c4c17799fc6c58d936fe`:
 [CI run](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39128294639).
 The `test-build` job passed, including API checks, full two-context browser journey,
 native exports/autolinking, backend/web audits and Docker build. `native-security`
@@ -46,3 +50,9 @@ moderate audit findings without disabling the security gate.
 
 The Vercel URL remains a static frontend with registration disabled. It is not a
 running authenticated API or proof of Atlas connectivity.
+
+The Auth0 continuation has now passed 56 local API tests (including real signed
+namespaced-token invitation checks), the existing two-context browser journey,
+web production build and native typecheck. These tests still use isolated test
+issuers, not a configured Auth0 tenant. Native compile-only CI is prepared for
+Android and iOS simulator; it does not distribute APKs/IPAs or bypass security.

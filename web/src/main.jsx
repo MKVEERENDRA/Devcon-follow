@@ -13,7 +13,7 @@ async function boot(){
   try{const response=await fetch('/client-config',{cache:'no-store'});if(response.ok)config=await response.json()}catch{}
   const container=document.getElementById('root');
   if(config?.authReady && config?.clientId && config?.issuer){
-    createRoot(container).render(<AuthProvider authority={config.issuer} client_id={config.clientId} redirect_uri={window.location.origin+'/'} post_logout_redirect_uri={window.location.origin+'/'} scope="openid profile email" response_type="code" automaticSilentRenew={true} onSigninCallback={()=>window.history.replaceState({},document.title,window.location.pathname)} extraQueryParams={config.audience?{audience:config.audience}:{}}><App config={config}/></AuthProvider>);
+    createRoot(container).render(<AuthProvider authority={config.issuer} client_id={config.clientId} redirect_uri={window.location.origin+'/'} post_logout_redirect_uri={window.location.origin+'/'} scope="openid profile email offline_access" response_type="code" automaticSilentRenew={true} revokeTokensOnSignout={true} onSigninCallback={()=>window.history.replaceState({},document.title,window.location.pathname)} extraQueryParams={config.audience?{audience:config.audience}:{}}><App config={config}/></AuthProvider>);
   } else createRoot(container).render(<App config={config||{authReady:false,ticketReady:false}}/>);
 }
 boot();

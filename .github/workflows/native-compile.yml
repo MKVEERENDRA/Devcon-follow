@@ -1,0 +1,58 @@
+name: Native compile evidence
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/native-compile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-compile-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android-compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --prefix mobile --no-audit --no-fund
+      - name: Generate existing Expo native project
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install
+      - name: Compile Android application and local BLE module
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-compile-reports
+          path: mobile/android/**/build/reports/
+  ios-simulator-compile:
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --prefix mobile --no-audit --no-fund
+      - name: Generate existing Expo native project
+        working-directory: mobile
+        run: npx expo prebuild --platform ios --no-install
+      - name: Install native pods
+        working-directory: mobile/ios
+        run: pod install
+      - name: Compile iOS simulator application and local BLE module
+        working-directory: mobile/ios
+        run: xcodebuild -workspace DevconFollow.xcworkspace -scheme DevconFollow -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+# Compile evidence only: no APK/IPA distribution or release-gate bypass.
+# Native security remains enforced separately by ci.yml.

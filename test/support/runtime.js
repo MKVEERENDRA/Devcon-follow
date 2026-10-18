@@ -7,7 +7,7 @@ import {ensureIndexes} from '../../src/indexes.js';
 import {buildServer} from '../../src/app.js';
 
 // Isolated, loopback-only test issuer. Never imported by application runtime or Docker.
-export async function startTestRuntime(){
+export async function startTestRuntime({config:overrides={}}={}){
   const mongo=await MongoMemoryServer.create();
   const client=new MongoClient(mongo.getUri());await client.connect();
   const db=client.db('test_'+randomUUID().replaceAll('-',''));await ensureIndexes(db);
@@ -15,8 +15,8 @@ export async function startTestRuntime(){
   const jwk={...await exportJWK(publicKey),kid:'sandbox',alg:'RS256',use:'sig'};
   const audience='devcon-test-api',codes=new Map();let issuer,origin;
   const accounts={alice:{email:'alice@example.test',password:'sandbox-alice'},bob:{email:'bob@example.test',password:'sandbox-bob'},eve:{email:'eve@example.test',password:'sandbox-eve'}};
-  async function sign(subject,{nonce,emailVerified=true,expiresIn='10m'}={}){
-    return new SignJWT({email:accounts[subject]?.email||'admin@example.test',email_verified:emailVerified,...(nonce?{nonce}:{})})
+  async function sign(subject,{nonce,emailVerified=true,expiresIn='10m',customClaims={}}={}){
+    return new SignJWT({email:accounts[subject]?.email||'admin@example.test',email_verified:emailVerified,...(nonce?{nonce}:{}),...customClaims})
       .setSubject(subject).setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime(expiresIn).setProtectedHeader({alg:'RS256',kid:'sandbox'}).sign(privateKey);
   }
   const identity=createServer(async(req,res)=>{
@@ -56,7 +56,7 @@ export async function startTestRuntime(){
     }catch{res.writeHead(400);res.end('Invalid sandbox request')}
   });
   await new Promise(resolve=>identity.listen(0,'127.0.0.1',resolve));issuer=`http://127.0.0.1:${identity.address().port}/`;
-  const config={LOG_LEVEL:'silent',OIDC_ISSUER:issuer,OIDC_JWKS_URL:issuer+'jwks',OIDC_AUDIENCE:audience,WEB_OIDC_CLIENT_ID:'sandbox-web',ADMIN_SUBJECTS:'admin',COMMUNITY_ACCESS_ENABLED:'true',COMMUNITY_INVITE_HMAC_KEY:randomBytes(32).toString('hex'),PROXIMITY_TOKEN_HMAC_KEY:randomBytes(32).toString('hex')};
+  const config={LOG_LEVEL:'silent',OIDC_ISSUER:issuer,OIDC_JWKS_URL:issuer+'jwks',OIDC_AUDIENCE:audience,WEB_OIDC_CLIENT_ID:'sandbox-web',ADMIN_SUBJECTS:'admin',COMMUNITY_ACCESS_ENABLED:'true',COMMUNITY_INVITE_HMAC_KEY:randomBytes(32).toString('hex'),PROXIMITY_TOKEN_HMAC_KEY:randomBytes(32).toString('hex'),...overrides};
   const {server,io}=await buildServer({db,config});await server.listen({port:0,host:'127.0.0.1'});origin=`http://127.0.0.1:${server.server.address().port}`;
   const request=async(subject,path,method='GET',body)=>{
     const response=await fetch(origin+path,{method,headers:{authorization:'Bearer '+await sign(subject),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});

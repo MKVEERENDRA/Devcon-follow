@@ -28,11 +28,12 @@ export default function App(){
   const [clockNow,setClockNow]=useState(Date.now()),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[tab,setTab]=useState<'home'|'nearby'|'profile'|'qr'|'connections'|'feed'|'messages'|'meetups'|'attendee'>('home');
   const [composeMeetup,setComposeMeetup]=useState(false),[ticketCode,setTicketCode]=useState(''),[handle,setHandle]=useState(''),[displayName,setDisplayName]=useState(''),[bio,setBio]=useState(''),[roleText,setRoleText]=useState('');
   const [feed,setFeed]=useState<any[]>([]),[postText,setPostText]=useState(''),[commentText,setCommentText]=useState<Record<string,string>>({}),[activeComments,setActiveComments]=useState<Record<string,any[]>>({}),[threads,setThreads]=useState<any[]>([]),[chatWith,setChatWith]=useState<Profile|null>(null),[chat,setChat]=useState<any[]>([]),[chatText,setChatText]=useState(''),[people,setPeople]=useState<Profile[]>([]),[nearby,setNearby]=useState<Profile[]>([]),[following,setFollowing]=useState<Profile[]>([]),[radioActive,setRadioActive]=useState(false),[radioState,setRadioState]=useState('off'),[selectedPerson,setSelectedPerson]=useState<Profile|null>(null),[gpsNearby,setGpsNearby]=useState<any[]>([]),[meetRequests,setMeetRequests]=useState<any[]>([]),[outgoingMeetups,setOutgoingMeetups]=useState<any[]>([]),[cameraPermission,requestCameraPermission]=useCameraPermissions(),[scanning,setScanning]=useState(false);
+  const identityToken=useRef<string|null>(null);
   const refreshCredential=useRef<string|null>(null),tokenExpiresAt=useRef(0),processedCode=useRef<string|null>(null);
   const radioRef=useRef<ProximityRadio|null>(null),pendingTokens=useRef(new Map<string,number>()),lastNearbyResolvedAt=useRef(0),radioFailure=useRef<string|null>(null),discoveryExpiresAt=useRef(0);
   const discovery=AuthSession.useAutoDiscovery(config?.issuer||'https://issuer-not-configured.invalid');
   const redirectUri=AuthSession.makeRedirectUri({scheme:'devconfollow',path:'callback'});
-  const [request,response,promptAsync]=AuthSession.useAuthRequest({clientId:(config?.nativeClientId||config?.clientId)||'not-configured',redirectUri,responseType:AuthSession.ResponseType.Code,scopes:['openid','profile','email','offline_access'],usePKCE:true,extraParams:config?.audience?{audience:config.audience}:{}},discovery);
+  const [request,response,promptAsync]=AuthSession.useAuthRequest({clientId:config?.nativeClientId||'not-configured',redirectUri,responseType:AuthSession.ResponseType.Code,scopes:['openid','profile','email','offline_access'],usePKCE:true,extraParams:config?.audience?{audience:config.audience}:{}},discovery);
 
   useEffect(()=>{const timer=setInterval(()=>setClockNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
   const api=useCallback(async(path:string,method='GET',body?:unknown)=>{
@@ -59,19 +60,19 @@ export default function App(){
     try{
       if(!API)throw new Error('Missing EXPO_PUBLIC_API_BASE_URL');
       const [cfg,saved,session]=await Promise.all([fetch(`${API}/client-config`).then(r=>r.json()),SecureStore.getItemAsync(TOKEN_KEY),SecureStore.getItemAsync(SESSION_KEY)]);
-      if(session){try{const data=JSON.parse(session);refreshCredential.current=data.refreshToken||null;tokenExpiresAt.current=data.expiresAt||0}catch{await SecureStore.deleteItemAsync(SESSION_KEY)}}
-      if(!alive)return;setConfig(cfg);if(saved){setToken(saved);const r=await fetch(`${API}/v1/me`,{headers:{Authorization:`Bearer ${saved}`}});if(r.ok){const account=await r.json();setMe(account);if(account.accessEligible){try{const f=await fetch(`${API}/v1/following`,{headers:{Authorization:`Bearer ${saved}`}});if(f.ok)setFollowing((await f.json()).attendees||[]);}catch{}}}else if(r.status===401){await SecureStore.deleteItemAsync(TOKEN_KEY);if(alive){setToken(null);setMe(null);}}else{throw new Error('Could not restore saved sign-in: '+r.status);}}
+      if(session){try{const data=JSON.parse(session);refreshCredential.current=data.refreshToken||null;identityToken.current=data.idToken||null;tokenExpiresAt.current=data.expiresAt||0}catch{await SecureStore.deleteItemAsync(SESSION_KEY)}}
+      if(!alive)return;setConfig({...cfg,authReady:cfg.authReady&&Boolean(cfg.nativeClientId)});if(saved){setToken(saved);const r=await fetch(`${API}/v1/me`,{headers:{Authorization:`Bearer ${saved}`}});if(r.ok){const account=await r.json();setMe(account);if(account.accessEligible){try{const f=await fetch(`${API}/v1/following`,{headers:{Authorization:`Bearer ${saved}`}});if(f.ok)setFollowing((await f.json()).attendees||[]);}catch{}}}else if(r.status===401){await SecureStore.deleteItemAsync(TOKEN_KEY);if(alive){setToken(null);setMe(null);}}else{throw new Error('Could not restore saved sign-in: '+r.status);}}
     }catch(e){if(alive)Alert.alert('Setup needed',e instanceof Error?e.message:'Could not connect to Devcon Follow API');}
     finally{if(alive)setLoading(false);}
   })();return()=>{alive=false};},[]);
 
-  useEffect(()=>{if(response?.type!=='success'||!request?.codeVerifier||!discovery||!(config?.nativeClientId||config?.clientId))return;
-    const authorizationCode=response.params.code, codeVerifier=request.codeVerifier, clientId=config.nativeClientId||config.clientId;
+  useEffect(()=>{if(response?.type!=='success'||!request?.codeVerifier||!discovery||!config?.nativeClientId)return;
+    const authorizationCode=response.params.code, codeVerifier=request.codeVerifier, clientId=config.nativeClientId;
     if(!authorizationCode||!codeVerifier||!clientId||processedCode.current===authorizationCode)return;
     processedCode.current=authorizationCode;
     let alive=true;(async()=>{try{
       setBusy(true);const result=await AuthSession.exchangeCodeAsync({clientId,code:authorizationCode,redirectUri,extraParams:{code_verifier:codeVerifier,...(config.audience?{audience:config.audience}:{})}},discovery);
-      if(result.accessToken){refreshCredential.current=result.refreshToken||null;tokenExpiresAt.current=Date.now()+(result.expiresIn||300)*1000;await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current}));await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);if(alive){setToken(result.accessToken);await refreshRef.current(result.accessToken);}}
+      if(result.accessToken){identityToken.current=result.idToken||null;refreshCredential.current=result.refreshToken||null;tokenExpiresAt.current=Date.now()+(result.expiresIn||300)*1000;await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current,idToken:identityToken.current}));await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);if(alive){setToken(result.accessToken);await refreshRef.current(result.accessToken);}}
     }catch(e){Alert.alert('Sign-in failed',e instanceof Error?e.message:'Could not complete sign-in');}finally{if(alive)setBusy(false);}})();
   },[response,request,discovery,config,redirectUri]);
 
@@ -82,12 +83,13 @@ export default function App(){
       if(running||!alive||AppState.currentState!=='active'||!refreshCredential.current||Date.now()<tokenExpiresAt.current-60000)return;
       running=true;
       try{
-        const result=await AuthSession.refreshAsync({clientId:config?.nativeClientId||config?.clientId||'',refreshToken:refreshCredential.current},discovery);
+        const result=await AuthSession.refreshAsync({clientId:config?.nativeClientId||'',refreshToken:refreshCredential.current},discovery);
         if(!alive)return;
         refreshCredential.current=result.refreshToken||refreshCredential.current;
+        identityToken.current=result.idToken||identityToken.current;
         tokenExpiresAt.current=Date.now()+(result.expiresIn||300)*1000;
         await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);
-        await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current}));
+        await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current,idToken:identityToken.current}));
         if(alive)setToken(result.accessToken);
       }catch{if(alive&&Date.now()>=tokenExpiresAt.current){await SecureStore.deleteItemAsync(TOKEN_KEY);await SecureStore.deleteItemAsync(SESSION_KEY);refreshCredential.current=null;setToken(null);setMe(null);}}
       finally{running=false;}
@@ -135,7 +137,24 @@ export default function App(){
   useEffect(()=>{const subscription=AppState.addEventListener('change',state=>{if(state!=='active'&&discoveryExpiresAt.current>0){void stopRadio();void api('/location/share','DELETE').then(()=>refresh()).catch(()=>{});}});return()=>subscription.remove();},[api,refresh,stopRadio]);
   const onRadioState=useCallback((state:string)=>{setRadioState(state);if(['unavailable','scan_error','advertise_error','gatt_service_error','permission_denied'].includes(state)){radioFailure.current=state;radioRef.current?.stop();radioRef.current=null;setRadioState('GPS only · Bluetooth unavailable');}},[]);
   const signIn=()=>promptAsync();
-  const signOut=async()=>{await stopRadio();const credential=refreshCredential.current;refreshCredential.current=null;tokenExpiresAt.current=0;await SecureStore.deleteItemAsync(SESSION_KEY);if(credential&&discovery?.revocationEndpoint){try{await AuthSession.revokeAsync({token:credential,clientId:config?.nativeClientId||config?.clientId||'',tokenTypeHint:AuthSession.TokenTypeHint.RefreshToken},discovery)}catch{}}try{if(token)await api('/location/share','DELETE');}catch{}await SecureStore.deleteItemAsync(TOKEN_KEY);setToken(null);setMe(null);setPeople([]);setFollowing([]);setFeed([]);setPostText('');setChat([]);setThreads([]);setChatWith(null);setChatText('');setActiveComments({});};
+  const signOut=async()=>{
+    await stopRadio();
+    const credential=refreshCredential.current,idToken=identityToken.current;
+    refreshCredential.current=null;identityToken.current=null;tokenExpiresAt.current=0;
+    await Promise.all([SecureStore.deleteItemAsync(SESSION_KEY),SecureStore.deleteItemAsync(TOKEN_KEY)]);
+    setToken(null);setMe(null);setPeople([]);setFollowing([]);setFeed([]);setPostText('');setChat([]);setThreads([]);setChatWith(null);setChatText('');setActiveComments({});
+    // Local logout is complete before any network request can stall.
+    const cleanup=Promise.allSettled([
+      token?api('/presence','DELETE'):Promise.resolve(),
+      credential&&discovery?.revocationEndpoint&&config?.nativeClientId?AuthSession.revokeAsync({token:credential,clientId:config.nativeClientId,tokenTypeHint:AuthSession.TokenTypeHint.RefreshToken},discovery):Promise.resolve()
+    ]);
+    let deadline:ReturnType<typeof setTimeout>|undefined;
+    await Promise.race([cleanup,new Promise<void>(resolve=>{deadline=setTimeout(resolve,3000)})]);
+    if(deadline)clearTimeout(deadline);
+    if(discovery?.endSessionEndpoint&&config?.nativeClientId){
+      try{const url=new URL(discovery.endSessionEndpoint);url.searchParams.set('client_id',config.nativeClientId);url.searchParams.set('post_logout_redirect_uri',redirectUri);if(idToken)url.searchParams.set('id_token_hint',idToken);await WebBrowser.openAuthSessionAsync(url.toString(),redirectUri)}catch{Alert.alert('Signed out on this device','The provider sign-out page could not be opened. Your local session and discovery have been cleared.')}
+    }
+  };
   const verifyTicket=()=>run(async()=>{await api('/tickets/verify','POST',{ticketSecret:ticketCode});setTicketCode('');await refresh();});
   const saveProfile=()=>run(async()=>{await api('/profile','PUT',{handle,displayName,bio,roles:roleText.split(',').map(x=>x.trim()).filter(Boolean),interests:me?.profile?.interests||[],socials:me?.profile?.socials||{},avatar:me?.profile?.avatar||null,discoverable:me?.profile?.discoverable!==false});await refresh();Alert.alert('Saved','Your attendee profile is updated.');});
   const checkIn=()=>run(async()=>{const permission=await Location.requestForegroundPermissionsAsync();if(!permission.granted)throw new Error('Foreground location permission is required for an on-site check-in.');const pos=await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High});if(!pos.coords.accuracy||pos.coords.accuracy>100)throw new Error('GPS accuracy is too low. Move outdoors and try again.');await api('/presence/check-in','POST',{lat:pos.coords.latitude,lon:pos.coords.longitude,accuracyMeters:pos.coords.accuracy});await refresh();Alert.alert('Checked in','Your venue check-in expires automatically.');});
