@@ -96,14 +96,21 @@ Deployment: `aadb28ce-11df-4e75-845b-d1e833a97f51`; URL:
 https://devcon-follow-api-staging.up.railway.app/ . Only the approved registration
 switch, self-service switch, private pilot mode/cohort and direct Socket.IO origin
 were set. The single approved verified identity is server-only; no administrator
-or venue was invented. Auth0 settings and Atlas were left unchanged.
+or venue was invented. Auth0 settings were left unchanged. The owner separately
+approved and added the exact new staging outbound /32 to the existing Atlas list.
 
-Railway marks the container deployment SUCCESS, but application acceptance is
-**BLOCKED**: its new outbound IP is absent from Atlas's restricted allowlist.
-`/health/live` returns 200 in initializing phase; root, readiness, client config,
-release and `/v1/me` return 503 until the database connects. See
-[restricted networking](RESTRICTED_NETWORKING.md). Do not equate the platform's
-deployment status with working login or database readiness.
+After the owner added the /32, independent inspection confirmed it and the
+running service recovered without another deployment. At 2026-10-19T16:32:50Z,
+root, `/health/live`, `/health/ready` and `/client-config` returned 200;
+unauthenticated `/v1/me` returned 401 JSON with private/no-store cache controls.
+Client config has authReady and communitySelfService true, Google connection null
+and ticketReady false. `/health/release` correctly remains 503: auth/access are
+configured, but administrator, approved venue and approved landmark are absent.
+Health evidence is local/ignored at
+`artifacts/staging/f267c5f-health-after-atlas.json`.
+Genuine attendee sign-in is pending the owner; neither working
+health endpoints nor configured clients count as real-provider acceptance. See
+[restricted networking](RESTRICTED_NETWORKING.md) for the continuing egress limit.
 
 The public Vercel client config still has authReady/ticketReady/communityReady
 false; public `/v1/me` routing has not been rolled out. No Vercel production or

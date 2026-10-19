@@ -2,13 +2,19 @@
 
 The owner-approved staging upload of source `f267c5f` created deployment
 `aadb28ce-11df-4e75-845b-d1e833a97f51`. Its startup diagnostic observed outbound
-IP `162.220.234.74`. Atlas inspection confirms that address is absent from the
-existing access list; the container is live but database readiness returns 503.
+IP `162.220.234.74`. Its initial absence from Atlas's restricted access list
+blocked database readiness after the upload.
 The owner approved the exact single-/32 addition. The connector rejected its
 first request because the comment exceeded its 80-character schema limit; the
 shortened request then reported that connector confirmation was not completed,
 so the operation was not performed. The owner was handed the existing project's
-Network Access page for this one entry. No Atlas entry was changed by the agent.
+Network Access page for this one entry. The owner added it, and independent Atlas
+inspection confirms `162.220.234.74/32` is present alongside the prior three
+entries. At 2026-10-19T16:32:50Z, root, liveness, readiness and client config
+returned 200; unauthenticated `/v1/me` returned 401 JSON. The running service
+reconnected automatically, without another deployment or database reset. No
+Atlas entry was changed by the agent. This is still temporary pod egress, not
+durable restricted networking or production acceptance.
 
 Previously, restricted staging connectivity used `152.55.180.192/32` and readiness
 recovered without a database reset. These are observed pod addresses, not reserved
