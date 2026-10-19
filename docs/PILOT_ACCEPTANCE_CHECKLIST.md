@@ -18,7 +18,9 @@ credentials or raw attendee coordinates in the release report.
   testers, a private community pilot, approved venue/window/landmarks and network
   work. This approval does not authorize production or public registration.
 - Record the existing deployment and encrypted variable backup/recovery method.
-  Keep registration disabled and preserve Atlas. Rollback restores the known
+  Keep public registration disabled and the approved staging cohort bounded;
+  staging sign-in may be enabled for that cohort only. Preserve Atlas.
+  Rollback restores the known
   image/config; it does not recreate or delete the database.
 
 ## 2. Real Auth0 identities
@@ -38,9 +40,13 @@ credentials or raw attendee coordinates in the release report.
 
 - Bind administrator access only to the approved, genuinely validated identity's
   subject. Verify a non-admin gets 403. An email label alone is not an admin grant.
-- Enable only the separately approved invitation-only community policy, using
-  server HMAC keys. Issue short-lived email-bound single-use invitations through
-  an approved delivery channel. Replay and wrong-email redemption must fail.
+- Use the separately approved self-service private pilot policy:
+  `COMMUNITY_SELF_SERVICE_ENABLED=true`, `COMMUNITY_REGISTRATION_MODE=pilot` and
+  a server-only approved verified-email cohort. Basic membership requires no
+  ticket or invitation. Unverified, out-of-cohort and revoked users must fail
+  protected reads/writes. Public mode needs separate release approval.
+  Leave the legacy invitation policy disabled unless separately selected; its
+  replay and wrong-email protections remain covered by regression tests.
 - Badge participants as community approved; `officiallyVerified` remains false.
   Leave official ticket verification disabled without an authorized organizer
   adapter. Never redeem event check-in QR codes or treat a screenshot as ownership.
@@ -65,8 +71,8 @@ credentials or raw attendee coordinates in the release report.
   cursor key before running multiple replicas; never expose a key in the client.
 - Deploy the selected existing Docker image to staging. Confirm liveness,
   readiness, configuration gates, unauthenticated 401 and restricted origins.
-  Keep public registration off. Restrict test access separately; do not globally
-  open registration merely to let the two testers enter.
+  Keep public registration off. Restrict staging sign-in through the approved
+  verified-email cohort; do not select public membership mode for the two testers.
 
 ## 5. Signed installation and phone matrix
 
@@ -91,7 +97,8 @@ resolution. Foreground return must not automatically create another 30 minutes.
 
 ## 6. Two-person journey and privacy negatives
 
-1. Both sign in, redeem approved access and create profiles. A hidden profile stays
+1. Both sign in with verified identities in the approved cohort and create
+   profiles, without mandatory tickets or invitations. A hidden profile stays
    absent. Search by roles/interests/goals; show honest availability and GPS uncertainty.
 2. Explicitly start Nearby for exactly 30 minutes. Simultaneous starts create one
    session. Nobody appears from a fabricated position. Global results/map do not
@@ -116,7 +123,7 @@ resolution. Foreground return must not automatically create another 30 minutes.
    it must remain unchanged without a server write until Save. Exercise native
    photo selection/cancellation/removal, social edits, role filters and pasted
    profile links with camera permission denied. The other tester must never see the note. Unfollow deletes it.
-8. Test block, invitation revocation, logout and account deletion; verify negative
+8. Test block, membership revocation, logout and account deletion; verify negative
    reads/writes, expired GPS/BLE and actual removal in the authorized staging scope.
    Record no raw personal payloads in evidence. Stop and delete remain usable after
    access revocation.

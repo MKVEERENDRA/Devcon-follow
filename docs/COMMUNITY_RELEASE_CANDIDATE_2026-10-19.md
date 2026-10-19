@@ -107,18 +107,48 @@ Client config has authReady and communitySelfService true, Google connection nul
 and ticketReady false. `/health/release` correctly remains 503: auth/access are
 configured, but administrator, approved venue and approved landmark are absent.
 Health evidence is local/ignored at
-`artifacts/staging/f267c5f-health-after-atlas.json`.
-Genuine attendee sign-in is pending the owner; neither working
-health endpoints nor configured clients count as real-provider acceptance. See
+`artifacts/staging/f267c5f-health-after-atlas.json`. The owner subsequently
+completed genuine Auth0 web sign-in. The API granted approved-cohort community
+access without a ticket or invitation; the owner-authorized profile was saved
+through the existing UI and survived a full browser reload. Status-only browser
+evidence confirms `/v1/me`, `/v1/following` and incoming/outgoing location-request
+lists returned 200. No bearer tokens, response bodies or raw subject identifiers
+were recorded. Profile discovery stays hidden and Nearby was never started.
+While the existing session stayed open, status-only capture observed an automatic
+Auth0 `/oauth/token` exchange returning 200, followed by authenticated `/v1/me`
+returning 200. The saved profile and hidden defaults remained intact. This is
+successful web renewal evidence; refresh-token reuse rejection and native renewal
+remain unverified. Evidence: local/ignored `artifacts/staging/owner-session-renewal.json`.
+The persisted profile screenshot and scoped results are local/ignored under
+`artifacts/staging/owner-profile-persisted.png`, `owner-authenticated-api-status.json`
+and `owner-acceptance.json`. This proves one-account web acceptance, not the
+required two-person/native journey. See
 [restricted networking](RESTRICTED_NETWORKING.md) for the continuing egress limit.
 
 The public Vercel client config still has authReady/ticketReady/communityReady
 false; public `/v1/me` routing has not been rolled out. No Vercel production or
 Proof of Audits change was made. Real Auth0 two-person acceptance, approved
 venue/window/landmark, owned Google OAuth credentials, Apple signing and physical
-phones remain external dependencies. The latest EAS submission failed before
-issuing a build ID; direct Expo API connectivity also timed out. The earlier
-0.3.1 build is superseded and must not be published as this source's artifact.
+phones remain external dependencies. Expo API connectivity later recovered and
+the new Android candidate was accepted as build
+`6583ca87-7174-4907-8c8b-df10c38ceee9`, source
+`b96ab82229cea6ec37d4a0ab165f0f7927bfdcc4` (only documentation differs from the
+deployed application source). It was still queued at the latest check; no new
+APK download/signature/installation acceptance is claimed. The earlier 0.3.1
+build is superseded and must not be published as this source's artifact.
+
+The fresh iOS internal-distribution attempt reached EAS credential setup but
+failed because no suitable distribution credentials exist. No signed build ID
+was produced. EAS also requires an owner-reviewed encryption compliance setting
+before App Store Connect testing; no legal declaration was invented to bypass it.
+
+| Section | Genuine staging observation | Remaining acceptance |
+| --- | --- | --- |
+| Discover | PASS: off-site guard, role/interest controls and zero visible profiles | Approved venue/window plus second consenting identity |
+| Nearby | PASS: hidden, Enable sharing disabled while off-site, no GPS requested | Real phone permissions, 30-minute GPS/BLE operation and Stop |
+| Meetups | PASS: real API finished loading, no pending meetings or invented updates | Two-person request/accept/reproposal/conflict journey |
+| Connections | PASS: empty follows/inbox, mutual-follow messaging guidance | Cross-client QR, explicit follows, private notes and chat with two real users |
+| Me | PASS: real community membership, profile write/read and reload persistence; hidden defaults | Native parity on installed release and remaining account lifecycle checks |
 
 - [CI test-build PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39267564374/job/118111024584): API tests, web build, sandbox browser journeys, native exports, BLE autolinking and deployment container.
 - [Android and iOS simulator compilation PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39267564521): compile evidence, not signed iPhone distribution or physical radio acceptance.
