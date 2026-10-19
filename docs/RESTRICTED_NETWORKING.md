@@ -1,9 +1,19 @@
 # Restricted Railway → Atlas networking
 
-Current restricted staging connectivity uses `152.55.180.192/32`. It recovered
-readiness without a database reset. This address is observed pod egress, not a
-reserved address. A previous deployment used `34.186.54.95/32`; do not assume it
-is still needed or delete it without checking other consumers.
+The owner-approved staging upload of source `f267c5f` created deployment
+`aadb28ce-11df-4e75-845b-d1e833a97f51`. Its startup diagnostic observed outbound
+IP `162.220.234.74`. Atlas inspection confirms that address is absent from the
+existing access list; the container is live but database readiness returns 503.
+The owner approved the exact single-/32 addition. The connector rejected its
+first request because the comment exceeded its 80-character schema limit; the
+shortened request then reported that connector confirmation was not completed,
+so the operation was not performed. The owner was handed the existing project's
+Network Access page for this one entry. No Atlas entry was changed by the agent.
+
+Previously, restricted staging connectivity used `152.55.180.192/32` and readiness
+recovered without a database reset. These are observed pod addresses, not reserved
+addresses. A previous deployment used `34.186.54.95/32`; do not assume old entries
+are still needed or delete them without checking other consumers.
 
 ## Durable option for the existing services
 
@@ -40,9 +50,10 @@ the [IP access-list documentation](https://www.mongodb.com/docs/atlas/security/i
 expiry must be tracked operationally. IP discovery after every failure remains a
 staging workaround, not durable production networking.
 
-Further live probes/redeploys are paused by the owner's latest instruction to
-focus on building. This document records the investigation, not an implemented
-static-egress solution.
+The owner subsequently approved one staging source deployment and five bounded
+access/configuration variables. That approval explicitly excluded Atlas/network
+changes. The observed new IP therefore requires a separate, specific network
+authorization. A static-egress solution has not been implemented or purchased.
 
 ## Budget-conscious alternative (design only, not provisioned)
 

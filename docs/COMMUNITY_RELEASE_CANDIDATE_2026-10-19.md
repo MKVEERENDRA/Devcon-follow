@@ -2,7 +2,8 @@
 
 This source changes community eligibility; it does not authorize a live rollout.
 Proof of Audits is out of scope. Existing public installer/source release remains
-`7bffdc1`; backend configuration and real attendee records were not changed here.
+`7bffdc1`. The owner later approved the staging-only source upload and private
+verified-email cohort described below; no production release was authorized.
 
 ## Implemented policy and recovery
 
@@ -79,16 +80,39 @@ evidence. 0.3.1/build 2 is the new candidate; a build is not accepted until its
 actual APK download, signer, checksum and cold launch are checked separately.
 No signed iPhone distribution or physical BLE/GPS/push interoperability is claimed.
 
-Read-only live checks: Railway live/ready 200; release 503; authReady/ticketReady/
-communityReady false. Public `/v1/me` still returns HTML until an approved proxy
-rollout. Native audit remains FAIL (15 high). Real Auth0 dashboard session, Google
-OAuth credentials, private staging authorization, a second consenting identity,
-approved venue/window/landmark, Apple signing and real phones remain external
-acceptance dependencies. Do not promote this candidate as production-ready.
-
 The supported Expo 58.0.15 patch fixes the CI SDK packaging mismatch. Local types,
 SDK dependency compatibility and Expo Doctor (20/20) pass; the security gate is
-still failing and has not been suppressed. The owner's current Auth0 dashboard
-session lists only `dev-8e0okjv7rzciphk7`; direct navigation to the configured
-`dev-xs1kh1yit6q5g3ph` tenant redirects back. No replacement tenant or client was
-created, and no Auth0 setting was changed.
+still failing and has not been suppressed. Owner access to the original Auth0
+tenant `dev-xs1kh1yit6q5g3ph` is now confirmed. Both existing clients and their
+staging/native callbacks and refresh rotation were inspected without changing
+settings. Google is enabled for both clients but uses Auth0 development keys;
+production-owned Google credentials remain required.
+
+## Authorized staging upload and actual release status
+
+Source `f267c5ffb64cdac3db5247065204c3f9fa0050d8` was uploaded from a tracked Git
+archive to the existing Railway staging service, with explicit owner approval.
+Deployment: `aadb28ce-11df-4e75-845b-d1e833a97f51`; URL:
+https://devcon-follow-api-staging.up.railway.app/ . Only the approved registration
+switch, self-service switch, private pilot mode/cohort and direct Socket.IO origin
+were set. The single approved verified identity is server-only; no administrator
+or venue was invented. Auth0 settings and Atlas were left unchanged.
+
+Railway marks the container deployment SUCCESS, but application acceptance is
+**BLOCKED**: its new outbound IP is absent from Atlas's restricted allowlist.
+`/health/live` returns 200 in initializing phase; root, readiness, client config,
+release and `/v1/me` return 503 until the database connects. See
+[restricted networking](RESTRICTED_NETWORKING.md). Do not equate the platform's
+deployment status with working login or database readiness.
+
+The public Vercel client config still has authReady/ticketReady/communityReady
+false; public `/v1/me` routing has not been rolled out. No Vercel production or
+Proof of Audits change was made. Real Auth0 two-person acceptance, approved
+venue/window/landmark, owned Google OAuth credentials, Apple signing and physical
+phones remain external dependencies. The latest EAS submission failed before
+issuing a build ID; direct Expo API connectivity also timed out. The earlier
+0.3.1 build is superseded and must not be published as this source's artifact.
+
+- [CI test-build PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39267564374/job/118111024584): API tests, web build, sandbox browser journeys, native exports, BLE autolinking and deployment container.
+- [Android and iOS simulator compilation PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39267564521): compile evidence, not signed iPhone distribution or physical radio acceptance.
+- [Native security FAIL](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39267564374/job/118111024836): 15 high findings rooted in the two documented upstream advisories; no gate suppression.
