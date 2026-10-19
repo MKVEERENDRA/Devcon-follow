@@ -38,8 +38,11 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   // response. Keep separate authenticated read/write budgets; route-specific
   // invitation, directory and abuse limits remain independently enforced.
   await app.register(rateLimit,{max:req=>req.authActor?(req.method==='GET'?240:60):100,timeWindow:'1 minute',keyGenerator:async req=>{try{req.authActor=await auth(tokenFromHeader(req.headers.authorization));return JSON.stringify(['user',req.authActor.userId,req.method==='GET'?'read':'write'])}catch{return 'ip:'+req.ip}},errorResponseBuilder:()=>({statusCode:429,message:'Rate limit exceeded',error:'Too Many Requests'})});
-  const cspConnect=new Set(["'self'",'wss:']);
+  const cspConnect=new Set(["'self'"]);
   try{if(config.OIDC_ISSUER)cspConnect.add(new URL(config.OIDC_ISSUER).origin)}catch{}
+  // A Vercel frontend proxies HTTP API requests but connects directly to the
+  // configured Railway socket origin. Permit its polling fallback as well as WS.
+  try{const socket=new URL(config.SOCKET_PUBLIC_ORIGIN);if(socket.protocol==='https:'&&socket.origin===config.SOCKET_PUBLIC_ORIGIN){cspConnect.add(socket.origin);cspConnect.add('wss://'+socket.host)}}catch{}
   app.addHook('onRequest',async(req,reply)=>{
     // Profiles, verified status, and location grants must never enter shared browser/proxy caches.
     if(req.url.startsWith('/v1/') || req.url.startsWith('/client-config'))reply.header('Cache-Control','no-store, private');

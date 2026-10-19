@@ -75,7 +75,7 @@ async function setup({records = {}, extraConfig = {}} = {}) {
 }
 
 test('HTTP integration: health, OIDC validation, and ticket gate fail closed', async t => {
-  const app = await setup();
+  const app = await setup({extraConfig:{SOCKET_PUBLIC_ORIGIN:'https://devcon-follow-api-staging.up.railway.app'}});
   t.after(app.close);
 
   const live = await app.server.inject({method: 'GET', url: '/health/live'});
@@ -85,6 +85,9 @@ test('HTTP integration: health, OIDC validation, and ticket gate fail closed', a
   assert.equal(live.headers['x-frame-options'], 'DENY');
   assert.equal(live.headers['referrer-policy'], 'no-referrer');
   assert.match(live.headers['content-security-policy'], /default-src 'self'/);
+  assert(live.headers['content-security-policy'].includes('https://devcon-follow-api-staging.up.railway.app'));
+  assert(live.headers['content-security-policy'].includes('wss://devcon-follow-api-staging.up.railway.app'));
+  assert(!live.headers['content-security-policy'].split(' ').includes('wss:'));
   assert.match(live.headers['permissions-policy'], /geolocation=\(self\)/);
 
   const config = await app.server.inject({method: 'GET', url: '/client-config'});

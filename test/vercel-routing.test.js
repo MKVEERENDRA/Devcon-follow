@@ -6,6 +6,9 @@ test('API rewrites precede SPA fallback and disable shared caching without chang
  assert.deepEqual(c.rewrites.slice(0,3),[{source:'/v1/:path*',destination:origin+'/v1/:path*'},{source:'/client-config',destination:origin+'/client-config'},{source:'/health/:path*',destination:origin+'/health/:path*'}]);
  for(const path of ['/install.html','/native-release.json','/client-config','/.well-known/assetlinks.json'])assert(!new RegExp('^'+c.rewrites.at(-1).source+'$').test(path));
  assert(c.headers.every(h=>h.headers.some(v=>v.key==='Cache-Control'&&v.value.includes('no-store'))));
- assert.equal(vercelConfig().rewrites.length,1);
+ const closed=vercelConfig();assert.equal(closed.rewrites.length,1);
+ assert(closed.headers.find(h=>h.source==='/client-config').headers.some(h=>h.key==='Content-Type'&&h.value==='application/json'));
+ assert(!new RegExp('^'+closed.rewrites[0].source+'$').test('/v1/me'));
+ assert(!new RegExp('^'+closed.rewrites[0].source+'$').test('/health/ready'));
  for(const bad of ['http://example.com','https://example.com/','https://example.com/path','https://secret@example.com','https://example.com?token=secret'])assert.throws(()=>vercelConfig(bad));
 });
