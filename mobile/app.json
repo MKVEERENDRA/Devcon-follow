@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Devcon Follow",
-    "slug": "devcon-follow",
+    "slug": "veer",
     "scheme": "devconfollow",
     "version": "0.3.0",
     "orientation": "portrait",
@@ -18,15 +18,16 @@
     "android": {
       "package": "com.proofofaudits.devconfollow",
       "permissions": [
-        "CAMERA",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_ADVERTISE",
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN"
-      ]
+      ],
+      "versionCode": 1
     },
     "plugins": [
       [
@@ -60,6 +61,12 @@
           "defaultChannel": "meetups"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "734dfdcc-a6f9-4fc2-8492-696f0aeda3aa"
+      }
+    },
+    "owner": "veerendravamshis-team"
   }
 }

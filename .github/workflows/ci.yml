@@ -40,6 +40,7 @@ jobs:
           npm run test:browser
           npm run test:browser:reliability
           npm run test:browser:parity
+          npm run test:browser:install
       - name: Export native JavaScript bundles
         working-directory: mobile
         run: npx expo export --platform android --platform ios
@@ -62,6 +63,7 @@ jobs:
             artifacts/browser/
             artifacts/browser-reliability/
             artifacts/browser-parity/
+            artifacts/install/
   native-security:
     runs-on: ubuntu-latest
     steps:

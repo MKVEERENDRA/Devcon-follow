@@ -12,6 +12,11 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "environment": "preview",
+      "developmentClient": false,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://devcon-follow-api-staging.up.railway.app"
       }
     },
     "production": {

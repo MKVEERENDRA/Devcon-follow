@@ -6,9 +6,11 @@ import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {AuthProvider} from 'react-oidc-context';
 import App from './App.jsx';
+import {NativeInstall} from './NativeInstall';
 import './styles.css';
 
 async function boot(){
+  if(window.location.pathname==='/install'||window.location.pathname==='/install/'||window.location.pathname==='/install.html'){createRoot(document.getElementById('root')).render(<NativeInstall/>);return;}
   let config=null;
   try{const response=await fetch('/client-config',{cache:'no-store'});if(response.ok)config=await response.json()}catch{}
   const container=document.getElementById('root');
