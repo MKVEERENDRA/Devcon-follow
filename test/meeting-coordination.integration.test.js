@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {startTestRuntime} from './support/runtime.js';
 import {createMeetingNotifications} from '../src/meeting-notifications.js';
-async function fixture(t){
- const app=await startTestRuntime();t.after(()=>app.close());const now=Date.now(),users=['alice','bob','charlie','dan'];
+async function fixture(t,options){
+ const app=await startTestRuntime(options);t.after(()=>app.close());const now=Date.now(),users=['alice','bob','charlie','dan'];
  await app.db.collection('venues').insertOne({venueId:'sandbox',name:'Sandbox only',enabled:true,center:{lat:19.01,lon:72.85},radiusMeters:300,startAt:new Date(now-1000),endAt:new Date(now+86400000)});
  for(const userId of users){await app.db.collection('tickets').insertOne({userId,status:'verified',ticketDigest:userId});await app.db.collection('profiles').insertOne({userId,handle:userId,displayName:userId,roles:['Builder'],discoverable:true});await app.db.collection('presence').insertOne({userId,venueId:'sandbox',expiresAt:new Date(now+86400000)})}
  await app.db.collection('landmarks').insertOne({landmarkId:'coffee',venueId:'sandbox',name:'Sandbox coffee',lat:19.01,lon:72.85,enabled:true});
@@ -47,4 +47,17 @@ test('durable push outbox retries, checks receipts, retires invalid devices and 
  assert.deepEqual(calls[1].body.data,{screen:'meetups'});assert(!JSON.stringify(calls[1].body).includes('bob'));
  // A queued future reminder is invalidated by authoritative cancellation, even across service restart.
  await col('meetups').updateOne({meetupId:m.meetupId},{$set:{status:'cancelled'}});at=new Date(+m.startsAt-240000);await service().tick();assert.equal(calls.length,3);
+});
+
+test('real sandbox JWTs bind opt-in push tokens to their owner and allow revoked-user cleanup without external calls',async t=>{
+ const calls=[];const app=await fixture(t,{config:{PUSH_ENABLED:'true',EXPO_PUSH_ACCESS_TOKEN:'sandbox-only-not-a-credential'},notificationFetch:async(...args)=>{calls.push(args);throw Error('No external provider is permitted in this sandbox test')}});
+ const token='ExpoPushToken[synthetic_device_token_123]';
+ await app.call('alice','/push-devices','POST',{token:'https://not-a-token.example.test'},400);
+ await app.call('alice','/push-devices','POST',{token});
+ await app.call('bob','/push-devices','POST',{token},409);
+ assert.equal((await app.db.collection('pushDevices').findOne({token})).userId,'alice');assert(!JSON.stringify(await app.call('alice','/meeting-notifications')).includes(token));
+ await app.db.collection('tickets').updateOne({userId:'alice'},{$set:{status:'revoked'}});
+ await app.call('alice','/push-devices','POST',{token:'ExpoPushToken[another_synthetic_device]'},403);
+ await app.call('alice','/push-devices','DELETE');assert.equal(await app.db.collection('pushDevices').countDocuments(),0);
+ await app.call('bob','/push-devices','POST',{token});await app.call('bob','/account','DELETE');assert.equal(await app.db.collection('pushDevices').countDocuments(),0);assert.equal(calls.length,0);
 });

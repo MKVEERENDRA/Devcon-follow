@@ -2,7 +2,7 @@ import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
 import {normalizeRole,publicProfile} from './domain.js';
 const fail=(statusCode,message)=>Object.assign(new Error(message),{statusCode});
 const escapeRegex=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const prefixFields=(query,prefix)=>Object.fromEntries(Object.entries(query).map(([key,value])=>key==='$or'?[key,value.map(clause=>prefixFields(clause,prefix))]:[prefix+key,value]));
+const prefixFields=(query,prefix)=>Object.fromEntries(Object.entries(query).map(([key,value])=>['$or','$and'].includes(key)?[key,value.map(clause=>prefixFields(clause,prefix))]:[prefix+key,value]));
 export function directoryParams(query={}){
  const allowed=new Set(['q','role','interest','openToMeet','limit','cursor']);
  if(Object.keys(query).some(k=>!allowed.has(k))||Object.values(query).some(v=>typeof v!=='string'))throw fail(400,'Invalid directory parameters');
@@ -18,7 +18,7 @@ export function directoryPipeline({actorId,venueId,params,last,communityEnabled,
  if(params.role)filters.roles=params.role;
  if(params.interest)filters.interests={$regex:'^'+escapeRegex(params.interest)+'$',$options:'i'};
  if(params.openToMeet)filters.openToMeet=params.openToMeet==='true'?true:{$ne:true};
- if(params.q)filters.$or=['displayName','handle','bio','roles','interests','lookingFor'].map(k=>({[k]:{$regex:escapeRegex(params.q),$options:'i'}}));
+ if(params.q)filters.$and=params.q.split(' ').map(term=>({$or:['displayName','handle','bio','roles','interests','lookingFor'].map(k=>({[k]:{$regex:escapeRegex(term),$options:'i'}}))}));
  const source=directorySource(params);
  const prefix=source==='profiles'?[
   {$match:{...filters,userId:match.userId}},{$sort:{userId:1}},

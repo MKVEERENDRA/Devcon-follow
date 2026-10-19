@@ -78,7 +78,7 @@ export function createMeetingNotifications({col,eligibleIds,isBlocked,notify,pus
   function routes(app,{requireUser,authenticate}){
     app.get('/v1/meeting-notifications',async req=>{
       const actor=await requireUser(req);await reconcile(actor.userId);
-      const rows=await col('meetingNotifications').find({userId:actor.userId,deliverAt:{$lte:now()},expiresAt:{$gt:now()}},{limit:100}).sort({createdAt:-1}).toArray();const notifications=[];
+      const rows=await col('meetingNotifications').find({userId:actor.userId,readAt:null,deliverAt:{$lte:now()},expiresAt:{$gt:now()}},{limit:100}).sort({createdAt:-1}).toArray();const notifications=[];
       for(const n of rows)if(await valid(n))notifications.push({notificationId:n._id,meetupId:n.meetupId,type:n.type,createdAt:n.createdAt,readAt:n.readAt});
       return {notifications};
     });

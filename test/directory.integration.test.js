@@ -30,6 +30,7 @@ test('secure paginated directory: 5,000 synthetic profiles, complete traversal, 
  do{const start=performance.now();const page=await request('/v1/directory?limit=50'+(cursor?'&cursor='+encodeURIComponent(cursor):''));durations.push(performance.now()-start);assert(page.attendees.length<=50);assert(!/coordinates|"lat"|"lon"|totalCount/.test(JSON.stringify(page)));seen.push(...page.attendees.map(p=>p.userId));cursor=page.nextCursor;if(!first)first=page;}while(cursor);
  assert.deepEqual(seen,expected);assert.equal(new Set(seen).size,1000);
  assert.equal((await request('/v1/directory?q=Unique%20needle')).attendees[0].userId,'attendee04990');
+ const crossFields=await request('/v1/directory?q=Ethereum%20protocol');assert(crossFields.attendees.length>0,'words may match interests and meeting goals across separate fields');assert(crossFields.attendees.every(p=>p.interests.includes('Ethereum')&&p.lookingFor.includes('Protocol')));
  const closed=await request('/v1/directory?openToMeet=false');assert(closed.attendees.every(p=>p.openToMeet===false));
  const filters=await request('/v1/directory?role=Founder&interest=ethereum&openToMeet=true');assert(filters.attendees.length>0);assert(filters.attendees.every(p=>p.roles.includes('Founder')&&p.openToMeet));
  assert.equal((await request('/v1/directory?q='+encodeURIComponent('.*[$ne]'))).attendees.length,0,'regex syntax must be literal');

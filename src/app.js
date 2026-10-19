@@ -25,7 +25,7 @@ const plus=(minutes)=>new Date(Date.now()+minutes*60_000);
 const jsonError=(status,message)=>Object.assign(new Error(message),{statusCode:status});
 const isString=x=>typeof x==='string'&&x.length>0;
 
-export async function buildServer({db,config}){
+export async function buildServer({db,config,notificationFetch=fetch}){
   const allowedOrigins=(config.WEB_ORIGINS||'').split(',').map(s=>s.trim()).filter(Boolean);
   // Same-origin PWA works without CORS; cross-origin clients require explicit allowlisting.
   const auth=createAuth({issuer:config.OIDC_ISSUER,audience:config.OIDC_AUDIENCE,jwksUrl:config.OIDC_JWKS_URL,emailClaimNamespace:config.OIDC_EMAIL_CLAIM_NAMESPACE});
@@ -440,7 +440,7 @@ export async function buildServer({db,config}){
     return {blocked:true};
   });
   access.register(app,{authenticate,admins,audit,onRevoked:userId=>io.in(`user:${userId}`).disconnectSockets(true)});
-  const meetingNotifications=createMeetingNotifications({col,eligibleIds:access.eligibleIds,isBlocked,notify,pushEnabled:config.PUSH_ENABLED==='true'&&Boolean(config.EXPO_PUSH_ACCESS_TOKEN),pushAccessToken:config.EXPO_PUSH_ACCESS_TOKEN||''});
+  const meetingNotifications=createMeetingNotifications({col,eligibleIds:access.eligibleIds,isBlocked,notify,pushEnabled:config.PUSH_ENABLED==='true'&&Boolean(config.EXPO_PUSH_ACCESS_TOKEN),pushAccessToken:config.EXPO_PUSH_ACCESS_TOKEN||'',fetchImpl:notificationFetch});
   meetingNotifications.routes(app,{requireUser,authenticate});
   registerMeetups(app,{col,authenticate,admins,requireUser,requireOnSite,requireAllowedPerson,currentVenue,isBlocked,notify,audit,meetingNotifications});
   let notificationBusy=false;
