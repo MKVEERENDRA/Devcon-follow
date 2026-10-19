@@ -86,3 +86,14 @@ all need explicit owner approval and a staged cutover. It has **not** been teste
 purchased or selected. Pro static egress remains the least disruptive option for
 retaining Railway. A free, durable restricted route on the present trial has not
 been established; repeatedly adding arbitrary pod IPs is not the recommended plan.
+
+## 20 October delivery update
+
+Deployment `17d3cc6d-e062-4350-a11e-1c871331243c` (source `a9aa57d`)
+observed `152.55.181.17`. The owner explicitly approved this single /32, added
+it directly, and Atlas readback confirmed five preserved restricted entries.
+Readiness recovered to 200 automatically. No database reset, duplicate service,
+second deployment, broad range or extra SSH key was needed. This is temporary
+staging connectivity. Current budget is ₹0; the paid designs above are historical
+research, not authorized purchases. Durable fixed egress remains blocked on the
+current hosting plan; no free fixed-egress host has been supplied or verified.

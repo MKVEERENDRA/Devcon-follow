@@ -105,6 +105,105 @@ installation, cold start and post-launch screenshot).
 - `24933f4`: correct config/manifest caching and API routing; allow only the
   configured Railway HTTPS/WSS socket origin, including polling fallback.
 - [CI test-build PASS at 92f7037](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39305015460), with native-security intentionally FAIL.
-- Native compile and EAS 0.3.2 results are still pending at this record.
+- [Native Android and unsigned iOS simulator compile PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39305015383), source `92f7037`.
 
-Deployment and candidate-build results will be appended after actual verification.
+## Verified 0.3.2 candidate and deployment
+
+[EAS Android build](https://expo.dev/accounts/veerendravamshis-team/projects/veer/builds/9c6760dd-fef6-4cb0-8ab1-5f43aae8906c)
+**FINISHED**, version 0.3.2/build 3, source
+`92f7037a015e09abf631113fa9904f491448fc93`.
+Downloaded binary: 99,356,328 bytes; SHA-256
+`c0f2ad88b875bacf46c619fef45933a613263245d57e220e378b2a96be3918ed`.
+Signing certificate remains
+`c62bcd71781c56566f5b4b748765bc27f6b08e3677e9c7adcd52fa8430c042c9`.
+SDK verification passes signature, signer continuity/app-link fingerprint,
+package, non-debuggable release mode, version, standalone JS and staging endpoint.
+The verifier does not certify dependency security; its earlier hardcoded audit
+count was removed in favor of an explicit separate current audit result.
+
+The actual APK installed on an isolated Android 14 AVD and cold-started in 5.750
+seconds. System UI ANR still overlays the rendered welcome screen. This emulator
+also has no active default network and cannot resolve the staging hostname;
+restoring Wi-Fi defaults and explicit DNS did not establish connectivity.
+The manifest includes INTERNET/ACCESS_NETWORK_STATE. No native provider login or
+clean visual acceptance is claimed, and the emulator was stopped afterward.
+Evidence: local `artifacts/android-preview/android34-20261020/` and
+`apk-verification-0.3.2-3.json`.
+
+The private browser transport additionally downloaded the **actual signed APK**
+through the real local API with sandbox OIDC authentication and verified its exact
+bytes/checksum before saving. This is stronger than a synthetic small-file test,
+but remains distinct from genuine-provider/live acceptance. Reproduce with
+`node scripts/browser-private-install.mjs --release-directory=PREPARED_RELEASE_DIRECTORY`.
+Default CI still uses clearly synthetic transport fixtures and privacy negatives.
+
+[CI test-build PASS at 24933f4](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39305979825/job/118243053154)
+includes the 80-test baseline, browser journeys and Docker build.
+[Native security FAIL](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39305979825/job/118243053567)
+is preserved with 15 high findings.
+
+The existing Railway staging service received source `a9aa57d` plus the verified
+0.3.2 APK via a tracked-source-only archive with the separate private artifact.
+Deployment: `17d3cc6d-e062-4350-a11e-1c871331243c`.
+The observed new egress `152.55.181.17` initially blocked database readiness.
+The owner added the separately approved `152.55.181.17/32`; independent Atlas
+inspection confirms it alongside the four existing entries. Liveness and
+readiness now return 200 without another deployment or database reset.
+The owner approved adding only `152.55.181.17/32` and publishing the installer
+repair after restricted download verification. The connector's separate execution
+confirmation did not complete, so it applied nothing. The owner completed the
+entry directly. No broad allowlist or extra SSH access was created.
+
+The [integrated Vercel preview](https://devcon-follow-iwk5ttsyx-mkveerendras-projects.vercel.app)
+returned real `/client-config` JSON and anonymous `/v1/me` 401 JSON before the
+staging redeployment; this is routing evidence, not Auth0 login from that preview.
+Its exact preview callback is not added to Auth0. The
+[approved installer-only preview](https://devcon-follow-hm5psxzs2-mkveerendras-projects.vercel.app/install.html)
+keeps public registration disabled and replaces the broken Expo handoff with the
+restricted staging installer. Production-domain publishing was conditional on successful restricted live
+download verification; that condition subsequently passed as recorded below.
+No public GitHub Release, public APK asset, production backend, Auth0 credential,
+public enrollment or Proof of Audits change was made.
+
+The owner explicitly confirmed the second tester and test venue are unavailable.
+These and physical two-person GPS/BLE acceptance remain BLOCKED; independent
+implementation and verification continued without invented real attendees or GPS.
+
+## Genuine authenticated live APK delivery
+
+The existing owner Auth0 session completed the installer authorization-code
+return without entering credentials through the agent. The staging installer
+loaded version 0.3.2/build 3 and its authenticated download saved
+`~/Downloads/devcon-follow-0.3.2-3.apk` (99,356,328 bytes). An independent SHA-256
+check of the browser-saved file matched
+`c0f2ad88b875bacf46c619fef45933a613263245d57e220e378b2a96be3918ed`.
+This proves genuine one-account restricted live binary delivery, not native
+provider login or physical two-person acceptance. Browser download-event
+observation timed out; the completed file and installer state were checked
+directly instead. No bearer credentials were inspected or exported.
+
+Current staging checks: liveness 200, readiness 200, release 503; anonymous
+`/v1/me`, `/v1/releases/android` and `/v1/releases/android/apk` all return 401 JSON.
+The release gate stays closed. Local evidence is in
+`artifacts/staging/a9aa57d-delivery-health.json` and
+`artifacts/install/live-private-download-20261020.png`.
+
+## Approved website publication — PASS
+
+After genuine restricted live APK delivery passed, the exact installer-only
+output was staged as production deployment
+`dpl_FKymmWXgjS7qnY5LdegqkayCDadC` in existing Devcon Follow project
+`prj_eOSHP6OdmTSBzqAyAyHv10QA0mEO`, scope `mkveerendras-projects`.
+Staged URL: https://devcon-follow-84ay7xkrn-mkveerendras-projects.vercel.app .
+The staged installer, JSON manifest and closed client configuration each passed
+200/content checks before promotion of this same production build.
+
+Published: https://devcon-follow.vercel.app/install.html . Anonymous checks confirm
+200 installer HTML, 200 JSON `/native-release.json` with no public binary and the
+correct restricted installer link, and 200 JSON `/client-config` with
+`authReady=false`. Browser inspection confirms the active “Open private Android
+testing” link. This publishes the approved installation handoff, not a public
+APK, public registration, production backend or production-ready release.
+Proof of Audits was untouched. Screenshot and machine-readable checks are in
+`artifacts/install/published-installer-20261020.png` and
+`artifacts/install/public-delivery-20261020.json`.
