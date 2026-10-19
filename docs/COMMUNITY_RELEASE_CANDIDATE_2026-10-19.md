@@ -66,7 +66,8 @@ Real DKIM proof, replay/nullifier and atomic per-ticket claim acceptance are
 
 ## Verification and outstanding acceptance
 
-77 API/regression tests pass, including the new no-ticket two-account MongoDB
+78 API/regression tests pass, including immediate native session-state cleanup,
+the new no-ticket two-account MongoDB
 journey, cohort denial, unverified-email denial, atomic enrollment, revocation,
 optional-proof fail-closed behavior, canonical QR parsing and throttling recovery.
 Browser coverage includes legacy invitation and new no-ticket PKCE journeys,
@@ -84,3 +85,10 @@ rollout. Native audit remains FAIL (15 high). Real Auth0 dashboard session, Goog
 OAuth credentials, private staging authorization, a second consenting identity,
 approved venue/window/landmark, Apple signing and real phones remain external
 acceptance dependencies. Do not promote this candidate as production-ready.
+
+The supported Expo 58.0.15 patch fixes the CI SDK packaging mismatch. Local types,
+SDK dependency compatibility and Expo Doctor (20/20) pass; the security gate is
+still failing and has not been suppressed. The owner's current Auth0 dashboard
+session lists only `dev-8e0okjv7rzciphk7`; direct navigation to the configured
+`dev-xs1kh1yit6q5g3ph` tenant redirects back. No replacement tenant or client was
+created, and no Auth0 setting was changed.

@@ -1,11 +1,14 @@
 # Native dependency investigation — 19 October 2026
 
-Rechecked for the 0.3.1 community candidate: audit still reports 15 high findings.
-Registry now offers Expo 58.0.15. Its dependency metadata selects @expo/cli
-58.1.12, which still declares node-forge ^1.4.0 and
-@expo/code-signing-certificates ^0.0.7; @expo/metro-config 58.0.15 still uses
-@expo/metro ~58.0.0. Neither advisory lists a patched root version. The earlier
-"latest matches installed" observation below is historical, not current.
+Applied the supported Expo 58.0.15 patch for the 0.3.1 community candidate after
+CI diagnosed an SDK packaging mismatch (expected ~58.0.15, installed 58.0.14).
+The lockfile now resolves @expo/cli 58.1.12 and @expo/metro-config 58.0.15.
+TypeScript, `expo install --check` and Expo Doctor (20/20) pass after the update.
+Fresh audit still reports 15 high findings, zero moderate and zero critical.
+The CLI still uses node-forge 1.4.0 and @expo/code-signing-certificates 0.0.7;
+Metro still resolves braces 3.0.3. This compatibility patch does not resolve the
+two advisory roots. The earlier "latest matches installed" observation below is
+historical, not current.
 No unsupported override, ineffective security certification or gate suppression
 was applied. Trusted locked builds and isolated tooling remain limited mitigations.
 
@@ -21,9 +24,9 @@ lockfile or package version was falsified.
 
 | Root | Installed dependency path | Finding / affected operation |
 | --- | --- | --- |
-| braces 3.0.3 | expo 58.0.14 → @expo/metro-config 58.0.14 → @expo/metro 58.0.0 → metro-file-map 0.87.1 → micromatch 4.0.8 → braces 3.0.3 | Recursive pattern parsing/compilation can exhaust the Node stack. Build/dev file matching is the observed consumer. |
+| braces 3.0.3 | expo 58.0.15 → @expo/metro-config 58.0.15 → @expo/metro 58.0.0 → metro-file-map 0.87.1 → micromatch 4.0.8 → braces 3.0.3 | Recursive pattern parsing/compilation can exhaust the Node stack. Build/dev file matching is the observed consumer. |
 | braces 3.0.3 | react-native 0.88.0 → @react-native/community-cli-plugin 0.88.0 → metro 0.87.1 → metro-file-map 0.87.1 → micromatch 4.0.8 → braces 3.0.3 | Same advisory propagated through React Native's tooling graph. |
-| node-forge 1.4.0 | expo 58.0.14 → @expo/cli 58.1.11 → node-forge; and @expo/cli 58.1.11 → @expo/code-signing-certificates 0.0.7 → node-forge 1.4.0 | RSA PKCS#1 v1.5 signature verification can accept malformed ASN.1 structure. Expo CLI/certificate tooling is the observed consumer. |
+| node-forge 1.4.0 | expo 58.0.15 → @expo/cli 58.1.12 → node-forge; and @expo/cli 58.1.12 → @expo/code-signing-certificates 0.0.7 → node-forge 1.4.0 | RSA PKCS#1 v1.5 signature verification can accept malformed ASN.1 structure. Expo CLI/certificate tooling is the observed consumer. |
 
 The complete set reported high is: `@expo/cli`,
 `@expo/code-signing-certificates`, `@expo/metro`, `@expo/metro-config`,
@@ -60,7 +63,8 @@ waiver or release approval.
 
 ## Supported fixes investigated
 
-Registry `expo` latest is 58.0.14, matching the installed SDK. The
+At the earlier investigation, registry `expo` latest was 58.0.14. The supported
+58.0.15 patch has now been applied as recorded above. The
 [Expo SDK matrix](https://docs.expo.dev/versions/v58.0.0/) pairs SDK 58 with React
 Native 0.88 and React 19.3.0. `npm outdated` proposes React 19.3.1 and TypeScript
 7.0.2 as latest; neither resolves these two roots, and moving outside the SDK
