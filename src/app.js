@@ -13,6 +13,7 @@ import {registerSocialRoutes} from './social.js';
 import {createAccess} from './access.js';
 import {registerDirectory} from './directory.js';
 import {registerMeetups} from './meetups.js';
+import {registerAndroidPreview} from './android-preview.js';
 import {createMeetingNotifications} from './meeting-notifications.js';
 import {
   MAX_LOCATION_AGE_MS,MAX_PRESENCE_AGE_MS,DISCOVERY_MINUTES,activePresence,activeShare,approvedGrant,
@@ -79,6 +80,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     const {presence,venue}=await currentVenue(user.userId);
     return {...user,presence,venue};
   }
+  await registerAndroidPreview(app,{config,requireUser});
   async function isBlocked(a,b){
     return !!(await col('blocks').findOne({$or:[{blockerId:a,blockedId:b},{blockerId:b,blockedId:a}]}));
   }

@@ -1,17 +1,7 @@
 {
   "schemaVersion": 1,
-  "android": {
-    "packageId": "com.proofofaudits.devconfollow",
-    "version": "0.3.0",
-    "versionCode": 1,
-    "buildId": "989288ba-28cf-442f-b83a-aee2a96fab91",
-    "sha256": "5a892187fa27c8ab4b3c2f9082da6488c58119391a4e39247bed5c03a2f4df91",
-    "signingCertificateSha256": "c62bcd71781c56566f5b4b748765bc27f6b08e3677e9c7adcd52fa8430c042c9",
-    "verified": true,
-    "kind": "apk",
-    "distribution": "private-preview",
-    "downloadUrl": "https://expo.dev/accounts/veerendravamshis-team/projects/veer/builds/989288ba-28cf-442f-b83a-aee2a96fab91",
-    "sourceCommit": "c6fad25dcf00b85ee411df05a05992c44f468f19"
-  },
-  "ios": null
+  "android": null,
+  "ios": null,
+  "androidStatus": "restricted-testing",
+  "privateInstallUrl": "https://devcon-follow-api-staging.up.railway.app/install.html"
 }

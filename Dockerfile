@@ -11,6 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY src ./src
+COPY --chown=node:node private-release ./private-release
 COPY --from=webbuild /workspace/web/dist ./web/dist
 USER node
 ENV NODE_ENV=production PORT=8080

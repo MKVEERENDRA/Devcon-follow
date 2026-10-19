@@ -16,3 +16,7 @@ playwright-report
 
 .mcp.json
 .codex
+private-release/*
+!private-release/.gitkeep
+!private-release/android.json
+!private-release/devcon-follow.apk

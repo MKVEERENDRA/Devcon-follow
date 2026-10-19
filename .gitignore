@@ -13,3 +13,5 @@ mobile/ios/
 artifacts/
 test-results/
 playwright-report/
+/private-release/*
+!/private-release/.gitkeep

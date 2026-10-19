@@ -42,6 +42,7 @@ jobs:
           npm run test:browser:reliability
           npm run test:browser:parity
           npm run test:browser:install
+          npm run test:browser:private-install
       - name: Export native JavaScript bundles
         working-directory: mobile
         run: npx expo export --platform android --platform ios

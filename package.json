@@ -17,7 +17,8 @@
     "preview:staging": "node scripts/staging-preview.mjs",
     "test:browser:reliability": "node scripts/browser-reliability.mjs",
     "test:browser:parity": "node scripts/browser-parity.mjs",
-    "test:browser:install": "node scripts/browser-install.mjs"
+    "test:browser:install": "node scripts/browser-install.mjs",
+    "test:browser:private-install": "node scripts/browser-private-install.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
