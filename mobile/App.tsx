@@ -37,6 +37,7 @@ export default function App(){
   const [clockNow,setClockNow]=useState(Date.now()),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[tab,setTab]=useState<'home'|'nearby'|'profile'|'qr'|'connections'|'messages'|'meetups'|'attendee'>('home');
   const [composeMeetup,setComposeMeetup]=useState(false),[ticketCode,setTicketCode]=useState(''),[handle,setHandle]=useState(''),[displayName,setDisplayName]=useState(''),[bio,setBio]=useState(''),[lookingFor,setLookingFor]=useState(''),[openToMeet,setOpenToMeet]=useState(false),[discoverable,setDiscoverable]=useState(false),[interestText,setInterestText]=useState(''),[roleText,setRoleText]=useState(''),[avatar,setAvatar]=useState<string|null>(null),[github,setGithub]=useState(''),[linkedin,setLinkedin]=useState(''),[x,setX]=useState(''),[website,setWebsite]=useState(''),[profileLink,setProfileLink]=useState('');
   const [threads,setThreads]=useState<any[]>([]),[chatWith,setChatWith]=useState<Profile|null>(null),[chat,setChat]=useState<any[]>([]),[chatText,setChatText]=useState(''),[nearby,setNearby]=useState<Profile[]>([]),[following,setFollowing]=useState<Profile[]>([]),[radioActive,setRadioActive]=useState(false),[radioState,setRadioState]=useState('off'),[selectedPerson,setSelectedPerson]=useState<Profile|null>(null),[gpsNearby,setGpsNearby]=useState<any[]>([]),[meetRequests,setMeetRequests]=useState<any[]>([]),[outgoingMeetups,setOutgoingMeetups]=useState<any[]>([]),[cameraPermission,requestCameraPermission]=useCameraPermissions(),[scanning,setScanning]=useState(false);
+  const clearLocalState=useCallback(()=>{setScanning(false);setTicketCode('');setToken(null);setMe(null);setFollowing([]);setChat([]);setThreads([]);setChatWith(null);setChatText('');setSelectedPerson(null);setComposeMeetup(false);setNearby([]);setGpsNearby([]);setMeetRequests([]);setOutgoingMeetups([]);setTab('home');setHandle('');setDisplayName('');setBio('');setLookingFor('');setOpenToMeet(false);setDiscoverable(false);setInterestText('');setRoleText('');setAvatar(null);setGithub('');setLinkedin('');setX('');setWebsite('');setProfileLink('');},[]);
   const lastNotificationId=useRef('');
   useEffect(()=>{if(!token)return;let alive=true;const open=(r:Notifications.NotificationResponse|null)=>{if(alive&&r&&r.notification.request.identifier!==lastNotificationId.current){lastNotificationId.current=r.notification.request.identifier;setTab('meetups')}};void Notifications.getLastNotificationResponseAsync().then(open).catch(()=>{});const subscription=Notifications.addNotificationResponseReceivedListener(open);return()=>{alive=false;subscription.remove()}},[token]);
   const identityToken=useRef<string|null>(null);
@@ -60,7 +61,7 @@ export default function App(){
   const refresh=useCallback(async(currentToken=token)=>{
     if(!currentToken)return;
     const response=await fetchApi(`${API}/v1/me`,{headers:{Authorization:`Bearer ${currentToken}`}});
-    if(response.status===401){await SecureStore.deleteItemAsync(TOKEN_KEY);setToken(null);setMe(null);return;}
+    if(response.status===401){await Promise.all([SecureStore.deleteItemAsync(TOKEN_KEY),SecureStore.deleteItemAsync(SESSION_KEY)]);refreshCredential.current=null;identityToken.current=null;tokenExpiresAt.current=0;clearLocalState();return;}
     const value=await response.json();if(!response.ok)throw new Error(value.error||'Could not load account');
     setMe(value);
     if(value.accessEligible){try{const connections=await fetchApi(`${API}/v1/following`,{headers:{Authorization:`Bearer ${currentToken}`}});if(connections.ok)setFollowing((await connections.json()).attendees||[]);}catch{}}
@@ -73,7 +74,7 @@ export default function App(){
       if(!API)throw new Error('Missing EXPO_PUBLIC_API_BASE_URL');
       const [cfg,saved,session]=await Promise.all([fetchApi(`${API}/client-config`).then(r=>{if(!r.ok)throw Error('The service is unavailable. Please retry connection.');return r.json()}),SecureStore.getItemAsync(TOKEN_KEY),SecureStore.getItemAsync(SESSION_KEY)]);
       if(session){try{const data=JSON.parse(session);refreshCredential.current=data.refreshToken||null;identityToken.current=data.idToken||null;tokenExpiresAt.current=data.expiresAt||0}catch{await SecureStore.deleteItemAsync(SESSION_KEY)}}
-      if(!alive)return;setConfig({...cfg,authReady:cfg.authReady&&Boolean(cfg.nativeClientId)});if(saved){setToken(saved);const r=await fetchApi(`${API}/v1/me`,{headers:{Authorization:`Bearer ${saved}`}});if(r.ok){const account=await r.json();setMe(account);if(account.accessEligible){try{const f=await fetchApi(`${API}/v1/following`,{headers:{Authorization:`Bearer ${saved}`}});if(f.ok)setFollowing((await f.json()).attendees||[]);}catch{}}}else if(r.status===401){await SecureStore.deleteItemAsync(TOKEN_KEY);if(alive){setToken(null);setMe(null);}}else{throw new Error('Could not restore saved sign-in: '+r.status);}}
+      if(!alive)return;setConfig({...cfg,authReady:cfg.authReady&&Boolean(cfg.nativeClientId)});if(saved){setToken(saved);const r=await fetchApi(`${API}/v1/me`,{headers:{Authorization:`Bearer ${saved}`}});if(r.ok){const account=await r.json();setMe(account);if(account.accessEligible){try{const f=await fetchApi(`${API}/v1/following`,{headers:{Authorization:`Bearer ${saved}`}});if(f.ok)setFollowing((await f.json()).attendees||[]);}catch{}}}else if(r.status===401){await Promise.all([SecureStore.deleteItemAsync(TOKEN_KEY),SecureStore.deleteItemAsync(SESSION_KEY)]);refreshCredential.current=null;identityToken.current=null;if(alive)clearLocalState();}else{throw new Error('Could not restore saved sign-in: '+r.status);}}
     }catch(e){if(alive)Alert.alert('Setup needed',e instanceof Error?e.message:'Could not connect to Devcon Follow API');}
     finally{if(alive)setLoading(false);}
   })();return()=>{alive=false};},[bootAttempt]);
@@ -103,7 +104,7 @@ export default function App(){
         await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);
         await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current,idToken:identityToken.current}));
         if(alive)setToken(result.accessToken);
-      }catch{if(alive&&Date.now()>=tokenExpiresAt.current){await SecureStore.deleteItemAsync(TOKEN_KEY);await SecureStore.deleteItemAsync(SESSION_KEY);refreshCredential.current=null;setToken(null);setMe(null);}}
+      }catch{if(alive&&Date.now()>=tokenExpiresAt.current){await SecureStore.deleteItemAsync(TOKEN_KEY);await SecureStore.deleteItemAsync(SESSION_KEY);refreshCredential.current=null;identityToken.current=null;clearLocalState();}}
       finally{running=false;}
     };
     void renew();const timer=setInterval(()=>void renew(),20000);
@@ -154,7 +155,7 @@ export default function App(){
     const credential=refreshCredential.current,idToken=identityToken.current;
     refreshCredential.current=null;identityToken.current=null;tokenExpiresAt.current=0;
     await Promise.all([SecureStore.deleteItemAsync(SESSION_KEY),SecureStore.deleteItemAsync(TOKEN_KEY)]);
-    setScanning(false);setTicketCode('');setToken(null);setMe(null);setFollowing([]);setChat([]);setThreads([]);setChatWith(null);setChatText('');setSelectedPerson(null);setComposeMeetup(false);setNearby([]);setGpsNearby([]);setMeetRequests([]);setOutgoingMeetups([]);setTab('home');setHandle('');setDisplayName('');setBio('');setLookingFor('');setOpenToMeet(false);setDiscoverable(false);setInterestText('');setRoleText('');setAvatar(null);setGithub('');setLinkedin('');setX('');setWebsite('');setProfileLink('');
+    clearLocalState();
     // Local logout is complete before any network request can stall.
     const cleanup=Promise.allSettled([
       token?api('/presence','DELETE'):Promise.resolve(),
