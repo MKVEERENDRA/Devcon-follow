@@ -45,7 +45,15 @@
       ],
       "expo-secure-store",
       "./plugins/withBluetoothPermissions",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a profile photo you want to share with approved participants.",
+          "cameraPermission": "Scan a Devcon Follow social profile QR code.",
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

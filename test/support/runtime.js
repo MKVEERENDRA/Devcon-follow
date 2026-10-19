@@ -7,17 +7,17 @@ import {ensureIndexes} from '../../src/indexes.js';
 import {buildServer} from '../../src/app.js';
 
 // Isolated, loopback-only test issuer. Never imported by application runtime or Docker.
-export async function startTestRuntime({config:overrides={}}={}){
+export async function startTestRuntime({config:overrides={},webTokenLifetimeSeconds=600}={}){
   const mongo=await MongoMemoryServer.create();
   const client=new MongoClient(mongo.getUri());await client.connect();
   const db=client.db('test_'+randomUUID().replaceAll('-',''));await ensureIndexes(db);
   const {publicKey,privateKey}=await generateKeyPair('RS256');
   const jwk={...await exportJWK(publicKey),kid:'sandbox',alg:'RS256',use:'sig'};
-  const audience='devcon-test-api',codes=new Map();let issuer,origin;
+  const audience='devcon-test-api',codes=new Map(),refreshTokens=new Map(),events={refreshes:0};let issuer,origin;
   const accounts={alice:{email:'alice@example.test',password:'sandbox-alice'},bob:{email:'bob@example.test',password:'sandbox-bob'},eve:{email:'eve@example.test',password:'sandbox-eve'}};
   async function sign(subject,{nonce,emailVerified=true,expiresIn='10m',customClaims={}}={}){
     return new SignJWT({email:accounts[subject]?.email||'admin@example.test',email_verified:emailVerified,...(nonce?{nonce}:{}),...customClaims})
-      .setSubject(subject).setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime(expiresIn).setProtectedHeader({alg:'RS256',kid:'sandbox'}).sign(privateKey);
+      .setJti(randomUUID()).setSubject(subject).setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime(expiresIn).setProtectedHeader({alg:'RS256',kid:'sandbox'}).sign(privateKey);
   }
   const identity=createServer(async(req,res)=>{
     try{
@@ -45,10 +45,17 @@ export async function startTestRuntime({config:overrides={}}={}){
           res.writeHead(302,{location:destination.href});return res.end();
         }
         if(url.pathname==='/token'){
+          if(form.get('grant_type')==='refresh_token'){
+            const previous=form.get('refresh_token'),subject=refreshTokens.get(previous);refreshTokens.delete(previous);
+            if(!subject||form.get('client_id')!=='sandbox-web'){res.writeHead(400);return json({error:'invalid_grant'})}
+            const refresh_token=randomBytes(32).toString('base64url');refreshTokens.set(refresh_token,subject);events.refreshes++;
+            return json({access_token:await sign(subject,{expiresIn:webTokenLifetimeSeconds+'s'}),refresh_token,token_type:'Bearer',expires_in:webTokenLifetimeSeconds,scope:'openid profile email offline_access'});
+          }
           const code=codes.get(form.get('code'));codes.delete(form.get('code'));
           if(!code||code.expiresAt<Date.now()||form.get('client_id')!=='sandbox-web'||form.get('redirect_uri')!==code.redirect||createHash('sha256').update(form.get('code_verifier')||'').digest('base64url')!==code.challenge){res.writeHead(400);return json({error:'invalid_grant'})}
-          const access_token=await sign(code.subject),id_token=await new SignJWT({email:accounts[code.subject].email,email_verified:true,name:code.subject,nonce:code.nonce}).setSubject(code.subject).setIssuer(issuer).setAudience('sandbox-web').setIssuedAt().setExpirationTime('10m').setProtectedHeader({alg:'RS256',kid:'sandbox'}).sign(privateKey);
-          return json({access_token,id_token,token_type:'Bearer',expires_in:600,scope:'openid profile email'});
+          const refresh_token=randomBytes(32).toString('base64url');refreshTokens.set(refresh_token,code.subject);
+          const access_token=await sign(code.subject,{expiresIn:webTokenLifetimeSeconds+'s'}),id_token=await new SignJWT({email:accounts[code.subject].email,email_verified:true,name:code.subject,nonce:code.nonce}).setSubject(code.subject).setIssuer(issuer).setAudience('sandbox-web').setIssuedAt().setExpirationTime('10m').setProtectedHeader({alg:'RS256',kid:'sandbox'}).sign(privateKey);
+          return json({access_token,id_token,refresh_token,token_type:'Bearer',expires_in:webTokenLifetimeSeconds,scope:'openid profile email offline_access'});
         }
       }
       if(url.pathname==='/logout'){res.writeHead(302,{location:origin+'/'});return res.end()}
@@ -62,5 +69,5 @@ export async function startTestRuntime({config:overrides={}}={}){
     const response=await fetch(origin+path,{method,headers:{authorization:'Bearer '+await sign(subject),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
     return {status:response.status,body:await response.json()};
   };
-  return {db,origin,issuer,request,sign,config,async close(){io.disconnectSockets(true);await new Promise(resolve=>io.close(resolve));await server.close();await new Promise(resolve=>identity.close(resolve));await db.dropDatabase();await client.close();await mongo.stop()}};
+  return {db,origin,issuer,request,sign,config,events,async close(){io.disconnectSockets(true);await new Promise(resolve=>io.close(resolve));await server.close();await new Promise(resolve=>identity.close(resolve));await db.dropDatabase();await client.close();await mongo.stop()}};
 }

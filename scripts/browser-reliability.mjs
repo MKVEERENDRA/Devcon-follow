@@ -8,7 +8,7 @@ try{
  const point={lat:19.01,lon:72.85,accuracyMeters:10};
  for(const id of ['alice','bob']){const r=await app.request('admin','/v1/admin/invitations','POST',{email:id+'@example.test'});assert.equal(r.status,201);await app.request(id,'/v1/access/redeem','POST',{code:r.body.code});await app.request(id,'/v1/profile','PUT',{handle:id,displayName:id,roles:['Builder'],discoverable:true});}
  await app.request('admin','/v1/admin/venues','POST',{name:'SANDBOX venue',...point,radiusMeters:300,startAt:new Date(Date.now()-60000).toISOString(),endAt:new Date(Date.now()+3600000).toISOString(),enabled:true});
- await app.request('alice','/v1/presence/check-in','POST',point);
+ for(const id of ['alice','bob'])await app.request(id,'/v1/presence/check-in','POST',point);
  browser=await chromium.launch({...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({geolocation:{latitude:point.lat,longitude:point.lon,accuracy:10},viewport:{width:390,height:844}});
  const page=await context.newPage();page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',e=>errors.push(e.message));

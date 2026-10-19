@@ -16,8 +16,9 @@ test('native profile edits preserve photo and social links and allow interests t
   const code=readFileSync(new URL('../mobile/App.tsx',import.meta.url),'utf8');
   assert.match(code,/setInterestText\(\(p\?\.interests\|\|\[\]\)\.join/);
   assert.match(code,/interests:interestText\.split/);
-  assert.match(code,/socials:me\?\.profile\?\.socials\|\|\{\}/);
-  assert.match(code,/avatar:me\?\.profile\?\.avatar\|\|null/);
+  assert.match(code,/setGithub\(p\?\.socials\?\.github/);
+  assert.match(code,/socials:\{github,linkedin,x,website\}/);
+  assert.match(code,/setAvatar\(p\?\.avatar\|\|null\)/);
   assert.match(code,/tab==='connections'/);
   assert.match(code,/api\('\/following'\)/);
 });

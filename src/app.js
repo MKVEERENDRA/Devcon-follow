@@ -11,6 +11,7 @@ import {createAuth,tokenFromHeader} from './auth.js';
 import {createTicketVerifier} from './tickets.js';
 import {registerSocialRoutes} from './social.js';
 import {createAccess} from './access.js';
+import {registerDirectory} from './directory.js';
 import {registerMeetups} from './meetups.js';
 import {
   MAX_LOCATION_AGE_MS,MAX_PRESENCE_AGE_MS,DISCOVERY_MINUTES,activePresence,activeShare,approvedGrant,
@@ -171,26 +172,16 @@ export async function buildServer({db,config}){
     const {venue}=actor;
     return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters},kind:'public_venue_only'};
   });
-  app.get('/v1/directory',async(req)=>{
-    const actor=await requireOnSite(req);
-    const role=isString(req.query?.role)?normalizeRole(req.query.role):null;
-    if(req.query?.role&&!role)throw jsonError(400,'Unknown role');
-    const query={discoverable:true,userId:{$ne:actor.userId}};
-    if(role)query.roles=role;
-    const profiles=await col('profiles').find(query,{projection:{_id:0},limit:101}).limit(100).toArray();
-    const ids=profiles.map(p=>p.userId);
-    if(!ids.length)return {attendees:[],kind:'directory_not_nearby',note:'These profiles are not claims of live proximity'};
-    const [blocks,tickets]=await Promise.all([
-      col('blocks').find({$or:[{blockerId:actor.userId,blockedId:{$in:ids}},{blockedId:actor.userId,blockerId:{$in:ids}}]}).toArray(),
-      access.eligibleIds(ids)
-    ]);
-    const excluded=new Set(blocks.map(b=>b.blockerId===actor.userId?b.blockedId:b.blockerId));
-    const validIds=tickets;
-    return {attendees:profiles.filter(p=>validIds.has(p.userId)&&!excluded.has(p.userId)).map(publicProfile),kind:'directory_not_nearby',note:'These profiles are not claims of live proximity'};
-  });
+  registerDirectory(app,{col,requireOnSite,communityEnabled:access.enabled});
+  async function requireProfileAudience(actor,id){
+    if(await col('follows').findOne({followerId:actor.userId,followedId:id}))return;
+    try{const [self,target]=await Promise.all([currentVenue(actor.userId),currentVenue(id)]);if(self.venue.venueId===target.venue.venueId)return}catch{}
+    throw jsonError(404,'Profile unavailable');
+  }
   app.get('/v1/profiles/:userId',async(req)=>{
     const actor=await requireUser(req), id=req.params.userId;
     await requireAllowedPerson(actor,id);
+    await requireProfileAudience(actor,id);
     const profile=await col('profiles').findOne({userId:id,discoverable:true});
     if(!profile)throw jsonError(404,'Profile not discoverable');
     const follow=await col('follows').findOne({followerId:actor.userId,followedId:id});
@@ -199,6 +190,7 @@ export async function buildServer({db,config}){
   app.post('/v1/follows/:userId',async(req,reply)=>{
     const actor=await requireUser(req),id=req.params.userId;
     await requireAllowedPerson(actor,id);
+    await requireProfileAudience(actor,id);
     if(!(await col('profiles').findOne({userId:id,discoverable:true})))throw jsonError(404,'Profile unavailable');
     const created=await col('follows').updateOne({followerId:actor.userId,followedId:id},{$setOnInsert:{followerId:actor.userId,followedId:id,createdAt:DATE()}},{upsert:true});
     // Idempotent follow: refreshes must not generate repeated notifications.

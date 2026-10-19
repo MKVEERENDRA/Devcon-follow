@@ -39,6 +39,7 @@ jobs:
           npx playwright install --with-deps chromium
           npm run test:browser
           npm run test:browser:reliability
+          npm run test:browser:parity
       - name: Export native JavaScript bundles
         working-directory: mobile
         run: npx expo export --platform android --platform ios
@@ -60,6 +61,7 @@ jobs:
           path: |
             artifacts/browser/
             artifacts/browser-reliability/
+            artifacts/browser-parity/
   native-security:
     runs-on: ubuntu-latest
     steps:

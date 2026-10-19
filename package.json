@@ -15,7 +15,8 @@
     "build:web": "npm --prefix web run build",
     "test:browser": "node scripts/browser-journey.mjs",
     "preview:staging": "node scripts/staging-preview.mjs",
-    "test:browser:reliability": "node scripts/browser-reliability.mjs"
+    "test:browser:reliability": "node scripts/browser-reliability.mjs",
+    "test:browser:parity": "node scripts/browser-parity.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -28,6 +29,7 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
     "mongodb-memory-server": "^11.3.0"
   }
