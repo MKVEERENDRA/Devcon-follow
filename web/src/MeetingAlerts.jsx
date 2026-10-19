@@ -1,0 +1,8 @@
+import React,{useCallback,useEffect,useState} from 'react';
+const label={pending:'New meeting invitation',accepted:'Meeting confirmed',declined:'Meeting declined',cancelled:'Meeting cancelled',expired:'Invitation expired',elapsed:'Meeting time has passed',reminder:'Meeting starts within five minutes'};
+export function MeetingAlerts({api,onSelect}){
+ const [items,setItems]=useState([]),[error,setError]=useState('');
+ const load=useCallback(async()=>{try{const r=await api('/meeting-notifications');setItems(r.notifications);setError('')}catch(e){setItems([]);setError(e.message)}},[api]);
+ useEffect(()=>{load();const timer=setInterval(load,30000);const reconnect=()=>void load();window.addEventListener('online',reconnect);window.addEventListener('devcon-meeting-update',reconnect);return()=>{clearInterval(timer);window.removeEventListener('online',reconnect);window.removeEventListener('devcon-meeting-update',reconnect)}},[load]);
+ return <aside className="panel" aria-label="Meeting updates"><h2>Meeting updates</h2><p className="small dim">Saved updates remain here if you miss a live alert. Open the meeting for its current status. Confirmed meetings reserve 30 minutes.</p>{error?<p role="alert">{error} <button className="text-button" onClick={load}>Retry updates</button></p>:!items.some(n=>!n.readAt)?<p>No unread meeting updates.</p>:items.filter(n=>!n.readAt).map(n=><button className="button secondary full" key={n.notificationId} onClick={async()=>{try{await api('/meeting-notifications/'+encodeURIComponent(n.notificationId)+'/read','POST');onSelect(n.type==='accepted'||n.type==='reminder'?'accepted':n.type==='pending'?'pending':'past');await load()}catch(e){setError(e.message)}}}>{label[n.type]||'Meeting updated'}</button>)}</aside>;
+}

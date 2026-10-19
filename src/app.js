@@ -13,6 +13,7 @@ import {registerSocialRoutes} from './social.js';
 import {createAccess} from './access.js';
 import {registerDirectory} from './directory.js';
 import {registerMeetups} from './meetups.js';
+import {createMeetingNotifications} from './meeting-notifications.js';
 import {
   MAX_LOCATION_AGE_MS,MAX_PRESENCE_AGE_MS,DISCOVERY_MINUTES,activePresence,activeShare,approvedGrant,
   freshLocation,insideVenue,validLocation,validMinutes,normalizeRole,safeHandle,safeText,safeAvatar,
@@ -30,7 +31,7 @@ export async function buildServer({db,config}){
   const auth=createAuth({issuer:config.OIDC_ISSUER,audience:config.OIDC_AUDIENCE,jwksUrl:config.OIDC_JWKS_URL,emailClaimNamespace:config.OIDC_EMAIL_CLAIM_NAMESPACE});
   const ticketVerifier=createTicketVerifier({url:config.TICKET_VERIFY_URL,token:config.TICKET_VERIFY_TOKEN,hmacKey:config.TICKET_BINDING_HMAC_KEY});
   const admins=new Set((config.ADMIN_SUBJECTS||'').split(',').map(s=>s.trim()).filter(Boolean));
-  const app=Fastify({logger:{level:config.LOG_LEVEL||'info',redact:['req.headers.authorization','req.headers.cookie','req.body.ticketSecret','req.body.lat','req.body.lon']},bodyLimit:200_000,trustProxy:config.TRUST_PROXY==='true'});
+  const app=Fastify({logger:{level:config.LOG_LEVEL||'info',redact:['req.headers.authorization','req.headers.cookie','req.body.ticketSecret','req.body.token','req.body.lat','req.body.lon']},bodyLimit:200_000,trustProxy:config.TRUST_PROXY==='true'});
   await app.register(cors,{origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),methods:['GET','POST','PATCH','PUT','DELETE'],allowedHeaders:['Authorization','Content-Type']});
   await app.register(rateLimit,{max:100,timeWindow:'1 minute',keyGenerator:async req=>{try{req.authActor=await auth(tokenFromHeader(req.headers.authorization));return 'user:'+req.authActor.userId}catch{return 'ip:'+req.ip}},errorResponseBuilder:()=>({error:'Rate limit exceeded'})});
   const cspConnect=new Set(["'self'",'wss:']);
@@ -433,12 +434,18 @@ export async function buildServer({db,config}){
     if(!isString(targetId)||targetId===actor.userId)throw jsonError(400,'Invalid target');
     await col('blocks').updateOne({blockerId:actor.userId,blockedId:targetId},{$setOnInsert:{blockerId:actor.userId,blockedId:targetId,createdAt:DATE()}},{upsert:true});
     await col('requests').updateMany({$or:[{requesterId:actor.userId,targetId},{requesterId:targetId,targetId:actor.userId}]},{$set:{status:'revoked',expiresAt:DATE()}});
+    await col('meetingBookings').deleteMany({participants:{$all:[actor.userId,targetId]}});
     await col('meetups').updateMany({$or:[{requesterId:actor.userId,targetId},{requesterId:targetId,targetId:actor.userId}]},{$set:{status:'cancelled',expiresAt:DATE()}});
     await audit(actor.userId,'attendee_blocked',{targetId});
     return {blocked:true};
   });
   access.register(app,{authenticate,admins,audit,onRevoked:userId=>io.in(`user:${userId}`).disconnectSockets(true)});
-  registerMeetups(app,{col,authenticate,admins,requireUser,requireOnSite,requireAllowedPerson,currentVenue,isBlocked,notify,audit});
+  const meetingNotifications=createMeetingNotifications({col,eligibleIds:access.eligibleIds,isBlocked,notify,pushEnabled:config.PUSH_ENABLED==='true'&&Boolean(config.EXPO_PUSH_ACCESS_TOKEN),pushAccessToken:config.EXPO_PUSH_ACCESS_TOKEN||''});
+  meetingNotifications.routes(app,{requireUser,authenticate});
+  registerMeetups(app,{col,authenticate,admins,requireUser,requireOnSite,requireAllowedPerson,currentVenue,isBlocked,notify,audit,meetingNotifications});
+  let notificationBusy=false;
+  const notificationTimer=setInterval(async()=>{if(notificationBusy)return;notificationBusy=true;try{await meetingNotifications.tick()}catch{app.log.warn('Meeting update recovery unavailable')}finally{notificationBusy=false}},30000);notificationTimer.unref();
+  app.addHook('onClose',async()=>clearInterval(notificationTimer));
   registerSocialRoutes(app,{col,requireUser,isBlocked,notify,audit,eligibleIds:access.eligibleIds});
   app.post('/v1/reports',async(req,reply)=>{
     const actor=await requireOnSite(req),{targetId,reason}=req.body||{};
@@ -526,6 +533,8 @@ export async function buildServer({db,config}){
       col('invitations').deleteMany({usedBy:id}),
       col('notes').deleteMany({$or:[{ownerId:id},{targetId:id}]}),
       col('meetups').deleteMany({$or:[{requesterId:id},{targetId:id}]}),
+      col('meetingBookings').deleteMany({participants:id}),col('pushDevices').deleteMany({userId:id}),col('pushDeliveries').deleteMany({userId:id}),
+      col('meetingNotifications').deleteMany({$or:[{userId:id},{otherId:id}]}),
       col('posts').deleteMany({authorId:id}),
       col('comments').deleteMany({authorId:id}),
       col('postLikes').deleteMany({$or:[{userId:id},{postId:{$in:authoredIds}}]}),

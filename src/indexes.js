@@ -7,6 +7,16 @@ export const INDEX_SPECS = [
   ['landmarks',{landmarkId:1},{unique:true}],
   ['landmarks',{venueId:1,enabled:1},{}],
   ['meetups',{meetupId:1},{unique:true}],
+  ['meetups',{requesterId:1,targetId:1},{unique:true,partialFilterExpression:{status:'pending'}}],
+  ['meetingBookings',{slots:1},{unique:true}],
+  ['meetingBookings',{expiresAt:1},{expireAfterSeconds:0}],
+  ['meetingNotifications',{userId:1,createdAt:-1},{}],
+  ['meetingNotifications',{deliverAt:1,pushQueued:1},{}],
+  ['meetingNotifications',{expiresAt:1},{expireAfterSeconds:0}],
+  ['pushDevices',{userId:1},{}],
+  ['pushDevices',{expiresAt:1},{expireAfterSeconds:0}],
+  ['pushDeliveries',{state:1,nextAt:1},{}],
+  ['pushDeliveries',{expiresAt:1},{expireAfterSeconds:0}],
   ['meetups',{requesterId:1,startsAt:1},{}],
   ['meetups',{targetId:1,startsAt:1},{}],
   ['meetups',{expiresAt:1},{expireAfterSeconds:0}],
@@ -51,7 +61,7 @@ export const INDEX_SPECS = [
 ];
 function sameKey(a,b){return JSON.stringify(Object.entries(a))===JSON.stringify(Object.entries(b))}
 function sameOptions(old,options){return Boolean(old.unique)===Boolean(options.unique) &&
-  (old.expireAfterSeconds??null)===(options.expireAfterSeconds??null)}
+  (old.expireAfterSeconds??null)===(options.expireAfterSeconds??null) && JSON.stringify(old.partialFilterExpression??null)===JSON.stringify(options.partialFilterExpression??null)}
 
 export async function ensureIndexes(db){
   const names=[...new Set(INDEX_SPECS.map(x=>x[0]))];
