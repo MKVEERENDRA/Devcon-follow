@@ -36,7 +36,7 @@ test('secure paginated directory: 5,000 synthetic profiles, complete traversal, 
  await request('/v1/directory?limit=50&cursor='+encodeURIComponent(first.nextCursor),'bob',400);
  await request('/v1/directory?limit=50&q=changed&cursor='+encodeURIComponent(first.nextCursor),'alice',400);
  await request('/v1/directory?limit=50&cursor='+encodeURIComponent(first.nextCursor.slice(0,-5)+'aaaaa'),'alice',400);
- await request('/v1/profiles/attendee00005','alice',404);await app.request('alice','/v1/follows/attendee00005','POST').then(r=>assert.equal(r.status,404));
+ const absent=await request('/v1/profiles/does-not-exist','alice',404),offVenue=await request('/v1/profiles/attendee00005','alice',404),hidden=await request('/v1/profiles/attendee00007','alice',404);assert.deepEqual(absent,offVenue,'unknown and off-venue IDs must not disclose eligibility through errors');assert.deepEqual(absent,hidden,'hidden profile errors must not disclose existence');await app.request('alice','/v1/follows/attendee00005','POST').then(r=>assert.equal(r.status,404));
  await app.db.collection('presence').updateOne({userId:'alice'},{$set:{venueId:'venue-b'}});
  await request('/v1/directory?limit=50&cursor='+encodeURIComponent(first.nextCursor),'alice',400);
  await app.db.collection('presence').updateOne({userId:'alice'},{$set:{venueId:'venue-a'}});
@@ -45,8 +45,10 @@ test('secure paginated directory: 5,000 synthetic profiles, complete traversal, 
  const after=await request('/v1/directory?q=attendee00100');assert.equal(after.attendees.length,0);
  const loadStart=performance.now();const responses=await Promise.all(Array.from({length:8},()=>request('/v1/directory?limit=24&role=Founder')));const parallelWallMs=performance.now()-loadStart;assert(responses.every(r=>r.attendees.length===24));
  const explained=await app.db.collection('presence').aggregate(directoryPipeline({actorId:'alice',venueId:'venue-a',params:directoryParams({limit:'24'}),communityEnabled:true}),{hint:{venueId:1,userId:1,expiresAt:1},maxTimeMS:2000}).explain('executionStats');
+ const filteredExplain=await app.db.collection('profiles').aggregate(directoryPipeline({actorId:'alice',venueId:'venue-a',params:directoryParams({limit:'24',role:'Founder'}),communityEnabled:true}),{hint:{discoverable:1,userId:1},maxTimeMS:2000}).explain('executionStats');
+ const profilePlan=JSON.stringify(filteredExplain);assert(profilePlan.includes('discoverable_1_userId_1'),'filtered traversal must use the profile compound index');assert(!profilePlan.includes('\"stage\":\"COLLSCAN\"'),'filtered path must not use a collection scan');
  const serialized=JSON.stringify(explained);assert(serialized.includes('venueId_1_userId_1_expiresAt_1'),'venue traversal must use the compound index');assert(!serialized.includes('"stage":"COLLSCAN"'),'no unbounded collection scan');
- durations.sort((a,b)=>a-b);t.diagnostic(JSON.stringify({syntheticProfiles:5000,authorizedProfiles:seen.length,pages:durations.length,pageP95Ms:Math.round(durations[Math.ceil(durations.length*.95)-1]),parallelQueries:8,parallelWallMs:Math.round(parallelWallMs)}));
+ assert(parallelWallMs<10000,'eight bounded sandbox queries must finish within ten seconds');durations.sort((a,b)=>a-b);assert(durations[Math.ceil(durations.length*.95)-1]<5000,'sandbox page P95 must stay below five seconds including JWT and loopback overhead');t.diagnostic(JSON.stringify({syntheticProfiles:5000,authorizedProfiles:seen.length,pages:durations.length,pageP95Ms:Math.round(durations[Math.ceil(durations.length*.95)-1]),parallelQueries:8,parallelWallMs:Math.round(parallelWallMs)}));
  // A saved connection remains available after the event; arbitrary IDs do not.
  await app.request('alice','/v1/follows/attendee00000','POST').then(r=>assert.equal(r.status,201));
  await app.db.collection('presence').deleteOne({userId:'alice'});

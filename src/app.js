@@ -75,11 +75,11 @@ export async function buildServer({db,config}){
   async function isBlocked(a,b){
     return !!(await col('blocks').findOne({$or:[{blockerId:a,blockedId:b},{blockerId:b,blockedId:a}]}));
   }
-  async function requireAllowedPerson(actor,targetId){
+  async function requireAllowedPerson(actor,targetId,notFoundMessage='Attendee not found'){
     if(!isString(targetId)||targetId===actor.userId)throw jsonError(400,'Invalid attendee');
     if(await isBlocked(actor.userId,targetId))throw jsonError(403,'Connection not available');
     const ticket=await col('tickets').findOne({userId:targetId,status:'verified'});
-    if(!ticket && !await access.community(targetId))throw jsonError(404,'Attendee not found');
+    if(!ticket && !await access.community(targetId))throw jsonError(404,notFoundMessage);
     return targetId;
   }
   const publishRefresh=()=>io.emit('directory:refresh'); // No attendee IDs, coordinates, or presence in the socket payload.
@@ -180,16 +180,16 @@ export async function buildServer({db,config}){
   }
   app.get('/v1/profiles/:userId',async(req)=>{
     const actor=await requireUser(req), id=req.params.userId;
-    await requireAllowedPerson(actor,id);
+    await requireAllowedPerson(actor,id,'Profile unavailable');
     await requireProfileAudience(actor,id);
     const profile=await col('profiles').findOne({userId:id,discoverable:true});
-    if(!profile)throw jsonError(404,'Profile not discoverable');
+    if(!profile)throw jsonError(404,'Profile unavailable');
     const follow=await col('follows').findOne({followerId:actor.userId,followedId:id});
     return {profile:publicProfile(profile),following:Boolean(follow)};
   });
   app.post('/v1/follows/:userId',async(req,reply)=>{
     const actor=await requireUser(req),id=req.params.userId;
-    await requireAllowedPerson(actor,id);
+    await requireAllowedPerson(actor,id,'Profile unavailable');
     await requireProfileAudience(actor,id);
     if(!(await col('profiles').findOne({userId:id,discoverable:true})))throw jsonError(404,'Profile unavailable');
     const created=await col('follows').updateOne({followerId:actor.userId,followedId:id},{$setOnInsert:{followerId:actor.userId,followedId:id,createdAt:DATE()}},{upsert:true});
