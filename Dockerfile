@@ -3,6 +3,7 @@ WORKDIR /workspace/web
 COPY web/package*.json ./
 RUN npm ci --no-audit --no-fund
 COPY web ./
+COPY mobile/profile-links.js /workspace/mobile/profile-links.js
 RUN npm run build
 
 FROM node:22-alpine

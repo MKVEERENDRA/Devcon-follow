@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.proofofaudits.devconfollow",
+      "sha256_cert_fingerprints": [
+        "C6:2B:CD:71:78:1C:56:56:6F:5B:4B:74:87:65:BC:27:F6:B0:8E:36:77:E9:C7:AD:CD:52:FA:84:30:C0:42:C9"
+      ]
+    }
+  }
+]

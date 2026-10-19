@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 
 test('native BLE session refreshes venue presence and foreground GPS sampling',()=>{
   const code=readFileSync(new URL('../mobile/App.tsx',import.meta.url),'utf8');
-  assert.match(code,/if\(!radioActive \|\| !token\)return;/);
+  assert.match(code,/if\(!radioActive \|\| !token \|\| !me\?\.accessEligible\)return;/);
   assert.match(code,/AppState\.currentState!=='active'/);
   assert.match(code,/api\('\/presence\/check-in','POST',sample\)/);
   assert.match(code,/api\('\/location\/sample','POST',sample\)/);

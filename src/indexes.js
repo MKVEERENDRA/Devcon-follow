@@ -2,6 +2,7 @@
 // Never drop/rebuild an index on a collection containing attendee data.
 export const INDEX_SPECS = [
   ['invitations',{digest:1},{unique:true}],
+  ['communityMembers',{userId:1},{unique:true}],
   ['invitations',{cleanupAt:1},{expireAfterSeconds:0}],
   ['invitations',{usedBy:1,status:1,accessExpiresAt:1},{}],
   ['landmarks',{landmarkId:1},{unique:true}],

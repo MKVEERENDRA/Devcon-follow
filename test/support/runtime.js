@@ -7,7 +7,7 @@ import {ensureIndexes} from '../../src/indexes.js';
 import {buildServer} from '../../src/app.js';
 
 // Isolated, loopback-only test issuer. Never imported by application runtime or Docker.
-export async function startTestRuntime({config:overrides={},webTokenLifetimeSeconds=600,notificationFetch}={}){
+export async function startTestRuntime({config:overrides={},webTokenLifetimeSeconds=600,notificationFetch,onSandboxError}={}){
   const mongo=await MongoMemoryServer.create();
   const client=new MongoClient(mongo.getUri());await client.connect();
   const db=client.db('test_'+randomUUID().replaceAll('-',''));await ensureIndexes(db);
@@ -64,7 +64,9 @@ export async function startTestRuntime({config:overrides={},webTokenLifetimeSeco
   });
   await new Promise(resolve=>identity.listen(0,'127.0.0.1',resolve));issuer=`http://127.0.0.1:${identity.address().port}/`;
   const config={LOG_LEVEL:'silent',OIDC_ISSUER:issuer,OIDC_JWKS_URL:issuer+'jwks',OIDC_AUDIENCE:audience,WEB_OIDC_CLIENT_ID:'sandbox-web',ADMIN_SUBJECTS:'admin',COMMUNITY_ACCESS_ENABLED:'true',COMMUNITY_INVITE_HMAC_KEY:randomBytes(32).toString('hex'),PROXIMITY_TOKEN_HMAC_KEY:randomBytes(32).toString('hex'),...overrides};
-  const {server,io}=await buildServer({db,config,notificationFetch});await server.listen({port:0,host:'127.0.0.1'});origin=`http://127.0.0.1:${server.server.address().port}`;
+  const {server,io}=await buildServer({db,config,notificationFetch});
+  if(onSandboxError)server.addHook('onError',async(req,_reply,error)=>onSandboxError({path:req.url,status:error.statusCode,code:error.code,message:error.message}));
+  await server.listen({port:0,host:'127.0.0.1'});origin=`http://127.0.0.1:${server.server.address().port}`;
   const request=async(subject,path,method='GET',body)=>{
     const response=await fetch(origin+path,{method,headers:{authorization:'Bearer '+await sign(subject),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
     return {status:response.status,body:await response.json()};

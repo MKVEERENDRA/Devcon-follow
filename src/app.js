@@ -33,7 +33,10 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   const admins=new Set((config.ADMIN_SUBJECTS||'').split(',').map(s=>s.trim()).filter(Boolean));
   const app=Fastify({logger:{level:config.LOG_LEVEL||'info',redact:['req.headers.authorization','req.headers.cookie','req.body.ticketSecret','req.body.token','req.body.lat','req.body.lon']},bodyLimit:200_000,trustProxy:config.TRUST_PROXY==='true'});
   await app.register(cors,{origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),methods:['GET','POST','PATCH','PUT','DELETE'],allowedHeaders:['Authorization','Content-Type']});
-  await app.register(rateLimit,{max:100,timeWindow:'1 minute',keyGenerator:async req=>{try{req.authActor=await auth(tokenFromHeader(req.headers.authorization));return 'user:'+req.authActor.userId}catch{return 'ip:'+req.ip}},errorResponseBuilder:()=>({error:'Rate limit exceeded'})});
+  // Background reads must not exhaust the budget for an explicit Stop/meeting
+  // response. Keep separate authenticated read/write budgets; route-specific
+  // invitation, directory and abuse limits remain independently enforced.
+  await app.register(rateLimit,{max:req=>req.authActor?(req.method==='GET'?240:60):100,timeWindow:'1 minute',keyGenerator:async req=>{try{req.authActor=await auth(tokenFromHeader(req.headers.authorization));return JSON.stringify(['user',req.authActor.userId,req.method==='GET'?'read':'write'])}catch{return 'ip:'+req.ip}},errorResponseBuilder:()=>({statusCode:429,message:'Rate limit exceeded',error:'Too Many Requests'})});
   const cspConnect=new Set(["'self'",'wss:']);
   try{if(config.OIDC_ISSUER)cspConnect.add(new URL(config.OIDC_ISSUER).origin)}catch{}
   app.addHook('onRequest',async(req,reply)=>{
@@ -57,8 +60,11 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   }
   async function requireUser(req){
     const user=await authenticate(req);
+    if(access.selfService&&!user.email)throw jsonError(403,'Verify your sign-in email to use community networking');
+    if(access.selfService&&!access.canJoin(user))throw jsonError(403,'This private pilot is not open for your account');
+    await access.enroll(user);
     const ticket=await col('tickets').findOne({userId:user.userId,status:'verified'});
-    if(!ticket && !await access.community(user.userId))throw jsonError(403,'Devcon ticket verification required or community invitation needed');
+    if(!ticket && !await access.community(user.userId))throw jsonError(403,access.selfService?'Community access unavailable':'Devcon ticket verification required or community invitation needed');
     return user;
   }
   async function currentVenue(userId){
@@ -99,7 +105,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   const authConfigured=Boolean(config.OIDC_ISSUER&&config.OIDC_AUDIENCE&&config.OIDC_JWKS_URL&&config.WEB_OIDC_CLIENT_ID);
   const registrationEnabled=config.REGISTRATION_ENABLED!=='false';
   const httpsEndpoint=value=>{try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.hash}catch{return false}};
-  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authConfigured,registrationEnabled,authReady:registrationEnabled&&authConfigured,ticketReady:ticketVerifier.configured,communityReady:access.enabled,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
+  app.get('/client-config',async(req,reply)=>{reply.header('Cache-Control','no-store');return {authConfigured,registrationEnabled,authReady:registrationEnabled&&authConfigured,ticketReady:ticketVerifier.configured,communityReady:access.enabled,communitySelfService:access.selfService,googleConnection:config.OIDC_GOOGLE_CONNECTION||null,socketOrigin:config.SOCKET_PUBLIC_ORIGIN||null,nativeClientId:config.NATIVE_OIDC_CLIENT_ID||null,issuer:config.OIDC_ISSUER||null,clientId:config.WEB_OIDC_CLIENT_ID||null,audience:config.OIDC_AUDIENCE||null}});
   app.get('/health/live',async()=>({ok:true,service:'devcon-follow-api'}));
   app.get('/health/release',async(req,reply)=>{
     await db.command({ping:1});
@@ -111,18 +117,30 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     const landmarks=venues.length?await col('landmarks').find({venueId:{$in:venues.map(v=>v.venueId)},enabled:true}).limit(1000).toArray():[];
     const hasLandmark=landmarks.some(l=>typeof l.landmarkId==='string'&&l.landmarkId.length>0&&typeof l.name==='string'&&l.name.trim()&&validLocation({...l,accuracyMeters:0})&&
       venues.some(v=>v.venueId===l.venueId&&haversineMeters(l,v.center)<=v.radiusMeters));
-    const checks={auth:Boolean(httpsEndpoint(config.OIDC_ISSUER)&&config.OIDC_AUDIENCE&&httpsEndpoint(config.OIDC_JWKS_URL)&&config.WEB_OIDC_CLIENT_ID),access:ticketVerifier.configured||access.enabled,administrator:admins.size>0,approvedVenue:venues.length>0,approvedLandmark:hasLandmark};
+    const checks={auth:Boolean(httpsEndpoint(config.OIDC_ISSUER)&&config.OIDC_AUDIENCE&&httpsEndpoint(config.OIDC_JWKS_URL)&&config.WEB_OIDC_CLIENT_ID),access:ticketVerifier.configured||access.enabled||access.selfService,administrator:admins.size>0,approvedVenue:venues.length>0,approvedLandmark:hasLandmark};
     const ok=Object.values(checks).every(Boolean);return reply.code(ok?200:503).send({ok,scope:'service-configuration',checks});
   });
   app.get('/health/ready',async()=>{await db.command({ping:1});return {ok:true,ticketVerifierConfigured:ticketVerifier.configured}});
   app.get('/v1/me',async(req)=>{
     const actor=await authenticate(req);
+    await access.enroll(actor);
     const [ticket,profile,presence,share]=await Promise.all([
       col('tickets').findOne({userId:actor.userId}),col('profiles').findOne({userId:actor.userId}),
       col('presence').findOne({userId:actor.userId}),col('shares').findOne({userId:actor.userId})
     ]);
-    const community=await access.community(actor.userId);
-    return {accessEligible:ticket?.status==='verified'||Boolean(community),accessTier:ticket?.status==='verified'?'official':community?'community':'pending',officiallyVerified:ticket?.status==='verified',userId:actor.userId,ticketVerified:ticket?.status==='verified',profile:publicProfile(profile),onSite:activePresence(presence),locationSharing:activeShare(share),sharingExpiresAt:activeShare(share)?share.expiresAt:null};
+    const allowed=!access.selfService||access.canJoin(actor);
+    const community=allowed?await access.community(actor.userId):null;
+    return {accessEligible:allowed&&(ticket?.status==='verified'||Boolean(community)),accessTier:ticket?.status==='verified'?'official':community?'community':'pending',officiallyVerified:ticket?.status==='verified',userId:actor.userId,ticketVerified:ticket?.status==='verified',profile:publicProfile(profile),onSite:activePresence(presence),locationSharing:activeShare(share),sharingExpiresAt:activeShare(share)?share.expiresAt:null};
+  });
+  // No reviewed Devcon DKIM blueprint or signed per-ticket field is available.
+  // Never accept an upload/asserted proof, issue a badge, or gate membership on it.
+  app.get('/v1/verification/ticket-email',async req=>{
+    await requireUser(req);
+    return {status:'unsupported',verified:false,label:'Ticket email verified',officiallyVerified:false,reason:'A reviewed Devcon sender/event blueprint and genuine signed per-ticket identifier are required. Basic community access does not require this proof.'};
+  });
+  app.post('/v1/verification/ticket-email',async req=>{
+    await requireUser(req);
+    throw jsonError(503,'Ticket email proof verification is unavailable: no reviewed Devcon blueprint or signed per-ticket schema is configured');
   });
   app.post('/v1/tickets/verify',async(req,reply)=>{
     const actor=await authenticate(req);
@@ -173,7 +191,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     const {venue}=actor;
     return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters},kind:'public_venue_only'};
   });
-  registerDirectory(app,{col,requireOnSite,communityEnabled:access.enabled});
+  registerDirectory(app,{col,requireOnSite,communityEnabled:access.enabled,selfService:access.selfService,memberFilter:access.memberFilter});
   async function requireProfileAudience(actor,id){
     if(await col('follows').findOne({followerId:actor.userId,followedId:id}))return;
     try{const [self,target]=await Promise.all([currentVenue(actor.userId),currentVenue(id)]);if(self.venue.venueId===target.venue.venueId)return}catch{}
@@ -531,6 +549,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
       col('blocks').deleteMany({$or:[{blockerId:id},{blockedId:id}]}),
       col('peerTokens').deleteMany({userId:id}),
       col('invitations').deleteMany({usedBy:id}),
+      col('communityMembers').deleteMany({userId:id}),
       col('notes').deleteMany({$or:[{ownerId:id},{targetId:id}]}),
       col('meetups').deleteMany({$or:[{requesterId:id},{targetId:id}]}),
       col('meetingBookings').deleteMany({participants:id}),col('pushDevices').deleteMany({userId:id}),col('pushDeliveries').deleteMany({userId:id}),

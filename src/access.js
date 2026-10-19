@@ -1,24 +1,49 @@
-import {createHmac, randomBytes} from 'node:crypto';
+import {createHash,createHmac, randomBytes} from 'node:crypto';
 
 const fail=(statusCode,message)=>Object.assign(new Error(message),{statusCode});
 export function createAccess({col,config}){
+  // Opt-in rollout switch. Shipping source must never open registration by itself.
+  const mode=config.COMMUNITY_REGISTRATION_MODE||'closed';
+  const selfService=config.COMMUNITY_SELF_SERVICE_ENABLED==='true'&&['pilot','public'].includes(mode);
+  const pilotEmails=new Set((config.COMMUNITY_PILOT_EMAILS||'').split(',').map(e=>e.trim().toLowerCase()).filter(Boolean));
+  const cohort=mode==='pilot'?createHash('sha256').update(JSON.stringify([...pilotEmails].sort())).digest('hex'):null;
+  const canJoin=actor=>Boolean(actor.email)&&(mode==='public'||mode==='pilot'&&pilotEmails.has(actor.email));
+  const memberFilter={status:'active',...(mode==='pilot'?{cohort}:{})};
   const enabled=config.COMMUNITY_ACCESS_ENABLED==='true' &&
     typeof config.COMMUNITY_INVITE_HMAC_KEY==='string' && config.COMMUNITY_INVITE_HMAC_KEY.length>=32;
   const digest=value=>createHmac('sha256',config.COMMUNITY_INVITE_HMAC_KEY).update(value).digest('hex');
   const grantQuery=()=>({status:'redeemed',accessExpiresAt:{$gt:new Date()}});
   async function community(userId){
+    if(selfService&&await col('communityMembers').findOne({userId,...memberFilter}))return {userId,kind:'community'};
     return enabled?col('invitations').findOne({...grantQuery(),usedBy:userId}):null;
+  }
+  async function enroll(actor){
+    if(!selfService||!canJoin(actor))return;
+    // Only a verified server-side OIDC claim can create membership. Never reset
+    // an existing revoked membership on login, token refresh or concurrent signup.
+    try{await col('communityMembers').updateOne({userId:actor.userId},{$setOnInsert:{userId:actor.userId,status:'active',createdAt:new Date()},$set:{cohort}},{upsert:true})}
+    catch(e){if(e.code!==11000)throw e}
   }
   async function eligibleIds(ids){
     if(!ids.length)return new Set();
-    const [tickets,grants]=await Promise.all([
+    const [tickets,grants,members]=await Promise.all([
       col('tickets').find({userId:{$in:ids},status:'verified'}).toArray(),
-      enabled?col('invitations').find({...grantQuery(),usedBy:{$in:ids}}).toArray():[]
+      enabled?col('invitations').find({...grantQuery(),usedBy:{$in:ids}}).toArray():[],
+      selfService?col('communityMembers').find({userId:{$in:ids},...memberFilter}).toArray():[]
     ]);
-    return new Set([...tickets.map(t=>t.userId),...grants.map(g=>g.usedBy)]);
+    return new Set([...tickets.map(t=>t.userId),...grants.map(g=>g.usedBy),...members.map(m=>m.userId)]);
   }
   function register(app,{authenticate,admins,audit,onRevoked}){
     const admin=async req=>{const actor=await authenticate(req);if(!admins.has(actor.userId))throw fail(403,'Administrator authorization required');return actor;};
+    app.delete('/v1/admin/community/:userId',async req=>{
+      const actor=await admin(req),userId=req.params.userId;
+      if(typeof userId!=='string'||!userId||userId.length>512)throw fail(400,'Invalid member');
+      const result=await col('communityMembers').updateOne({userId},{$set:{status:'revoked',revokedAt:new Date()}});
+      if(!result.matchedCount)throw fail(404,'Member unavailable');
+      await Promise.all(['presence','shares','locations','peerTokens'].map(name=>col(name).deleteMany({userId})));
+      onRevoked?.(userId);await audit(actor.userId,'community_membership_revoked');
+      return {revoked:true};
+    });
     app.post('/v1/admin/invitations',{config:{rateLimit:{max:10,timeWindow:'1 minute'}}},async(req,reply)=>{
       const actor=await admin(req);
       if(!enabled)throw fail(503,'Community access is disabled');
@@ -57,5 +82,5 @@ export function createAccess({col,config}){
       return {revoked:true};
     });
   }
-  return {enabled,community,eligibleIds,register};
+  return {enabled,selfService,canJoin,memberFilter,enroll,community,eligibleIds,register};
 }

@@ -12,7 +12,7 @@ export function directoryParams(query={}){
  return {q,interest,role,openToMeet:query.openToMeet??'',limit};
 }
 export function directorySource(params){return params.q||params.role||params.interest||params.openToMeet?'profiles':'presence'}
-export function directoryPipeline({actorId,venueId,params,last,communityEnabled,now=new Date()}){
+export function directoryPipeline({actorId,venueId,params,last,communityEnabled,selfService=false,memberFilter={status:'active'},now=new Date()}){
  const match={venueId,expiresAt:{$gt:now},revoked:{$ne:true},userId:{$ne:actorId,...(last?{$gt:last}:{})}};
  const filters={discoverable:true};
  if(params.role)filters.roles=params.role;
@@ -29,14 +29,15 @@ export function directoryPipeline({actorId,venueId,params,last,communityEnabled,
   ...prefix,
   {$lookup:{from:'tickets',localField:'userId',foreignField:'userId',pipeline:[{$match:{status:'verified'}},{$project:{_id:1}},{$limit:1}],as:'official'}},
   ...(communityEnabled?[{$lookup:{from:'invitations',localField:'userId',foreignField:'usedBy',pipeline:[{$match:{status:'redeemed',accessExpiresAt:{$gt:now}}},{$project:{_id:1}},{$limit:1}],as:'community'}}]:[]),
-  {$match:{$or:[{'official.0':{$exists:true}},...(communityEnabled?[{'community.0':{$exists:true}}]:[])]}},
+  ...(selfService?[{$lookup:{from:'communityMembers',localField:'userId',foreignField:'userId',pipeline:[{$match:memberFilter},{$project:{_id:1}},{$limit:1}],as:'member'}}]:[]),
+  {$match:{$or:[{'official.0':{$exists:true}},...(communityEnabled?[{'community.0':{$exists:true}}]:[]),...(selfService?[{'member.0':{$exists:true}}]:[])]}},
   {$lookup:{from:'blocks',localField:'userId',foreignField:'blockedId',pipeline:[{$match:{blockerId:actorId}},{$project:{_id:1}},{$limit:1}],as:'blockedByMe'}},
   {$lookup:{from:'blocks',localField:'userId',foreignField:'blockerId',pipeline:[{$match:{blockedId:actorId}},{$project:{_id:1}},{$limit:1}],as:'blockedMe'}},
   {$match:{'blockedByMe.0':{$exists:false},'blockedMe.0':{$exists:false}}},
   {$limit:params.limit+1},{$project:{_id:0,profile:1}}
  ];
 }
-export function registerDirectory(app,{col,requireOnSite,communityEnabled}){
+export function registerDirectory(app,{col,requireOnSite,communityEnabled,selfService=false,memberFilter={status:'active'}}){
  // Process-local key: restart invalidates cursors, never grants access. No new live secret required.
  const key=randomBytes(32);
  const seal=(last,scope)=>{const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key,iv);cipher.setAAD(Buffer.from(scope));const encrypted=Buffer.concat([cipher.update(JSON.stringify({last,expires:Date.now()+15*60000})),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),encrypted]).toString('base64url')};
@@ -46,7 +47,7 @@ export function registerDirectory(app,{col,requireOnSite,communityEnabled}){
   const scope=JSON.stringify([actor.userId,actor.venue.venueId,params]);
   const last=req.query.cursor?open(req.query.cursor,scope):null;
   const source=directorySource(params);
-  let results;try{results=await col(source).aggregate(directoryPipeline({actorId:actor.userId,venueId:actor.venue.venueId,params,last,communityEnabled}),{hint:source==='profiles'?{discoverable:1,userId:1}:{venueId:1,userId:1,expiresAt:1},maxTimeMS:2000,allowDiskUse:false}).toArray()}catch(error){if(error.code===50)throw fail(503,'Directory search is busy. Narrow your filters or retry.');throw error}
+  let results;try{results=await col(source).aggregate(directoryPipeline({actorId:actor.userId,venueId:actor.venue.venueId,params,last,communityEnabled,selfService,memberFilter}),{hint:source==='profiles'?{discoverable:1,userId:1}:{venueId:1,userId:1,expiresAt:1},maxTimeMS:2000,allowDiskUse:false}).toArray()}catch(error){if(error.code===50)throw fail(503,'Directory search is busy. Narrow your filters or retry.');throw error}
   const more=results.length>params.limit,visible=results.slice(0,params.limit).map(r=>r.profile);
   return {attendees:visible.map(publicProfile),nextCursor:more?seal(visible.at(-1).userId,scope):null,kind:'same_venue_directory',note:'Approved, discoverable participants checked in at this venue; not a claim of GPS proximity'};
  });

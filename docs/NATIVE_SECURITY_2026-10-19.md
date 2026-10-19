@@ -1,5 +1,14 @@
 # Native dependency investigation — 19 October 2026
 
+Rechecked for the 0.3.1 community candidate: audit still reports 15 high findings.
+Registry now offers Expo 58.0.15. Its dependency metadata selects @expo/cli
+58.1.12, which still declares node-forge ^1.4.0 and
+@expo/code-signing-certificates ^0.0.7; @expo/metro-config 58.0.15 still uses
+@expo/metro ~58.0.0. Neither advisory lists a patched root version. The earlier
+"latest matches installed" observation below is historical, not current.
+No unsupported override, ineffective security certification or gate suppression
+was applied. Trusted locked builds and isolated tooling remain limited mitigations.
+
 Rechecked after adding SDK-compatible photo, notification and crypto modules through source `e212605`; the two advisory roots and 15-package count are unchanged. The release gate has not been suppressed.
 
 Release security remains **FAIL**. Fresh `npm --prefix mobile audit --json`

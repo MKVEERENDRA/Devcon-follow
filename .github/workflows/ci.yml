@@ -38,6 +38,7 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npm run test:browser
+          node scripts/browser-journey.mjs --community
           npm run test:browser:reliability
           npm run test:browser:parity
           npm run test:browser:install
@@ -61,6 +62,7 @@ jobs:
           name: browser-evidence
           path: |
             artifacts/browser/
+            artifacts/browser-community/
             artifacts/browser-reliability/
             artifacts/browser-parity/
             artifacts/install/
