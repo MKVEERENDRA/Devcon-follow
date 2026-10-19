@@ -38,7 +38,7 @@ test('durable push outbox retries, checks receipts, retires invalid devices and 
   calls.push({url,body:JSON.parse(options.body)});if(url.endsWith('/send')&&failSend){failSend=false;return {ok:false,status:429}}
   return {ok:true,json:async()=>({data:url.endsWith('/send')?{status:'ok',id:'sandbox-ticket'}:{'sandbox-ticket':{status:'error',details:{error:'DeviceNotRegistered'}}}})};
  }});
- const m={meetupId:'sandbox-meeting',requesterId:'alice',targetId:'bob',status:'accepted',startsAt:new Date(+at+3600000),expiresAt:new Date(+at+86400000)};await col('meetups').insertOne(m);await col('pushDevices').insertOne({_id:'sandbox-device',userId:'bob',token:'ExpoPushToken[sandbox_device_123]',expiresAt:new Date(+at+86400000)});
+ const m={meetupId:'sandbox-meeting',requesterId:'alice',targetId:'bob',status:'accepted',notificationPending:true,startsAt:new Date(+at+3600000),expiresAt:new Date(+at+86400000)};await col('meetups').insertOne(m);await col('pushDevices').insertOne({_id:'sandbox-device',userId:'bob',token:'ExpoPushToken[sandbox_device_123]',expiresAt:new Date(+at+86400000)});
  await service(false).tick();assert.equal(calls.length,0);
  await service().tick();assert.equal(calls.length,1);assert.equal(await col('pushDeliveries').countDocuments({state:'pending'}),1);
  at=new Date(+at+120000);await service().tick();assert.equal(calls.length,2);assert.equal(await col('pushDeliveries').countDocuments({state:'receipt'}),1);

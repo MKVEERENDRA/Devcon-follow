@@ -15,20 +15,21 @@ export function createMeetingNotifications({col,eligibleIds,isBlocked,notify,pus
       const otherId=userId===m.requesterId?m.targetId:m.requesterId;
       const add=async(type,deliverAt,until)=>{
         const _id=idFor(m.meetupId,userId,type);
-        const inserted=await col('meetingNotifications').updateOne({_id},{$setOnInsert:{userId,otherId,meetupId:m.meetupId,type,deliverAt,expiresAt:until,createdAt:at,readAt:null}},{upsert:true});
+        const inserted=await col('meetingNotifications').updateOne({_id},{$setOnInsert:{userId,otherId,meetupId:m.meetupId,type,deliverAt,expiresAt:until,createdAt:at,readAt:null,pushQueued:false}},{upsert:true});
         if(inserted.upsertedCount&&+deliverAt<=+at)notify(userId,'meetup:update',{});
       };
       await add(m.status,at,new Date(+at+7*DAY));
       if(m.status==='accepted')await add('reminder',new Date(Math.max(+at,+m.startsAt-300000)),new Date(+m.startsAt));
     }
-    await col('meetups').updateOne({meetupId:m.meetupId,status:m.status},{$set:{notificationSyncedStatus:m.status}});
+    await col('meetups').updateOne({meetupId:m.meetupId,status:m.status},{$set:{notificationSyncedStatus:m.status,notificationPending:false}});
   };
-  const reconcile=async()=>{
-    await col('meetups').updateMany({status:'pending',startsAt:{$lte:now()}},{$set:{status:'expired'}});
-    await col('meetups').updateMany({status:'accepted',startsAt:{$lte:new Date(+now()-1800000)}},{$set:{status:'elapsed'}});
+  const reconcile=async(userId)=>{
+    const participant=userId?{$or:[{requesterId:userId},{targetId:userId}]}:{};
+    await col('meetups').updateMany({...participant,status:'pending',startsAt:{$lte:now()}},{$set:{status:'expired',notificationPending:true}});
+    await col('meetups').updateMany({...participant,status:'accepted',startsAt:{$lte:new Date(+now()-1800000)}},{$set:{status:'elapsed',notificationPending:true}});
     // Recover a crash after cancellation/account erasure but before booking cleanup.
-    for(const booking of await col('meetingBookings').find({},{limit:100}).toArray()){const m=await col('meetups').findOne({meetupId:booking._id});if(!m||!['pending','accepted'].includes(m.status))await col('meetingBookings').deleteOne({_id:booking._id});}
-    const unsynced=await col('meetups').find({$expr:{$ne:['$status',{$ifNull:['$notificationSyncedStatus','']}]}},{limit:100}).toArray();
+    for(const booking of await col('meetingBookings').find(userId?{participants:userId}:{},{limit:100}).toArray()){const m=await col('meetups').findOne({meetupId:booking._id});if(!m||!['pending','accepted'].includes(m.status))await col('meetingBookings').deleteOne({_id:booking._id});}
+    const unsynced=await col('meetups').find(userId?{$and:[participant,{$or:[{notificationPending:true},{notificationSyncedStatus:{$exists:false}}]}]}:{notificationPending:true},{limit:100}).toArray();
     for(const m of unsynced)await sync(m);
   };
   const request=async(path,body)=>{
@@ -41,7 +42,7 @@ export function createMeetingNotifications({col,eligibleIds,isBlocked,notify,pus
     await reconcile();
     if(!pushEnabled)return; // No external traffic until separately configured and authorized.
     const at=now();
-    const due=await col('meetingNotifications').find({deliverAt:{$lte:at},expiresAt:{$gt:at},pushQueued:{$ne:true}},{limit:100}).toArray();
+    const due=await col('meetingNotifications').find({deliverAt:{$lte:at,$gte:new Date(+at-3600000)},expiresAt:{$gt:at},readAt:null,pushQueued:false},{limit:100}).toArray();
     for(const n of due){
       if(await valid(n))for(const device of await col('pushDevices').find({userId:n.userId,expiresAt:{$gt:at}},{limit:5}).toArray()){
         const _id=idFor(n._id,device._id);
@@ -76,7 +77,7 @@ export function createMeetingNotifications({col,eligibleIds,isBlocked,notify,pus
   };
   function routes(app,{requireUser,authenticate}){
     app.get('/v1/meeting-notifications',async req=>{
-      const actor=await requireUser(req);await reconcile();
+      const actor=await requireUser(req);await reconcile(actor.userId);
       const rows=await col('meetingNotifications').find({userId:actor.userId,deliverAt:{$lte:now()},expiresAt:{$gt:now()}},{limit:100}).sort({createdAt:-1}).toArray();const notifications=[];
       for(const n of rows)if(await valid(n))notifications.push({notificationId:n._id,meetupId:n.meetupId,type:n.type,createdAt:n.createdAt,readAt:n.readAt});
       return {notifications};
