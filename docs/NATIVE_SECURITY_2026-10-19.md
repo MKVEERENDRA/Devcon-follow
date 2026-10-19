@@ -1,5 +1,7 @@
 # Native dependency investigation — 19 October 2026
 
+Rechecked after adding SDK-compatible photo, notification and crypto modules through source `e212605`; the two advisory roots and 15-package count are unchanged. The release gate has not been suppressed.
+
 Release security remains **FAIL**. Fresh `npm --prefix mobile audit --json`
 reports 15 high, zero moderate and zero critical package findings. These are
 15 affected packages in the dependency graph, rooted in two distinct advisories;
@@ -31,8 +33,8 @@ evidence, not a permanent statement about upstream support.
 ## Build versus app runtime
 
 Fresh Android/iOS Hermes exports with source maps completed locally in
-`mobile/artifacts/v1-security/`. Android contains 992 source entries; iOS contains
-993. Neither source list contains `node_modules/braces/` or
+`mobile/artifacts/coordination-export/` for source `e212605`. Android contains 1,066 source entries; iOS contains
+1,065. Neither source list contains `node_modules/braces/` or
 `node_modules/node-forge/`. This supports the narrower observation that those npm
 implementations were not included in these two app JavaScript bundles.
 

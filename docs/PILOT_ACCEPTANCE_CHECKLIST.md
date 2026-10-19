@@ -56,6 +56,13 @@ credentials or raw attendee coordinates in the release report.
   /32s, retain TLS and the existing database/cluster-scoped account. Verify actual
   egress after restart and replacement, DB read/write, unique/TTL/geo indexes and
   recovery from DB unavailability. Do not rely on a single ping as write proof.
+- Reconcile the directory compound indexes from `src/indexes.js` without dropping
+  populated indexes. Review pending-invitation duplicates before adding the unique
+  partial constraint; inspect bookings and the new 30-day meeting retention.
+  Confirm replica cursor strategy and notification-worker recovery. Inspect filtered and unfiltered execution plans on staging
+  synthetic data; verify revoked/off-venue/blocked attendees are absent on every
+  page and direct profile requests. Choose sticky routing or a securely shared
+  cursor key before running multiple replicas; never expose a key in the client.
 - Deploy the selected existing Docker image to staging. Confirm liveness,
   readiness, configuration gates, unauthenticated 401 and restricted origins.
   Keep public registration off. Restrict test access separately; do not globally
@@ -95,15 +102,25 @@ resolution. Foreground return must not automatically create another 30 minutes.
    connected. A pending Stop must not become an automatic renewal.
 4. Request a meetup with a reason, public landmark and time; recipient accepts or
    declines. Test cancellation and stale-time actions. Meetup approval never grants GPS.
-5. Scan a profile QR, inspect the profile and explicitly follow/save. Scanning
+5. Miss a socket update and recover the persisted meeting alert; acknowledge it
+   explicitly. Test duplicate submit/lost response, overlapping acceptances,
+   cancellation/reproposal, expiry and reminder suppression. Device push requires
+   separate authorization, EAS project/APNs/FCM credentials and enhanced Expo push
+   security with a server-only token. Keep it off otherwise. Test denial, invalid
+   token retirement, retry/receipts, logout/offline deregistration limitations and
+   notification taps on a cold signed app. Generic pushes reveal no names/locations.
+6. Scan a profile QR, inspect the profile and explicitly follow/save. Scanning
    alone must not follow. One-way follow cannot chat; mutual follow can.
-6. Save private notes, reconnect/restart, leave the event and confirm retained
-   connections/chat. The other tester must never see the note. Unfollow deletes it.
-7. Test block, invitation revocation, logout and account deletion; verify negative
+7. Save private notes, reconnect/restart, leave the event and confirm retained
+   connections/chat. Renew an access token while a note contains an unsaved draft;
+   it must remain unchanged without a server write until Save. Exercise native
+   photo selection/cancellation/removal, social edits, role filters and pasted
+   profile links with camera permission denied. The other tester must never see the note. Unfollow deletes it.
+8. Test block, invitation revocation, logout and account deletion; verify negative
    reads/writes, expired GPS/BLE and actual removal in the authorized staging scope.
    Record no raw personal payloads in evidence. Stop and delete remain usable after
    access revocation.
-8. Screen-reader/large-text and keyboard checks: names, focus order, disabled/selected
+9. Screen-reader/large-text and keyboard checks: names, focus order, disabled/selected
    states, errors/retry, tab navigation, camera permission and understandable timers.
 
 ## 7. Decision

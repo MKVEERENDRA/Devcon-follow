@@ -1,3 +1,7 @@
+> Current attendee-flow continuation: [`891afe0`](https://github.com/MKVEERENDRA/Devcon-follow/commit/891afe0), including [`e212605`](https://github.com/MKVEERENDRA/Devcon-follow/commit/e212605), adds durable meeting updates, conflict/retry protection and cancel/reproposal. [Five-section end-to-end report](docs/END_TO_END_PRODUCT_REPORT_2026-10-19.md): **70/70 local tests**, three sandbox browser journeys; real device/push acceptance and deployments remain blocked/frozen.
+
+> Latest source continuation: [`791c906`](https://github.com/MKVEERENDRA/Devcon-follow/commit/791c906) and [`38eb754`](https://github.com/MKVEERENDRA/Devcon-follow/commit/38eb754) adds secure paginated discovery, refresh-safe private notes, native editing/QR parity and accessibility coverage. [Current evidence](docs/DIRECTORY_PARITY_EVIDENCE_2026-10-19.md) supersedes earlier counts: **67/67 local tests**, three sandbox browser journeys. Live testing and deployment remain prohibited.
+
 # Devcon Follow
 
 Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed and its last database-readiness check passed. Production is not deployed.**
@@ -23,6 +27,7 @@ npm --prefix mobile run typecheck
 npx playwright install chromium
 npm run test:browser
 npm run test:browser:reliability
+npm run test:browser:parity
 cd mobile
 npx expo install --check
 npx expo-doctor
