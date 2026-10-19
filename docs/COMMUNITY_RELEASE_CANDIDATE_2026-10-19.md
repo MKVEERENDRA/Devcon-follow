@@ -133,14 +133,45 @@ phones remain external dependencies. Expo API connectivity later recovered and
 the new Android candidate was accepted as build
 `6583ca87-7174-4907-8c8b-df10c38ceee9`, source
 `b96ab82229cea6ec37d4a0ab165f0f7927bfdcc4` (only documentation differs from the
-deployed application source). It was still queued at the latest check; no new
-APK download/signature/installation acceptance is claimed. The earlier 0.3.1
-build is superseded and must not be published as this source's artifact.
+deployed application source). The [EAS build](https://expo.dev/accounts/veerendravamshis-team/projects/veer/builds/6583ca87-7174-4907-8c8b-df10c38ceee9)
+finished. The actual Android 0.3.1/version-code 2 APK was downloaded through the
+authenticated EAS CLI, verified with Android SDK tools, and installed successfully
+in an isolated Android 15 emulator. Package: `com.proofofaudits.devconfollow`;
+size: 99,356,328 bytes; SHA-256:
+`8c5b0a1d52a4745de93a72198a681f2046ff16cb6fb9fbc8f54cb026ab821c99`.
+The release certificate matches the previous APK and prepared app-link association;
+the package is not debuggable and embeds the staging endpoint and standalone JS.
+
+Three activity cold starts reported `Status ok` and `LaunchState COLD`, but visual
+acceptance is **BLOCKED**: the emulator overlays “System UI isn't responding” on
+the rendered welcome screen. Rebooting and disabling Bluetooth did not clear the
+dialog. A crash buffer also records the emulator Bluetooth service aborting; this
+does not establish the cause of the System UI failure. The app process remains
+running. No clean visual launch, native login, physical-phone or BLE acceptance
+is claimed. Evidence and actual APK are local/ignored under
+`artifacts/android-preview/`, including `apk-verification-0.3.1-2.json` and
+`emulator-bt-off-0.3.1-2.png`. The earlier 0.3.1 build is superseded.
+
+Expo's existing unauthenticated internal-build-page access switch was confirmed
+OFF without changing it. However, an anonymous range GET to the artifact CDN
+returned 206 with APK ZIP bytes: possession of that raw URL permits download.
+The raw URL is withheld from source and public manifests; this is an unlisted
+artifact, not proof of authenticated CDN storage. No new public distribution or
+installer update was performed. The published installer still references 0.3.0;
+it must not be represented as delivering these fixes.
 
 The fresh iOS internal-distribution attempt reached EAS credential setup but
 failed because no suitable distribution credentials exist. No signed build ID
 was produced. EAS also requires an owner-reviewed encryption compliance setting
 before App Store Connect testing; no legal declaration was invented to bypass it.
+The owner confirmed they have no Apple Developer membership. EAS ad hoc and
+TestFlight distribution remain blocked on owner enrollment and signing setup;
+no membership purchase, enrollment or Apple terms acceptance is authorized.
+[Apple permits limited personal-device testing through Xcode's free Personal Team](https://developer.apple.com/help/account/basics/about-your-developer-account),
+with seven-day provisioning and device/app limits. That alternative needs an
+owner-controlled Mac, Xcode, personal Apple Account and iPhone; it has not been
+configured here. The passing unsigned simulator compilation remains compile
+evidence only.
 
 | Section | Genuine staging observation | Remaining acceptance |
 | --- | --- | --- |
