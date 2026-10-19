@@ -1,3 +1,10 @@
+> Rechecked 20 October 2026 (IST): supported SDK compatibility updates now resolve
+> Expo 58.0.16 and Expo CLI 58.1.13; Metro config remains 58.0.15. Expo Doctor
+> passes 20/20 and `expo install --check` passes. Fresh audit still reports 15 high,
+> zero moderate/critical findings. Primary advisories still list no patched braces
+> or node-forge version. The gate remains failing. See
+> [installer delivery evidence](INSTALLER_DELIVERY_2026-10-20.md).
+
 # Native dependency investigation — 19 October 2026
 
 Applied the supported Expo 58.0.15 patch for the 0.3.1 community candidate after

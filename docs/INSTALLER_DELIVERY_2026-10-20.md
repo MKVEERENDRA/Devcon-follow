@@ -79,4 +79,32 @@ waiver was applied. Broad public distribution remains blocked. See the
 - iOS distribution is excluded from this execution at the owner's request; preserve
   its code and compilation, with no membership purchase or signing attempt.
 
+## Emulator diagnosis
+
+A newly created isolated Android 15 AVD (1536 MiB RAM, 720×1280 software graphics,
+no saved snapshot) reproduced the System UI ANR on the launcher **before this app
+was installed**. The pre-install screenshot and `dumpsys window` both show
+`Application Not Responding: com.android.systemui`; Devcon Follow was absent.
+Disabling the modem simulator and Wi-Fi packet streamer did not resolve it.
+This establishes reproduction independent of the application, not the precise
+system cause. The earlier Bluetooth-service crash is not sufficient to prove
+that it causes this ANR.
+
+Installing the actual 0.3.1 APK then returned Success; its activity cold start
+returned Status ok / LaunchState COLD in 2.293 seconds and its process remained
+running. Visual acceptance still fails because of the system dialog. No dialog
+was dismissed, app failure hidden or physical-device result substituted.
+The isolated emulator was stopped afterward. Local evidence:
+`artifacts/android-preview/clean-20261020/` (pre-install screenshot/window dump,
+installation, cold start and post-launch screenshot).
+
+## Current source / CI
+
+- `4a7876f`: supported native SDK patch alignment, Android 0.3.2/build 3.
+- `92f7037`: restricted authenticated APK transport and repaired installer source.
+- `24933f4`: correct config/manifest caching and API routing; allow only the
+  configured Railway HTTPS/WSS socket origin, including polling fallback.
+- [CI test-build PASS at 92f7037](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39305015460), with native-security intentionally FAIL.
+- Native compile and EAS 0.3.2 results are still pending at this record.
+
 Deployment and candidate-build results will be appended after actual verification.
