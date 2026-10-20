@@ -170,3 +170,37 @@ attendee record, billing or Proof of Audits change is part of this continuation.
 5. Obtain consolidated production/public-distribution approval before creating
    a public release, connecting the public site to an approved production API or
    enabling public enrollment. This staging APK cannot be relabeled production.
+
+## Subsequent production preparation — source only
+
+`ddb1d89` adds an explicit **Save verified APK** fallback after the private
+response passes MIME, size and SHA-256 checks. It reuses the same checked blob
+without another API request or credential in its URL, expires after two minutes,
+and revokes it on replacement, account/authentication change or unmount. This
+addresses browsers that do not complete an automatic asynchronous save; it does
+not claim that requesting a save means the OS installed the app.
+
+Local verification passed: web build, syntax, sandbox PKCE download, fallback
+save with identical bytes/no extra API fetch, expiry and blob revocation, HTML
+and tamper rejection, axe and large text. The same download/fallback test also
+passed with the actual signed 0.3.3/build 4 binary. These remain sandbox transport
+tests, not new genuine-provider/device acceptance. The production/source changes
+have **not** been deployed; the running staging image/source remain recorded
+above. No new APK is required for this web-only fix.
+
+Auth0 management authorization was diagnosed without printing credentials:
+Codex already has an enabled global Auth0 MCP entry, and the keychain domain
+matches the existing Devcon tenant. Its saved management token expired at
+2026-10-19T01:18:50.117Z and **no refresh token is present**. A dashboard sign-in
+does not renew this separate MCP credential. No new admin token, permissions,
+client or Google secret was created. Do not ask the owner to repeat dashboard
+login as a presumed repair for this condition. App SSO and this management
+authorization are separate; the genuine app SSO result above remains valid.
+
+Fresh audit still reports 15 high/zero critical findings under the same two
+upstream advisories, neither listing a patched version. The existing production
+Railway environment was inspected read-only: the service remains staged-create,
+with seven old pending changes and no running deployment. Those changes were
+not applied blindly. Production-owned Google configuration, durable restricted
+connectivity and physical acceptance remain unresolved. No paid upgrade or
+public release/security waiver is implied by this preparation.
