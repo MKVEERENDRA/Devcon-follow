@@ -16,6 +16,14 @@ export function inspectSourceMap(map) {
   return {sourceCount:sources.length+nested.reduce((n,s)=>n+s.sourceCount,0),affectedPackages:[...new Set([...exposed,...nested.flatMap(s=>s.affectedPackages)])].sort()};
 }
 
+export function inspectMatchingBundle(embedded,buildBundle,map){
+  const embeddedBundleSha256=createHash('sha256').update(embedded).digest('hex');
+  if(embeddedBundleSha256!==createHash('sha256').update(buildBundle).digest('hex'))throw Error('Build bundle differs from APK bytes; this source map cannot certify the APK inventory');
+  const inventory=inspectSourceMap(map);
+  if(!inventory.sourceCount)throw Error('Empty source inventory');
+  return {...inventory,embeddedBundleSha256};
+}
+
 export async function bundleExposure(directory) {
   const maps=[];
   async function walk(path) {
