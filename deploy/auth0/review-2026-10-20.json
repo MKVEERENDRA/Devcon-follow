@@ -1,0 +1,62 @@
+{
+  "reviewedOn": "2026-10-20",
+  "timezone": "Asia/Calcutta",
+  "method": "Read-only review of the existing tenant in the owner's signed-in Chrome session",
+  "tenant": "dev-xs1kh1yit6q5g3ph",
+  "issuer": "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/",
+  "changesApplied": false,
+  "signingKeysRotated": false,
+  "native": {
+    "clientId": "rpuStYOg5xnK645nPJvn7R8JUYtkBljZ",
+    "type": "native",
+    "callbacks": ["devconfollow://callback"],
+    "logoutUrls": ["devconfollow://callback"],
+    "authorizationCodeGrant": true,
+    "refreshTokenGrant": true,
+    "implicitGrant": false,
+    "passwordGrant": false,
+    "refreshTokenRotation": true,
+    "refreshTokenIdleLifetimeSeconds": 86400,
+    "refreshTokenMaximumLifetimeSeconds": 604800,
+    "refreshTokenOverlapSeconds": 0,
+    "idTokenLifetimeSeconds": 600,
+    "oidcConformant": true,
+    "jwtAlgorithm": "RS256",
+    "unverifiableCallbackConfirmation": true,
+    "physicalAcceptance": "unverified"
+  },
+  "web": {
+    "clientId": "gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9",
+    "type": "single_page_application",
+    "callbacks": ["https://devcon-follow.vercel.app/", "http://localhost:4173/", "https://devcon-follow-api-staging.up.railway.app/"],
+    "logoutUrls": ["https://devcon-follow.vercel.app/", "http://localhost:4173/", "https://devcon-follow-api-staging.up.railway.app/"],
+    "webOrigins": ["https://devcon-follow.vercel.app", "http://localhost:4173", "https://devcon-follow-api-staging.up.railway.app"],
+    "refreshTokenRotation": true,
+    "refreshTokenIdleLifetimeSeconds": 86400,
+    "refreshTokenMaximumLifetimeSeconds": 604800,
+    "idTokenLifetimeSeconds": 600,
+    "crossOriginAuthentication": false
+  },
+  "google": {
+    "connectionName": "google-oauth2",
+    "connectionId": "con_akqhT7gU1lzhmxCd",
+    "enabledForExistingWebClient": true,
+    "enabledForExistingNativeClient": true,
+    "auth0DevelopmentKeys": true,
+    "productionReady": false,
+    "ownedCredentialSetup": {
+      "status": "pending correct owner Google Cloud account sign-in",
+      "proposedClientType": "web_application",
+      "proposedJavascriptOrigins": ["https://dev-xs1kh1yit6q5g3ph.us.auth0.com"],
+      "proposedRedirectUris": ["https://dev-xs1kh1yit6q5g3ph.us.auth0.com/login/callback"],
+      "proposedScopes": ["openid", "email", "profile"],
+      "created": false,
+      "billingAuthorized": false
+    }
+  },
+  "documentation": [
+    "https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google",
+    "https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/devkeys"
+  ],
+  "limitations": "Configuration review is not real native login, Google production acceptance, a security waiver or public release approval. No credentials are recorded."
+}

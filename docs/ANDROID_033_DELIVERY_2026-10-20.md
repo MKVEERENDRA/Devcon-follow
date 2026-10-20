@@ -204,3 +204,39 @@ with seven old pending changes and no running deployment. Those changes were
 not applied blindly. Production-owned Google configuration, durable restricted
 connectivity and physical acceptance remain unresolved. No paid upgrade or
 public release/security waiver is implied by this preparation.
+
+## Signed-in Chrome Auth0 review
+
+The owner supplied a completed Auth0 dashboard. Browser inventory located the
+correct **signed-in Chrome session** for the existing tenant. The separate
+in-app browser was still on a login page; the expired MCP token does not prevent
+using the authorized Chrome dashboard. Do not request another Auth0 login while
+this Chrome session is usable.
+
+Read-only live review confirms the existing native callback/logout scheme,
+authorization-code and refresh grants, RS256/OIDC mode, refresh rotation with
+24-hour idle/7-day maximum lifetime, and disabled implicit/password grants. Web
+callback/logout/origin allowlists already include the public domain and staging,
+with no wildcard; web refresh rotation is enabled. Google is already enabled for
+both existing clients. **No setting or signing key was changed.** Public-only
+configuration evidence: `deploy/auth0/review-2026-10-20.json`.
+
+The Google connection still explicitly reports Auth0 development keys, with no
+owner client ID configured. Auth0's official Google setup requires a Google
+project, owned OAuth web client, the tenant's `/login/callback`, and testing of
+the configured connection before production. The exact proposed origins,
+redirect and minimal sign-in scopes are recorded in the review JSON, not applied.
+
+Google Cloud initially used the wrong signed-in Google account and displayed a
+two-step-verification requirement. The owner corrected the intended account;
+**do not require 2SV changes to the other account**. The correct-owner Google
+sign-in page was opened. Chrome then reported an extension popup blocking
+automation. The owner was handed sign-in and popup completion. No Google project,
+OAuth credential, billing trial, paid upgrade or account-security change was
+created or accepted. Credentials and recovery codes must stay out of chat.
+
+Installer fallback code `ddb1d89` now also has a passing full [test-build CI job](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39455001018/job/118739438997).
+The independent [native security job](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39455001018/job/118739439179)
+remains failing, unchanged. The source has not been deployed with this web-only
+installer improvement; the existing staging service was not redeployed during
+account inspection.
