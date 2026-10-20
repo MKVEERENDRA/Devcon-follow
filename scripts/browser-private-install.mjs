@@ -21,10 +21,19 @@ try{
  await page.goto(app.origin+'/install.html');await page.getByRole('button',{name:'Sign in for private Android testing'}).click();
  await page.getByLabel('Email').fill('alice@example.test');await page.getByLabel('Password').fill('sandbox-alice');await page.getByRole('button',{name:'Sign in',exact:true}).click();
  const download=page.getByRole('button',{name:'Download private Android APK',exact:true});await download.waitFor();assert.equal(new URL(page.url()).pathname,'/install.html');
+ await page.clock.install();
  const saved=page.waitForEvent('download',{timeout:90000});await download.click();const received=await saved;
  assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
+ const saveVerified=page.getByRole('link',{name:'Save verified APK',exact:true});await saveVerified.waitFor();
+ const verifiedUrl=await saveVerified.getAttribute('href');assert(verifiedUrl.startsWith('blob:'),'the fallback must not expose an API credential or a public binary URL');
+ let repeatedFetches=0;const countFetch=r=>{if(new URL(r.url()).pathname==='/v1/releases/android/apk')repeatedFetches++};page.on('request',countFetch);
+ const fallbackSaved=page.waitForEvent('download',{timeout:90000});await saveVerified.click();const fallback=await fallbackSaved;assert.deepEqual(await readFile(await fallback.path()),bytes);assert.equal(repeatedFetches,0,'explicit save reuses already verified bytes without another authenticated fetch');page.off('request',countFetch);
+ await page.clock.runFor(120001);assert.equal(await saveVerified.count(),0,'expire the in-memory save link');
+ assert.equal(await page.evaluate(url=>fetch(url).then(()=>true,()=>false),verifiedUrl),false,'expired blob URL is revoked');await page.clock.resume();
  if(!actualDirectory){await page.route('**/v1/releases/android/apk',r=>r.fulfill({status:200,contentType:'text/html',body:'<html>Login required</html>'}));await download.click();await page.getByRole('alert').filter({hasText:'The server did not return an APK.'}).waitFor();
+ assert.equal(await saveVerified.count(),0,'never offer an HTML response as a verified APK');
  await page.unroute('**/v1/releases/android/apk');await page.route('**/v1/releases/android/apk',r=>r.fulfill({status:200,contentType:'application/vnd.android.package-archive',body:Buffer.alloc(bytes.length,1)}));await download.click();await page.getByRole('alert').filter({hasText:'Download checksum did not match.'}).waitFor();
+ assert.equal(await saveVerified.count(),0,'never offer tampered bytes as a verified APK');
  await page.unroute('**/v1/releases/android/apk');await page.reload();await download.waitFor()}
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[]);
  await page.evaluate(()=>document.documentElement.style.fontSize='200%');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
