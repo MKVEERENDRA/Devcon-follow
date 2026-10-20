@@ -97,3 +97,15 @@ second deployment, broad range or extra SSH key was needed. This is temporary
 staging connectivity. Current budget is ₹0; the paid designs above are historical
 research, not authorized purchases. Durable fixed egress remains blocked on the
 current hosting plan; no free fixed-egress host has been supplied or verified.
+
+## Android 0.3.3 deployment recovery
+
+Deployment `490faa38-809a-4f21-8da7-0b5cf8972168`, application source
+`358e86752aa0e6f8cb32f92e83d6db31356a029c`, observed `152.55.182.15`.
+The first access-list attempt reported an unexpected error and independent
+readback confirmed no entry. The owner then added exactly `152.55.182.15/32`
+directly. Subsequent Atlas readback confirms six entries, preserving the five
+previous entries; the running service recovered to readiness 200 without another
+deployment or database reset. The agent made no Atlas mutation. Release readiness
+remains 503 because administrator/approved venue/landmarks are absent. This does
+not establish durable fixed egress or production acceptance.

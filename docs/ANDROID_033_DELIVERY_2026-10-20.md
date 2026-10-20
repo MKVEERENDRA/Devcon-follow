@@ -107,24 +107,49 @@ Tracked source was isolated with `git archive`; only verified binary/metadata
 were added to `private-release/` outside the public root. No environment file,
 operator configuration, source map or build-artifact URL was uploaded with it.
 
-The runtime observed **152.55.182.15** as its outbound IP. Atlas read-only
-inspection confirms it is absent from the existing five-entry allowlist. Liveness
-returns 200; database readiness, client config and protected routes return
-fail-closed 503 during initialization. One precise new `/32` approval is pending;
-earlier IP-specific approvals do not cover it. No Atlas change, database reset,
-credential rotation or repeated deployment was attempted to evade this block.
+The runtime observed **152.55.182.15** as its outbound IP. Its initial absence
+from Atlas blocked database readiness. The owner subsequently reported adding
+only `152.55.182.15/32`; independent Atlas readback confirms six entries with all
+five previous entries preserved. The same running service recovered automatically,
+without a redeploy, database reset or credential change. The agent made no Atlas
+mutation.
+
+Post-recovery checks:
+
+| Endpoint | Actual result |
+| --- | --- |
+| `/health/live` | PASS 200 |
+| `/health/ready` | PASS 200; database ready, official ticket verifier absent |
+| `/health/release` | BLOCKED 503; auth/access true, administrator/approved venue/landmark false |
+| `/client-config` | PASS 200 JSON, no-store; authReady=true, communitySelfService=true, ticketReady=false |
+| `/v1/me` without authentication | PASS 401 JSON, no-store/private |
+| `/v1/releases/android` without authentication | PASS 401 JSON, no-store/private |
+| `/v1/releases/android/apk` without authentication | PASS 401 JSON, no-store/private |
+
+The existing genuine owner browser session successfully retrieved candidate
+metadata and displayed **0.3.3/build 4** after pressing Retry. Clicking Download
+entered “Downloading and checking APK…” and returned to the normal button without
+an error. Source checks response MIME, exact size and SHA-256 before initiating
+its blob-file save. This is live authenticated UI/client-integrity evidence;
+no token or cookie was exported. The browser download-event capture timed out,
+and no newly saved file was available in the host Downloads directory. Therefore
+an **independent filesystem checksum of this live browser download remains
+unverified**. Do not extend the separate exact local APK and sandbox-byte checks
+into a claim that such a live file was independently recovered.
+Screenshot: `artifacts/install/live-private-033-recovered.png`.
 
 The public installer remains
 https://devcon-follow.vercel.app/install.html and links to the existing private
-https://devcon-follow-api-staging.up.railway.app/install.html . Its live download
-must be reverified after database recovery. No new public website publication,
+https://devcon-follow-api-staging.up.railway.app/install.html . The private
+installer now serves the 0.3.3 candidate to the existing approved owner session.
+No new public website publication,
 GitHub Release/tag, production API, public enrollment, Auth0 setting, venue,
 attendee record, billing or Proof of Audits change is part of this continuation.
 
 ## Remaining release requirements
 
-1. Restore restricted staging connectivity for the newly observed IP; durable
-   fixed egress remains unavailable within the current zero-cost setup. Do not
+1. Staging connectivity is restored, but durable fixed egress remains
+   unavailable within the current zero-cost setup. Do not
    open broad ranges. See [network runbook](RESTRICTED_NETWORKING.md).
 2. Finish existing Auth0 administration review after owner login and provision
    owner-controlled Google credentials; preserve genuine owner web-login evidence.
