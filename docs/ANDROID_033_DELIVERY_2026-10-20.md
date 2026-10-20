@@ -88,6 +88,16 @@ journey. The emulator was stopped after recording evidence.
 
 Real Auth0 history is unchanged: one genuine owner **web** sign-in, profile
 persistence, session renewal and the earlier 0.3.2 private binary download passed.
+Subsequently, after database recovery, the existing owner web account restored
+through the real Auth0 SSO redirect. The saved profile remained present on Me,
+with Nearby hidden and profile visibility hidden. No profile mutation or
+location start was performed. All five sections loaded: off-site Discover showed
+no profiles, Nearby sharing stayed disabled, Meetups completed loading with no
+pending items, Connections showed no follows, and Me showed the saved profile.
+These are current owner read/empty-state checks, not two-person functionality.
+This is genuine one-owner web/session-persistence
+evidence against the new staging deployment, not native or two-person acceptance.
+
 No new Auth0 credentials were entered by the agent. The current admin tab is
 still awaiting owner login; native Google/email/rotation/account-switch flows
 have no new genuine-provider acceptance evidence. Official ticket verification
