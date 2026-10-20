@@ -1,6 +1,8 @@
 # Devcon Follow
 
-Current production-delivery work: [20 October report](docs/PRODUCTION_DELIVERY_2026-10-20.md), [security decision packet](docs/RELEASE_SECURITY_DECISION_2026-10-20.md), and [verified private APK + published installer](docs/INSTALLER_DELIVERY_2026-10-20.md). Latest local baseline: **85/85 tests**, web build, native types and both platform exports pass. Public registration and production rollout remain blocked pending the explicit release decision and real acceptance. Historical freeze notes below are superseded by the current execution brief; they do not prohibit authorized source/local work.
+Latest delivery: [Android 0.3.3 / exact APK evidence / staging status](docs/ANDROID_033_DELIVERY_2026-10-20.md). Current CI: **86/86 tests**, web/container and sandbox journeys PASS; Android/iOS compilation PASS. Native security gate remains FAIL. Authorized staging upload is separate from unapproved production/public distribution.
+
+Previous production-delivery work: [20 October report](docs/PRODUCTION_DELIVERY_2026-10-20.md), [security decision packet](docs/RELEASE_SECURITY_DECISION_2026-10-20.md), and [verified private APK + published installer](docs/INSTALLER_DELIVERY_2026-10-20.md). Previous local baseline: **85/85 tests**, web build, native types and both platform exports pass. Public registration and production rollout remain blocked pending the explicit release decision and real acceptance. Historical freeze notes below are superseded by the current execution brief; they do not prohibit authorized source/local work.
 
 Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed and its last database-readiness check passed. Production is not deployed.**
 

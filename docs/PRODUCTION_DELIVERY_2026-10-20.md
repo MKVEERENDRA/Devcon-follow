@@ -1,5 +1,7 @@
 # Public product delivery — 20 October 2026 (IST)
 
+> Subsequent authorized staging continuation: [Android 0.3.3 delivery](ANDROID_033_DELIVERY_2026-10-20.md) supersedes this report’s old APK, deployment and test-count facts. Production restrictions remain in place.
+
 ## Outcome
 
 Production delivery is **BLOCKED**, not complete. The existing five-section

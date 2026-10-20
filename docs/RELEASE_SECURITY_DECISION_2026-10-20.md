@@ -90,3 +90,14 @@ release action. No real record or manifest entry has been created here.
 Audited dependency snapshot SHA-256:
 `83750c480f63b7b23ab54c1fd0f2b4f053abface9b6698e9337d158836485f82`.
 Local read-only evidence: `artifacts/install/native-audit-20261020.json`.
+
+## Subsequent exact APK correlation
+
+Android 0.3.3/build 4 now has matching same-build EAS bundle/source-map evidence.
+The bundle is byte-identical to the SDK-verified signed APK, with 1,069 mapped
+sources and neither known npm advisory implementation present. Exact hashes,
+source and scope are in [0.3.3 delivery](ANDROID_033_DELIVERY_2026-10-20.md).
+This closes the earlier export/APK correlation gap for **this candidate only**.
+It does not audit native libraries or repair the affected build/certificate
+toolchain; the independent native-security gate remains failing. No actual
+release-security decision or public distribution approval has been recorded.
