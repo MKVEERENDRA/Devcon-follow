@@ -90,7 +90,7 @@ source fix; it needs the next explicitly versioned build.**
 | Check | Status | Evidence |
 | --- | --- | --- |
 | Full regression/integration suite | PASS | 85 tests, zero failures/skips; disposable MongoDB and sandbox OIDC |
-| Node syntax, web build, native TypeScript | PASS | ``/tmp/devcon-public-final-web.log` and native TypeScript command output` |
+| Node syntax, web build, native TypeScript | PASS | `/tmp/devcon-public-final-web.log` and native TypeScript command output |
 | Android + iOS Hermes export with source maps | PASS | `mobile/artifacts/production-security/`; `/tmp/devcon-native-restore-export.log` |
 | Expo preview configuration | PASS | Existing version/build/project preserved |
 | Production pointed at staging | PASS | Actual `expo config` command refuses it before build |
@@ -147,3 +147,20 @@ by copying staging records. No production rollback is claimed tested when no
 production deployment exists.
 
 The security decision is [prepared separately](RELEASE_SECURITY_DECISION_2026-10-20.md).
+
+## Pushed continuation
+
+- `b5ae69c`: native cold-start restoration and rotated credential persistence.
+- `06f8a2bc872bd19f7ec2803ad3bce9865db6358f`: bounded installer security
+  disposition, production endpoint metadata checks and this evidence packet.
+- [Current test/build CI](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39374438865)
+  and [current native compilation](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39374438892)
+  were running at this evidence update; neither is reported as passed.
+- Earlier [4b8072c test/build PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39373148086/job/118465263867)
+  and [Android/iOS compilation PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39373148056)
+  are preserved as distinct dated results. The native-security job remains red.
+
+Latest local full-suite log: `/tmp/devcon-native-restore-full-tests.log` (85/85).
+The targeted installer browser check also passes current decision/expiry cases,
+responsive layouts, enlarged text, retry and axe checks. Its risk decision is
+clearly synthetic and is never downloaded or published as a real APK.
