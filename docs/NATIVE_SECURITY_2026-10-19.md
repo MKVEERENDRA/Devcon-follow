@@ -1,3 +1,5 @@
+> Current continuation: [release-security decision packet](RELEASE_SECURITY_DECISION_2026-10-20.md) and [production delivery](PRODUCTION_DELIVERY_2026-10-20.md). The high gate remains red. A bounded owner decision can now be represented honestly by the installer; no real decision or public release has been created. Fresh exported-bundle inventories do not certify the different embedded APK bundle.
+
 > Rechecked 20 October 2026 (IST): supported SDK compatibility updates now resolve
 > Expo 58.0.16 and Expo CLI 58.1.13; Metro config remains 58.0.15. Expo Doctor
 > passes 20/20 and `expo install --check` passes. Fresh audit still reports 15 high,

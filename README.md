@@ -1,16 +1,14 @@
-> Current attendee-flow continuation: [`891afe0`](https://github.com/MKVEERENDRA/Devcon-follow/commit/891afe0), including [`e212605`](https://github.com/MKVEERENDRA/Devcon-follow/commit/e212605), adds durable meeting updates, conflict/retry protection and cancel/reproposal. [Five-section end-to-end report](docs/END_TO_END_PRODUCT_REPORT_2026-10-19.md): **70/70 local tests**, three sandbox browser journeys; real device/push acceptance and deployments remain blocked/frozen.
-
-> Latest source continuation: [`791c906`](https://github.com/MKVEERENDRA/Devcon-follow/commit/791c906) and [`38eb754`](https://github.com/MKVEERENDRA/Devcon-follow/commit/38eb754) adds secure paginated discovery, refresh-safe private notes, native editing/QR parity and accessibility coverage. [Current evidence](docs/DIRECTORY_PARITY_EVIDENCE_2026-10-19.md) supersedes earlier counts: **67/67 local tests**, three sandbox browser journeys. Live testing and deployment remain prohibited.
-
 # Devcon Follow
+
+Current production-delivery work: [20 October report](docs/PRODUCTION_DELIVERY_2026-10-20.md), [security decision packet](docs/RELEASE_SECURITY_DECISION_2026-10-20.md), and [verified private APK + published installer](docs/INSTALLER_DELIVERY_2026-10-20.md). Latest local baseline: **85/85 tests**, web build, native types and both platform exports pass. Public registration and production rollout remain blocked pending the explicit release decision and real acceptance. Historical freeze notes below are superseded by the current execution brief; they do not prohibit authorized source/local work.
 
 Private conference networking: **Discover / Nearby / Meetups / Connections / Me**. This is an existing application restored from the supplied project ZIP, with working local integration and browser journeys. **The public Vercel site is a static preview with registration disabled; the staging container is deployed and its last database-readiness check passed. Production is not deployed.**
 
 The web and API run from one origin. The Expo client contains foreground GPS and native Bluetooth source. No public posts, feeds or likes are exposed. Basic community access does not require a ticket or invitation when the explicitly approved self-service policy is enabled. It never claims official Devcon ticket ownership or event admission.
 
-Current product/build and release limits: [19 October update](docs/PRODUCT_BUILD_2026-10-19.md). Live-app testing is stopped at the owner’s request; local verification uses disposable data.
+Historical product/build limits: [19 October update](docs/PRODUCT_BUILD_2026-10-19.md). Local verification uses disposable data. Current authorized work and remaining live-acceptance limits are recorded in the 20 October report.
 
-Latest reliability work: [v1 evidence](docs/V1_RELIABILITY_EVIDENCE_2026-10-19.md), [five-screen audit](docs/FIVE_SCREEN_AUDIT_2026-10-19.md), [native security investigation](docs/NATIVE_SECURITY_2026-10-19.md), and [owner acceptance checklist](docs/PILOT_ACCEPTANCE_CHECKLIST.md). Live-app acceptance and deployment remain frozen.
+Latest reliability work: [v1 evidence](docs/V1_RELIABILITY_EVIDENCE_2026-10-19.md), [five-screen audit](docs/FIVE_SCREEN_AUDIT_2026-10-19.md), [native security investigation](docs/NATIVE_SECURITY_2026-10-19.md), and [owner acceptance checklist](docs/PILOT_ACCEPTANCE_CHECKLIST.md). Public rollout still requires the consolidated approval in the current execution brief.
 
 ## Run and verify
 
