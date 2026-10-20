@@ -2,8 +2,11 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {resolve,basename} from 'node:path';
+import buildConfig from '../mobile/build-config.cjs';
 const args=Object.fromEntries(process.argv.slice(2).map((value,i,all)=>value.startsWith('--')?[value.slice(2),all[i+1]]:null).filter(Boolean));
 if(!args.apk)throw Error('Usage: node scripts/verify-android-apk.mjs --apk FILE [--build-id ID] [--output JSON]');
+// Explicit expected release endpoint; default preserves private preview checks.
+const apiBaseUrl=buildConfig.nativeApiOrigin(args['api-origin']||'https://devcon-follow-api-staging.up.railway.app');
 const apk=resolve(args.apk),bytes=await readFile(apk);
 if(bytes.length<10000||bytes[0]!==80||bytes[1]!==75)throw Error('Not a downloaded APK ZIP');
 const run=(tool,values)=>execFileSync(tool,values,{encoding:'utf8',maxBuffer:20*1024*1024});
@@ -23,7 +26,7 @@ if(version!==config.version||versionCode!==config.android.versionCode)throw Erro
 const entries=run('unzip',['-Z1',apk]);
 if(!entries.split('\n').includes('assets/index.android.bundle'))throw Error('No standalone embedded JavaScript bundle');
 const bundle=execFileSync('unzip',['-p',apk,'assets/index.android.bundle'],{maxBuffer:50*1024*1024});
-const apiBaseUrl='https://devcon-follow-api-staging.up.railway.app';
-if(!bundle.includes(Buffer.from(apiBaseUrl)))throw Error('Staging API URL not found in embedded bundle');
+if(!bundle.includes(Buffer.from(apiBaseUrl)))throw Error('Expected API URL not found in embedded bundle');
+if(args['api-origin']&&apiBaseUrl!=='https://devcon-follow-api-staging.up.railway.app'&&bundle.includes(Buffer.from('https://devcon-follow-api-staging.up.railway.app')))throw Error('Production candidate still contains the staging API endpoint');
 const evidence={kind:'apk',filename:basename(apk),packageId,version,versionCode,buildId:args['build-id']||null,sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:certificate,sizeBytes:bytes.length,apiBaseUrl,standaloneBundle:true,debuggable:false,signatureVerified:true,appLinkCertificateMatch:true,verifiedAt:new Date().toISOString(),deviceInstallation:'unverified',nativeSecurity:'Not assessed by package verifier; consult the current native audit gate'};
 const output=resolve(args.output||'artifacts/android-preview/apk-verification.json');await mkdir(resolve(output,'..'),{recursive:true});await writeFile(output,JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence,null,2));

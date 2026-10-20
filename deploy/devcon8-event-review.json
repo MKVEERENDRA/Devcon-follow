@@ -1,0 +1,24 @@
+{
+  "eventId": "devcon8-mumbai-2026",
+  "name": "Devcon 8 India",
+  "timezone": "Asia/Kolkata",
+  "dates": {
+    "start": "2026-11-03",
+    "endInclusive": "2026-11-06"
+  },
+  "venue": {
+    "name": "JIO World Center",
+    "address": "G Block, Bandra Kurla Complex (BKC), Mumbai, India"
+  },
+  "sources": [
+    "https://devcon.org/en/",
+    "https://blog.ethereum.org/2025/12/23/devcon-mumbai"
+  ],
+  "checkedOn": "2026-10-20",
+  "enabled": false,
+  "discoveryGeometry": null,
+  "approvedDiscoveryWindows": [],
+  "approvedLandmarks": [],
+  "reviewStatus": "BLOCKED: actual geospatial boundaries, daily access windows and public meeting landmarks need authorized review; this reference file is not an admin venue payload",
+  "officialTicketVerification": false
+}

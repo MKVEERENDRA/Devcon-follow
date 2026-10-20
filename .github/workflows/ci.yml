@@ -7,9 +7,12 @@ permissions:
 jobs:
   test-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: npm
@@ -45,7 +48,9 @@ jobs:
           npm run test:browser:private-install
       - name: Export native JavaScript bundles
         working-directory: mobile
-        run: npx expo export --platform android --platform ios
+        run: npx expo export --platform android --platform ios --source-maps
+      - name: Inventory advisory implementations in exported JavaScript
+        run: node scripts/native-bundle-exposure.mjs mobile/dist artifacts/install/native-bundle-exposure.json
       - name: Verify Bluetooth autolinking
         working-directory: mobile
         run: |
@@ -57,7 +62,7 @@ jobs:
           npm --prefix web audit --audit-level=high
       - name: Build deployment container
         run: docker build -t devcon-follow:test .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: browser-evidence
@@ -69,9 +74,12 @@ jobs:
             artifacts/install/
   native-security:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
       - run: npm ci --prefix mobile --no-audit --no-fund
