@@ -17,14 +17,22 @@
       "developmentClient": false,
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://devcon-follow-api-staging.up.railway.app"
-      }
+      },
+      "buildArtifactPaths": [
+        "android/app/build/generated/assets/react/release/index.android.bundle",
+        "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+      ]
     },
     "production": {
       "environment": "production",
       "developmentClient": false,
       "android": {
         "buildType": "apk"
-      }
+      },
+      "buildArtifactPaths": [
+        "android/app/build/generated/assets/react/release/index.android.bundle",
+        "android/app/build/generated/sourcemaps/react/release/index.android.bundle.map"
+      ]
     }
   }
 }
