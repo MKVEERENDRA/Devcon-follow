@@ -42,6 +42,7 @@ jobs:
           npx playwright install --with-deps chromium
           npm run test:browser
           node scripts/browser-journey.mjs --community
+          node scripts/browser-qr-login.mjs
           npm run test:browser:reliability
           npm run test:browser:parity
           npm run test:browser:install
