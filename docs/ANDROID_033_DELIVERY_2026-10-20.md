@@ -240,3 +240,16 @@ The independent [native security job](https://github.com/MKVEERENDRA/Devcon-foll
 remains failing, unchanged. The source has not been deployed with this web-only
 installer improvement; the existing staging service was not redeployed during
 account inspection.
+
+The owner subsequently reported correct-account Google sign-in completed. The
+original temporary tab was no longer available after the browser interruption.
+The supported Chrome DOM reader recovered access, but the only connected profile
+still shows the other Google account, with no owner account in its account menu.
+Only that profile is exposed by browser inventory. The next handoff is to
+**connect/share the already signed-in owner Chrome profile/tab**, not repeat
+Google login, change the other account's MFA, or repeat Auth0 login. No Google
+credential/project has been created or copied. Staging readiness remains 200.
+
+The Auth0 review commit `b63fdd83e13a687f868662feab5c5bc16a041f20` was pushed
+successfully with the existing owner SSH key on port 22 after port 443 timed out.
+No GitHub account or credential change was needed.

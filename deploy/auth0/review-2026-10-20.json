@@ -9,8 +9,12 @@
   "native": {
     "clientId": "rpuStYOg5xnK645nPJvn7R8JUYtkBljZ",
     "type": "native",
-    "callbacks": ["devconfollow://callback"],
-    "logoutUrls": ["devconfollow://callback"],
+    "callbacks": [
+      "devconfollow://callback"
+    ],
+    "logoutUrls": [
+      "devconfollow://callback"
+    ],
     "authorizationCodeGrant": true,
     "refreshTokenGrant": true,
     "implicitGrant": false,
@@ -28,9 +32,21 @@
   "web": {
     "clientId": "gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9",
     "type": "single_page_application",
-    "callbacks": ["https://devcon-follow.vercel.app/", "http://localhost:4173/", "https://devcon-follow-api-staging.up.railway.app/"],
-    "logoutUrls": ["https://devcon-follow.vercel.app/", "http://localhost:4173/", "https://devcon-follow-api-staging.up.railway.app/"],
-    "webOrigins": ["https://devcon-follow.vercel.app", "http://localhost:4173", "https://devcon-follow-api-staging.up.railway.app"],
+    "callbacks": [
+      "https://devcon-follow.vercel.app/",
+      "http://localhost:4173/",
+      "https://devcon-follow-api-staging.up.railway.app/"
+    ],
+    "logoutUrls": [
+      "https://devcon-follow.vercel.app/",
+      "http://localhost:4173/",
+      "https://devcon-follow-api-staging.up.railway.app/"
+    ],
+    "webOrigins": [
+      "https://devcon-follow.vercel.app",
+      "http://localhost:4173",
+      "https://devcon-follow-api-staging.up.railway.app"
+    ],
     "refreshTokenRotation": true,
     "refreshTokenIdleLifetimeSeconds": 86400,
     "refreshTokenMaximumLifetimeSeconds": 604800,
@@ -45,11 +61,19 @@
     "auth0DevelopmentKeys": true,
     "productionReady": false,
     "ownedCredentialSetup": {
-      "status": "pending correct owner Google Cloud account sign-in",
+      "status": "owner reports sign-in completed; awaiting access to the correct signed-in Google Cloud Chrome profile",
       "proposedClientType": "web_application",
-      "proposedJavascriptOrigins": ["https://dev-xs1kh1yit6q5g3ph.us.auth0.com"],
-      "proposedRedirectUris": ["https://dev-xs1kh1yit6q5g3ph.us.auth0.com/login/callback"],
-      "proposedScopes": ["openid", "email", "profile"],
+      "proposedJavascriptOrigins": [
+        "https://dev-xs1kh1yit6q5g3ph.us.auth0.com"
+      ],
+      "proposedRedirectUris": [
+        "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/login/callback"
+      ],
+      "proposedScopes": [
+        "openid",
+        "email",
+        "profile"
+      ],
       "created": false,
       "billingAuthorized": false
     }
