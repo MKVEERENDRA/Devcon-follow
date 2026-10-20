@@ -1,4 +1,4 @@
-import {TOKEN_KEY,SESSION_KEY,clearStoredSession} from './session';
+import {TOKEN_KEY,SESSION_KEY,clearStoredSession,restoreStoredSession} from './session';
 import {fetchWithTimeout as fetchApi} from './http';
 import {profileUrl,profileId} from './profile-links';
 import * as Notifications from 'expo-notifications';
@@ -31,12 +31,12 @@ const colors = {bg:theme.paper,panel:theme.white,line:theme.line,text:theme.ink,
 
 export default function App(){
   const {width,fontScale}=useWindowDimensions();const stacked=useStackedLayout(width,fontScale);
-  const [bootAttempt,setBootAttempt]=useState(0);
+  const [bootAttempt,setBootAttempt]=useState(0),[bootError,setBootError]=useState('');
   const [config,setConfig]=useState<ClientConfig|null>(null),[token,setToken]=useState<string|null>(null),[me,setMe]=useState<Me|null>(null);
   const [clockNow,setClockNow]=useState(Date.now()),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[tab,setTab]=useState<'home'|'nearby'|'profile'|'qr'|'connections'|'messages'|'meetups'|'attendee'>('home');
   const [composeMeetup,setComposeMeetup]=useState(false),[ticketCode,setTicketCode]=useState(''),[handle,setHandle]=useState(''),[displayName,setDisplayName]=useState(''),[bio,setBio]=useState(''),[lookingFor,setLookingFor]=useState(''),[openToMeet,setOpenToMeet]=useState(false),[discoverable,setDiscoverable]=useState(false),[interestText,setInterestText]=useState(''),[roleText,setRoleText]=useState(''),[avatar,setAvatar]=useState<string|null>(null),[github,setGithub]=useState(''),[linkedin,setLinkedin]=useState(''),[x,setX]=useState(''),[website,setWebsite]=useState(''),[profileLink,setProfileLink]=useState('');
   const [threads,setThreads]=useState<any[]>([]),[chatWith,setChatWith]=useState<Profile|null>(null),[chat,setChat]=useState<any[]>([]),[chatText,setChatText]=useState(''),[nearby,setNearby]=useState<Profile[]>([]),[following,setFollowing]=useState<Profile[]>([]),[radioActive,setRadioActive]=useState(false),[radioState,setRadioState]=useState('off'),[selectedPerson,setSelectedPerson]=useState<Profile|null>(null),[gpsNearby,setGpsNearby]=useState<any[]>([]),[meetRequests,setMeetRequests]=useState<any[]>([]),[outgoingMeetups,setOutgoingMeetups]=useState<any[]>([]),[cameraPermission,requestCameraPermission]=useCameraPermissions(),[scanning,setScanning]=useState(false);
-  const clearLocalState=useCallback(()=>{setScanning(false);setTicketCode('');setToken(null);setMe(null);setFollowing([]);setChat([]);setThreads([]);setChatWith(null);setChatText('');setSelectedPerson(null);setComposeMeetup(false);setNearby([]);setGpsNearby([]);setMeetRequests([]);setOutgoingMeetups([]);setTab('home');setHandle('');setDisplayName('');setBio('');setLookingFor('');setOpenToMeet(false);setDiscoverable(false);setInterestText('');setRoleText('');setAvatar(null);setGithub('');setLinkedin('');setX('');setWebsite('');setProfileLink('');},[]);
+  const clearLocalState=useCallback(()=>{setBootError('');setScanning(false);setTicketCode('');setToken(null);setMe(null);setFollowing([]);setChat([]);setThreads([]);setChatWith(null);setChatText('');setSelectedPerson(null);setComposeMeetup(false);setNearby([]);setGpsNearby([]);setMeetRequests([]);setOutgoingMeetups([]);setTab('home');setHandle('');setDisplayName('');setBio('');setLookingFor('');setOpenToMeet(false);setDiscoverable(false);setInterestText('');setRoleText('');setAvatar(null);setGithub('');setLinkedin('');setX('');setWebsite('');setProfileLink('');},[]);
   const lastNotificationId=useRef('');
   useEffect(()=>{if(!token)return;let alive=true;const open=(r:Notifications.NotificationResponse|null)=>{if(alive&&r&&r.notification.request.identifier!==lastNotificationId.current){lastNotificationId.current=r.notification.request.identifier;setTab('meetups')}};void Notifications.getLastNotificationResponseAsync().then(open).catch(()=>{});const subscription=Notifications.addNotificationResponseReceivedListener(open);return()=>{alive=false;subscription.remove()}},[token]);
   const identityToken=useRef<string|null>(null);
@@ -69,13 +69,29 @@ export default function App(){
 
   const refreshRef=useRef(refresh);
   useEffect(()=>{refreshRef.current=refresh},[refresh]);
-  useEffect(()=>{let alive=true;setLoading(true);(async()=>{
+  useEffect(()=>{let alive=true;setLoading(true);setBootError('');(async()=>{
     try{
       if(!API)throw new Error('Missing EXPO_PUBLIC_API_BASE_URL');
       const [cfg,saved,session]=await Promise.all([fetchApi(`${API}/client-config`).then(r=>{if(!r.ok)throw Error('The service is unavailable. Please retry connection.');return r.json()}),SecureStore.getItemAsync(TOKEN_KEY),SecureStore.getItemAsync(SESSION_KEY)]);
-      if(session){try{const data=JSON.parse(session);refreshCredential.current=data.refreshToken||null;identityToken.current=data.idToken||null;tokenExpiresAt.current=data.expiresAt||0}catch{await SecureStore.deleteItemAsync(SESSION_KEY)}}
-      if(!alive)return;setConfig({...cfg,authReady:cfg.authReady&&Boolean(cfg.nativeClientId)});if(saved){setToken(saved);const r=await fetchApi(`${API}/v1/me`,{headers:{Authorization:`Bearer ${saved}`}});if(r.ok){const account=await r.json();setMe(account);if(account.accessEligible){try{const f=await fetchApi(`${API}/v1/following`,{headers:{Authorization:`Bearer ${saved}`}});if(f.ok)setFollowing((await f.json()).attendees||[]);}catch{}}}else if(r.status===401){await clearSession();}else{throw new Error('Could not restore saved sign-in: '+r.status);}}
-    }catch(e){if(alive)Alert.alert('Setup needed',e instanceof Error?e.message:'Could not connect to Devcon Follow API');}
+      let storedSession=null;
+      if(session){try{storedSession=JSON.parse(session)}catch{await SecureStore.deleteItemAsync(SESSION_KEY)}}
+      if(!alive)return;setConfig({...cfg,authReady:cfg.authReady&&Boolean(cfg.nativeClientId)});
+      if(saved||storedSession){
+        const restored=await restoreStoredSession({token:saved,session:storedSession,clear:clearSession,
+          refresh:async refreshToken=>{
+            if(!cfg.issuer||!cfg.nativeClientId)throw Error('The sign-in provider is not configured');
+            const provider=await AuthSession.fetchDiscoveryAsync(cfg.issuer);
+            return AuthSession.refreshAsync({clientId:cfg.nativeClientId,refreshToken},provider);
+          },
+          loadAccount:current=>fetchApi(`${API}/v1/me`,{headers:{Authorization:`Bearer ${current}`}}),
+          persist:async(current,data)=>{await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify(data));await SecureStore.setItemAsync(TOKEN_KEY,current)}
+        });
+        if(!alive||!restored)return;
+        refreshCredential.current=restored.session.refreshToken;identityToken.current=restored.session.idToken;tokenExpiresAt.current=restored.session.expiresAt;
+        setMe(restored.account);setToken(restored.token);
+        if(restored.account.accessEligible){try{const f=await fetchApi(`${API}/v1/following`,{headers:{Authorization:`Bearer ${restored.token}`}});if(alive&&f.ok)setFollowing((await f.json()).attendees||[])}catch{}}
+      }
+    }catch(e){if(alive){const message=e instanceof Error?e.message:'Could not connect to Devcon Follow API';setBootError(message);Alert.alert('Connection interrupted',message);}}
     finally{if(alive)setLoading(false);}
   })();return()=>{alive=false};},[bootAttempt]);
 
@@ -101,8 +117,8 @@ export default function App(){
         refreshCredential.current=result.refreshToken||refreshCredential.current;
         identityToken.current=result.idToken||identityToken.current;
         tokenExpiresAt.current=Date.now()+(result.expiresIn||300)*1000;
-        await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);
         await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current,idToken:identityToken.current}));
+        await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);
         if(alive)setToken(result.accessToken);
       }catch{if(alive&&Date.now()>=tokenExpiresAt.current){await clearSession();}}
       finally{running=false;}
@@ -199,7 +215,8 @@ export default function App(){
 
   if(loading)return <Screen><ActivityIndicator color={colors.mint}/><Text style={styles.muted}>Connecting securely…</Text></Screen>;
   if(!token)return <SafeAreaView style={styles.safe}><StatusBar style="dark"/><ScrollView contentContainerStyle={styles.welcome}><Text style={styles.brand}>Devcon<Text style={{fontWeight:'400',color:colors.mint}}>Follow</Text></Text><Image source={require('./assets/welcome-network.png')} style={styles.welcomeArt} resizeMode="contain" accessibilityLabel="Illustration of people making connections"/><Text style={styles.welcomeTitle}>Meet the right people{`\n`}at Devcon</Text><Text style={[styles.muted,{textAlign:'center',fontSize:13}]}>Create your attendee profile, confirm your access, and start discovering people nearby.</Text>{config?.googleConnection&&<Button title="Continue with Google" onPress={()=>{loginMethod.current='google';void run(async()=>{await promptGoogle()})}} disabled={!config.authReady||!googleRequest||busy}/>}
-{!config&&<Button title="Retry connection" onPress={()=>setBootAttempt(n=>n+1)}/>}<Button title="Continue with email" onPress={()=>{loginMethod.current='email';void run(async()=>{await signIn()})}} disabled={!config?.authReady||!request||busy}/>{!config?.authReady&&<Notice text={config?.authConfigured?'Registration is closed while the private pilot is validated. Your location stays private.':'Sign-in is not available yet. Your location stays private until you choose to share.'}/>}<Card><Text style={styles.cardTitle}>Attendee access</Text><Text style={styles.small}>Three simple steps to start making connections.</Text><View style={[styles.accessSteps,stacked&&{flexDirection:'column'}]}>{[{icon:'user' as const,title:'Sign in',body:'Create your account or sign in.'},{icon:'shield' as const,title:config?.communitySelfService?'Create profile':'Confirm access',body:config?.communitySelfService?'Choose your role and interests.':'Verify your ticket or use an invitation.'},{icon:'check' as const,title:'Start meeting',body:'Choose when you are discoverable.'}].map(step=><View style={styles.accessStep} key={step.title}><Feather name={step.icon} size={23} color={colors.mint}/><Text style={styles.stepTitle}>{step.title}</Text><Text style={styles.stepBody}>{step.body}</Text></View>)}</View></Card><Text style={[styles.small,{textAlign:'center'}]}>Your exact location is never public.</Text></ScrollView></SafeAreaView>;
+{!!bootError&&<Notice text={bootError}/>}
+{(!config||!!bootError)&&<Button title="Retry connection" onPress={()=>setBootAttempt(n=>n+1)}/>}<Button title="Continue with email" onPress={()=>{loginMethod.current='email';void run(async()=>{await signIn()})}} disabled={!config?.authReady||!request||busy}/>{!config?.authReady&&<Notice text={config?.authConfigured?'Registration is closed while the private pilot is validated. Your location stays private.':'Sign-in is not available yet. Your location stays private until you choose to share.'}/>}<Card><Text style={styles.cardTitle}>Attendee access</Text><Text style={styles.small}>Three simple steps to start making connections.</Text><View style={[styles.accessSteps,stacked&&{flexDirection:'column'}]}>{[{icon:'user' as const,title:'Sign in',body:'Create your account or sign in.'},{icon:'shield' as const,title:config?.communitySelfService?'Create profile':'Confirm access',body:config?.communitySelfService?'Choose your role and interests.':'Verify your ticket or use an invitation.'},{icon:'check' as const,title:'Start meeting',body:'Choose when you are discoverable.'}].map(step=><View style={styles.accessStep} key={step.title}><Feather name={step.icon} size={23} color={colors.mint}/><Text style={styles.stepTitle}>{step.title}</Text><Text style={styles.stepBody}>{step.body}</Text></View>)}</View></Card><Text style={[styles.small,{textAlign:'center'}]}>Your exact location is never public.</Text></ScrollView></SafeAreaView>;
 
   if(!me?.accessEligible&&config?.communitySelfService)return <Screen><Header title="Community account" onSignOut={signOut}/><Text style={styles.title}>Confirm your sign-in email</Text><Text style={styles.muted}>Use a verified email or Google account to join. Tickets and invitations are not required. If membership was suspended, contact the pilot administrator.</Text><Button title="I verified my email — retry" onPress={()=>run(refresh)}/></Screen>;
   if(!me?.accessEligible)return <Screen><Header title="Verify attendee access" onSignOut={signOut}/><Text style={styles.title}>Confirm your attendee access.</Text><Text style={styles.muted}>Use organizer-authorized ticket verification or a separately labeled community invitation. A QR image or screenshot is not proof of ticket ownership.</Text>{config?.ticketReady?<><TextInput style={styles.input} value={ticketCode} onChangeText={setTicketCode} placeholder="Ticket credential" placeholderTextColor={colors.muted} secureTextEntry autoCapitalize="none"/><Button title="Verify ticket" onPress={verifyTicket} disabled={busy||ticketCode.length<8}/></>:<><Notice text="Devcon ticket ownership verification is not connected yet. Sign-in works but verified attendee features remain locked. A QR screenshot, order email, or wallet pass alone is not proof of current ownership."/><Button title="Open official Devcon ticket store / recover order" onPress={()=>{void Linking.openURL("https://tickets.devcon.org/")}}/></>}{config?.communityReady&&<><Text style={styles.muted}>Community invitation — not official ticket verification or conference admission. Sign in with the verified email invited by an administrator.</Text><TextInput style={styles.input} value={ticketCode} onChangeText={setTicketCode} placeholder="Community invitation code" secureTextEntry autoCapitalize="none"/><Button title="Accept community invitation" disabled={busy||!ticketCode} onPress={()=>run(async()=>{await api('/access/redeem','POST',{code:ticketCode.trim()});setTicketCode('');await refresh()})}/></>}</Screen>;
