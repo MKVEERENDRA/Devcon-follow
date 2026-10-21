@@ -1,0 +1,47 @@
+{
+  "apiVersion": "serving.knative.dev/v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "devcon-follow-api",
+    "annotations": {"run.googleapis.com/ingress": "all"}
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "annotations": {
+          "autoscaling.knative.dev/minScale": "0",
+          "autoscaling.knative.dev/maxScale": "1",
+          "run.googleapis.com/cpu-throttling": "true",
+          "run.googleapis.com/network-interfaces": "[{\"network\":\"REPLACE_DEDICATED_NETWORK\",\"subnetwork\":\"REPLACE_DEDICATED_SUBNET\"}]",
+          "run.googleapis.com/vpc-access-egress": "all-traffic"
+        }
+      },
+      "spec": {
+        "serviceAccountName": "REPLACE_RUNTIME_SERVICE_ACCOUNT",
+        "containerConcurrency": 40,
+        "timeoutSeconds": 3600,
+        "containers": [{
+          "image": "REPLACE_VERIFIED_IMAGE_AT_SHA256_DIGEST",
+          "ports": [{"containerPort": 8080}],
+          "resources": {"limits": {"cpu": "1", "memory": "512Mi"}},
+          "env": [
+            {"name": "NODE_ENV", "value": "production"},
+            {"name": "MONGODB_URI", "valueFrom": {"secretKeyRef": {"name": "devcon-follow-mongodb-uri", "key": "1"}}},
+            {"name": "MONGODB_DB", "value": "devcon_follow"},
+            {"name": "OIDC_ISSUER", "value": "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/"},
+            {"name": "OIDC_JWKS_URL", "value": "https://dev-xs1kh1yit6q5g3ph.us.auth0.com/.well-known/jwks.json"},
+            {"name": "OIDC_AUDIENCE", "value": "https://devcon-follow.vercel.app/api"},
+            {"name": "OIDC_EMAIL_CLAIM_NAMESPACE", "value": "https://devcon-follow.vercel.app/claims"},
+            {"name": "WEB_OIDC_CLIENT_ID", "value": "gwz7Y3PO4y7NdV15ATLynGy2LHzXwbv9"},
+            {"name": "NATIVE_OIDC_CLIENT_ID", "value": "rpuStYOg5xnK645nPJvn7R8JUYtkBljZ"},
+            {"name": "REGISTRATION_ENABLED", "value": "false"},
+            {"name": "COMMUNITY_ACCESS_ENABLED", "value": "false"},
+            {"name": "COMMUNITY_SELF_SERVICE_ENABLED", "value": "false"},
+            {"name": "COMMUNITY_REGISTRATION_MODE", "value": "closed"},
+            {"name": "PUSH_ENABLED", "value": "false"}
+          ]
+        }]
+      }
+    }
+  }
+}
