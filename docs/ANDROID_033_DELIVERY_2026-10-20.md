@@ -285,3 +285,20 @@ connection name `OIDC_GOOGLE_CONNECTION=google-oauth2` was set in staging only.
 Its served config/button remains unverified until database startup succeeds.
 Public enrollment, production backend, public APK and Proof of Audits remain
 unchanged.
+
+### Network recovery after owner action — 21 October
+
+The owner reports adding the exact observed `152.55.181.125/32`. Without
+redeploying, subsequent HTTPS checks returned liveness **200**, database
+readiness **200**, and client config **200**, with `authReady=true` and
+`googleConnection=google-oauth2`. Anonymous `/v1/me` and
+`/v1/releases/android` both return **401 JSON**. The installer returns
+**200 HTML**; its served `/assets/main-Bx5VCOPl.js` includes the verified
+APK save fallback and Google button. These supersede the initialization
+failures immediately above. No authenticated binary or physical acceptance
+is claimed from these unauthenticated checks.
+
+Release remains **503**: auth/access checks pass, but administrator, approved
+venue and approved landmark checks fail. Production, broad enrollment and
+public APK distribution are unchanged. Current private installation handoff:
+https://devcon-follow-api-staging.up.railway.app/install.html .
