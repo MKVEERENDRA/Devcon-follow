@@ -58,10 +58,10 @@
     "connectionId": "con_akqhT7gU1lzhmxCd",
     "enabledForExistingWebClient": true,
     "enabledForExistingNativeClient": true,
-    "auth0DevelopmentKeys": true,
+    "auth0DevelopmentKeys": null,
     "productionReady": false,
     "ownedCredentialSetup": {
-      "status": "owner reports sign-in completed; awaiting access to the correct signed-in Google Cloud Chrome profile",
+      "status": "owner reports Google credentials saved and connection test successful; application-level Android/web acceptance remains pending",
       "proposedClientType": "web_application",
       "proposedJavascriptOrigins": [
         "https://dev-xs1kh1yit6q5g3ph.us.auth0.com"
@@ -74,9 +74,19 @@
         "email",
         "profile"
       ],
-      "created": false,
-      "billingAuthorized": false
-    }
+      "created": true,
+      "billingAuthorized": false,
+      "projectId": "devcon-follow-2026",
+      "projectNumber": "791537153174",
+      "createdEvidence": "Google OAuth client creation screen supplied by owner on 2026-10-21"
+    },
+    "ownerReportedConnectionTest": {
+      "reportedOn": "2026-10-21",
+      "result": "success",
+      "method": "Owner manually configured Google OAuth and reported successful Auth0 Google connection test",
+      "independentlyVerified": false
+    },
+    "auth0DevelopmentKeysLastObservedOn": "2026-10-20"
   },
   "documentation": [
     "https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google",
