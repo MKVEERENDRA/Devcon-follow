@@ -120,3 +120,11 @@ replacement for the current backend. Sources:
 https://render.com/docs/outbound-ip-addresses and https://render.com/docs/free .
 No account, duplicate infrastructure, migration, payment, paid trial or broader
 Atlas rule was created. The mostly-₹0 constraint is preserved.
+
+Google audience clarification: Testing status by itself does **not** block basic
+Sign in with Google. Google explicitly exempts requests limited to
+name/email/profile/OpenID scopes from the test-user-list and seven-day expiry
+restrictions: https://support.google.com/cloud/answer/15549945?hl=en . Do not ask
+the owner to populate a test-user list or publish the Google audience as a
+presumed repair for basic sign-in. Final public privacy/branding preparation is
+separate. The operator identity/contact question remains pending.

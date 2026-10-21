@@ -97,7 +97,9 @@
       "privacyPolicyUrlConfigured": false,
       "termsUrlConfigured": false,
       "testUsersShown": 0,
-      "publicPublicationPerformed": false
+      "publicPublicationPerformed": false,
+      "basicSignInException": "Google documents that Testing user-list and 7-day restrictions do not apply when requesting only name/email/profile/OpenID scopes; Testing status alone is not evidence that basic Google login is blocked.",
+      "audienceDocumentation": "https://support.google.com/cloud/answer/15549945?hl=en"
     },
     "brandingChanges": {
       "savedOn": "2026-10-21",
