@@ -63,3 +63,30 @@ administrator/venue/landmark configuration and genuine acceptance. The owner’s
 Pro-only: https://docs.railway.com/networking/static-outbound-ips . A billing or
 network-isolation change requires an explicit decision; no purchase or broader
 Atlas allowlist was made. The older staging APK is not a production artifact.
+
+## Authorized installer deployment attempt — 21 October
+
+After the owner requested deployment, a clean `git archive` of
+`cac9a75d0599a083ade4004d86fd5d9797ae905a` was prepared with the verified 0.3.4/5
+APK and matching SDK metadata outside the public root. The isolated package is
+`/tmp/devcon034-deploy-1bwloy71`. It excludes operator configuration, credentials,
+environment files and unrelated artifacts.
+
+An upload to existing Railway project `2bc6b37c-697d-4077-a23b-503ee588d595`,
+staging environment `7377c9c3-4384-401d-bbb6-4fde0347fa73`, service
+`a9000893-59e1-48d7-8c0e-bf0b9a1c6c88` was rejected with CLI exit 1:
+**Deploys have been paused temporarily**. No deployment ID was returned.
+
+Railway independently reports a platform build pause across all four regions,
+investigating since 21 October 07:24 UTC (12:54 IST):
+https://status.railway.com/incident/QH8L8B3E . This is a provider incident; no
+new login, database rebuild, payment or alternate infrastructure is indicated.
+No account restriction is inferred from this platform incident.
+
+Readback confirms the latest staging deployment remains
+`f65929a7-3766-4819-b737-b4ebc99c45f9` SUCCESS; database readiness still returns
+200. The installer still serves 0.3.3/4. No Atlas entries, production service,
+public enrollment, Vercel or Proof of Audits settings were changed. Resume the
+existing targeted staging upload after the provider pause is lifted, then
+verify deployed metadata, readiness and authenticated binary checksum.
+Production security/networking/physical acceptance gates remain separate.
