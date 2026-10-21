@@ -43,7 +43,7 @@ change or waive the failing native dependency audit.
 
 - Full test/build CI: PASS for this candidate source; native-security: FAIL.
   https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39568513647
-- Android native compilation: PASS; iOS compilation still running when recorded.
+- Android and iOS native compilation: PASS (both jobs completed successfully).
   https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39568513589
 - Version/build guard and session regression checks: 7/7 PASS following the
   version-only increment. Earlier full functional verification: 89/89 PASS and
