@@ -90,3 +90,33 @@ public enrollment, Vercel or Proof of Audits settings were changed. Resume the
 existing targeted staging upload after the provider pause is lifted, then
 verify deployed metadata, readiness and authenticated binary checksum.
 Production security/networking/physical acceptance gates remain separate.
+
+## Public-user preparation and mostly-free hosting review
+
+A further targeted staging upload was also rejected by Railway's platform pause.
+No deployment was created. Later read-only HTTPS checks still return readiness
+200 and release 503: administrator, approved venue and approved landmark remain
+false. Google connection `google-oauth2` is served by staging client config.
+
+Owner Google Cloud access was recovered without a new login. The existing Google
+OAuth client is present. Audience showed Testing, no test users, and a disabled
+Publish app button directing completion of Branding. Branding had no homepage,
+privacy URL or terms URL. The existing public homepage was saved, with
+`devcon-follow.vercel.app` added alongside the existing `auth0.com` branding
+domain. The UI confirmed Branding changes saved. No OAuth callback, credential,
+scope, Google audience publication or registration policy was changed.
+
+Screenshot evidence is local: artifacts/release/google-branding-2026-10-21.png .
+The public privacy.html page returns 200 but explicitly identifies itself as an
+engineering draft; it was not submitted as a finalized public privacy policy.
+The owner was asked for the public operator name and privacy/support contact to
+prepare a real notice. No legal entity or identity was invented.
+
+A free Render migration was considered but not provisioned. Its documented
+outbound ranges are region-shared, and its free web service sleeps after 15
+minutes idle with roughly one-minute wake-up. Render explicitly advises against
+production use of Free instances. This is not a verified equivalent production
+replacement for the current backend. Sources:
+https://render.com/docs/outbound-ip-addresses and https://render.com/docs/free .
+No account, duplicate infrastructure, migration, payment, paid trial or broader
+Atlas rule was created. The mostly-₹0 constraint is preserved.

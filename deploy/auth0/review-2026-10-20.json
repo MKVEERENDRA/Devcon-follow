@@ -86,7 +86,30 @@
       "method": "Owner manually configured Google OAuth and reported successful Auth0 Google connection test",
       "independentlyVerified": false
     },
-    "auth0DevelopmentKeysLastObservedOn": "2026-10-20"
+    "auth0DevelopmentKeysLastObservedOn": "2026-10-20",
+    "publicAudienceReview": {
+      "reviewedOn": "2026-10-21",
+      "method": "Signed-in owner Google Cloud console",
+      "projectId": "devcon-follow-2026",
+      "publishingStatus": "Testing",
+      "publishButtonInitiallyDisabled": true,
+      "initialReason": "Complete Branding configuration",
+      "privacyPolicyUrlConfigured": false,
+      "termsUrlConfigured": false,
+      "testUsersShown": 0,
+      "publicPublicationPerformed": false
+    },
+    "brandingChanges": {
+      "savedOn": "2026-10-21",
+      "homePage": "https://devcon-follow.vercel.app/",
+      "authorizedDomains": [
+        "auth0.com",
+        "devcon-follow.vercel.app"
+      ],
+      "saveConfirmation": "Branding changes saved.",
+      "credentialsChanged": false,
+      "scopesChanged": false
+    }
   },
   "documentation": [
     "https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google",
