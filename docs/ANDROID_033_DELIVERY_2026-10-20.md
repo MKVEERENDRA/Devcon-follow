@@ -253,3 +253,35 @@ credential/project has been created or copied. Staging readiness remains 200.
 The Auth0 review commit `b63fdd83e13a687f868662feab5c5bc16a041f20` was pushed
 successfully with the existing owner SSH key on port 22 after port 443 timed out.
 No GitHub account or credential change was needed.
+
+## 21 October Google connection and installer continuation
+
+The owner manually created the standard Google OAuth web client in project
+`devcon-follow-2026` and reports saving credentials in the existing Auth0 Google
+connection and a successful **Try Connection**. This is owner-reported provider
+acceptance, not independent native app login or two-person acceptance. No secret
+is recorded in source. The old account/profile-login requests are superseded.
+
+Source `8050d0407ce74998cc8c490f42cc87ad0fdee6c9` was packaged using `git archive`,
+with only the independently verified Android 0.3.3/4 bytes and SDK metadata
+added to private-release outside the public root. The actual signed bytes
+passed the sandbox browser installer again on 21 October, including automatic
+and explicit save, exact checksum, expiry, accessibility and large text checks.
+This is transport evidence, not physical installation or genuine provider login.
+
+The authorized staging upload created deployment
+`cf80d73f-4fd4-4def-9459-de9a3e0c984b`. The Google connection variable update then produced final deployment
+`f65929a7-3766-4819-b737-b4ebc99c45f9` (**SUCCESS**); the initial upload
+was superseded. Runtime reports a new outbound IP `152.55.181.125`. A read-only
+Atlas inspection confirms this IP is absent from the six preserved entries.
+Liveness is 200, but database readiness and client config return 503 during
+initialization. Thus installer transport is NOT live-verified on the new pod.
+Adding only `152.55.181.125/32` needs a new specific network approval; no broad
+range was added. The running process retries automatically, so no further
+redeploy is needed after an authorized entry. Staging previously returned database readiness 200;
+release configuration still lacked administrator, approved venue and landmark.
+The client config also exposed `googleConnection=null`; the existing Google
+connection name `OIDC_GOOGLE_CONNECTION=google-oauth2` was set in staging only.
+Its served config/button remains unverified until database startup succeeds.
+Public enrollment, production backend, public APK and Proof of Audits remain
+unchanged.
