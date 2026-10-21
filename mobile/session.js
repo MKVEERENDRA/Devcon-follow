@@ -6,6 +6,27 @@ export async function clearStoredSession(store,clearState){
   await Promise.all([store.deleteItemAsync(TOKEN_KEY),store.deleteItemAsync(SESSION_KEY)]);
 }
 
+// A temporary provider outage is not revocation, even after access expiry.
+// Retain the rotated refresh credential in memory before keystore I/O so a
+// failed write never makes the next attempt reuse a consumed credential.
+export async function renewActiveSession({session,refresh,onRotated,persist,clear,isActive=()=>true,now=Date.now}){
+  let result;
+  try{result=await refresh(session.refreshToken)}
+  catch(error){
+    if(error?.code==='invalid_grant'){
+      if(isActive())await clear();
+      return null;
+    }
+    throw error;
+  }
+  if(!isActive())return null;
+  if(typeof result.accessToken!=='string'||!result.accessToken)throw Error('The sign-in provider did not return an access token');
+  const next={refreshToken:result.refreshToken||session.refreshToken,idToken:result.idToken||session.idToken,expiresAt:now()+(result.expiresIn||300)*1000};
+  onRotated(next);
+  await persist(result.accessToken,next);
+  return isActive()?{token:result.accessToken,session:next}:null;
+}
+
 // Restore before publishing a token to React: the foreground renewal effect
 // must not race a cold-start 401 and delete a freshly rotated credential.
 export async function restoreStoredSession({token,session,refresh,loadAccount,persist,clear,now=Date.now}){

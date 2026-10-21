@@ -1,4 +1,4 @@
-import {TOKEN_KEY,SESSION_KEY,clearStoredSession,restoreStoredSession} from './session';
+import {TOKEN_KEY,SESSION_KEY,clearStoredSession,restoreStoredSession,renewActiveSession} from './session';
 import {fetchWithTimeout as fetchApi} from './http';
 import {profileUrl,profileId} from './profile-links';
 import * as Notifications from 'expo-notifications';
@@ -112,15 +112,16 @@ export default function App(){
       if(running||!alive||AppState.currentState!=='active'||!refreshCredential.current||Date.now()<tokenExpiresAt.current-60000)return;
       running=true;
       try{
-        const result=await AuthSession.refreshAsync({clientId:config?.nativeClientId||'',refreshToken:refreshCredential.current},discovery);
-        if(!alive)return;
-        refreshCredential.current=result.refreshToken||refreshCredential.current;
-        identityToken.current=result.idToken||identityToken.current;
-        tokenExpiresAt.current=Date.now()+(result.expiresIn||300)*1000;
-        await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify({refreshToken:refreshCredential.current,expiresAt:tokenExpiresAt.current,idToken:identityToken.current}));
-        await SecureStore.setItemAsync(TOKEN_KEY,result.accessToken);
-        if(alive)setToken(result.accessToken);
-      }catch{if(alive&&Date.now()>=tokenExpiresAt.current){await clearSession();}}
+        const result=await renewActiveSession({
+          session:{refreshToken:refreshCredential.current,idToken:identityToken.current,expiresAt:tokenExpiresAt.current},
+          refresh:refreshToken=>AuthSession.refreshAsync({clientId:config?.nativeClientId||'',refreshToken},discovery),
+          isActive:()=>alive,
+          onRotated:next=>{refreshCredential.current=next.refreshToken;identityToken.current=next.idToken;tokenExpiresAt.current=next.expiresAt},
+          persist:async(current,next)=>{await SecureStore.setItemAsync(SESSION_KEY,JSON.stringify(next));await SecureStore.setItemAsync(TOKEN_KEY,current)},
+          clear:clearSession
+        });
+        if(alive&&result){setBootError('');setToken(result.token)}
+      }catch{if(alive){tokenExpiresAt.current=0;setBootError('Session renewal interrupted. Your drafts are kept. Keep the app open to retry automatically.');}}
       finally{running=false;}
     };
     void renew();const timer=setInterval(()=>void renew(),20000);
@@ -222,6 +223,7 @@ export default function App(){
   if(!me?.accessEligible)return <Screen><Header title="Verify attendee access" onSignOut={signOut}/><Text style={styles.title}>Confirm your attendee access.</Text><Text style={styles.muted}>Use organizer-authorized ticket verification or a separately labeled community invitation. A QR image or screenshot is not proof of ticket ownership.</Text>{config?.ticketReady?<><TextInput style={styles.input} value={ticketCode} onChangeText={setTicketCode} placeholder="Ticket credential" placeholderTextColor={colors.muted} secureTextEntry autoCapitalize="none"/><Button title="Verify ticket" onPress={verifyTicket} disabled={busy||ticketCode.length<8}/></>:<><Notice text="Devcon ticket ownership verification is not connected yet. Sign-in works but verified attendee features remain locked. A QR screenshot, order email, or wallet pass alone is not proof of current ownership."/><Button title="Open official Devcon ticket store / recover order" onPress={()=>{void Linking.openURL("https://tickets.devcon.org/")}}/></>}{config?.communityReady&&<><Text style={styles.muted}>Community invitation — not official ticket verification or conference admission. Sign in with the verified email invited by an administrator.</Text><TextInput style={styles.input} value={ticketCode} onChangeText={setTicketCode} placeholder="Community invitation code" secureTextEntry autoCapitalize="none"/><Button title="Accept community invitation" disabled={busy||!ticketCode} onPress={()=>run(async()=>{await api('/access/redeem','POST',{code:ticketCode.trim()});setTicketCode('');await refresh()})}/></>}</Screen>;
 
   return <SafeAreaView style={styles.safe}><StatusBar style="dark"/><View style={[styles.top,stacked&&{flexDirection:'column',alignItems:'flex-start',gap:8}]}><Text style={styles.brand}>Devcon<Text style={{color:colors.mint,fontWeight:'400'}}>Follow</Text></Text><View>{(radioActive||me.locationSharing)&&<Button title="Stop discovery" onPress={stopDiscovery} danger/>}<Pressable accessibilityRole="button" onPress={signOut}><Text style={styles.link}>Sign out</Text></Pressable></View></View>
+    {!!bootError&&<Notice text={bootError}/>}
     {tab==='home'&&<ScrollView contentContainerStyle={styles.content}><Text style={styles.title}>Find your people at Devcon</Text><Text style={styles.muted}>Discover relevant attendees by role and interest.</Text>
       {!me.profile?<Card><Text style={styles.cardTitle}>Set up your profile first</Text><Button title="Create profile" onPress={editProfile}/></Card>:<Card><Text style={styles.cardTitle}>Event presence</Text><Text style={styles.muted}>{me.onSite?'Checked in to an approved venue':'Not checked in'}</Text><Button title={me.onSite?'Refresh venue check-in':'Check in at an approved venue'} onPress={checkIn} disabled={busy}/></Card>}
       <Card><Text style={styles.cardTitle}>Devcon venue map</Text><Text style={styles.muted}>Map shows the public venue, not the location of other people. Indoor GPS may be inaccurate. A person’s exact location is available only after their individual approval.</Text><Button title="Open approved venue map" onPress={()=>run(async()=>{const {venue}=await api('/venue/map');await Linking.openURL('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(venue.lat+','+venue.lon))})}/></Card>
