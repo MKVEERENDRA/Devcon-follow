@@ -13,17 +13,30 @@ const directory=actualDirectory||await mkdtemp(join(tmpdir(),'devcon-browser-apk
 const bytes=actualDirectory?await readFile(join(directory,'devcon-follow.apk')):Buffer.concat([Buffer.from('PK'),Buffer.alloc(10000,7)]);
 const metadata=actualDirectory?JSON.parse(await readFile(join(directory,'android.json'),'utf8')):{kind:'apk',packageId:'com.proofofaudits.devconfollow',version:'0.3.1',versionCode:2,buildId:'6583ca87-7174-4907-8c8b-df10c38ceee9',sourceCommit:'a'.repeat(40),sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:'b'.repeat(64),sizeBytes:bytes.length,standaloneBundle:true,debuggable:false,apiBaseUrl:'https://devcon-follow-api-staging.up.railway.app'};
 if(!actualDirectory){await writeFile(join(directory,'devcon-follow.apk'),bytes);await writeFile(join(directory,'android.json'),JSON.stringify(metadata))}
-const app=await startTestRuntime({config:{NODE_ENV:'test',ANDROID_PREVIEW_DIRECTORY:directory,ANDROID_PREVIEW_API_ORIGIN:metadata.apiBaseUrl,COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test',COMMUNITY_ACCESS_ENABLED:'false'}});let browser;
+// Keep full APK bytes streaming over localhost; route interception buffers them
+// in Playwright. The separate synthetic run covers cross-origin delivery.
+const deliveryOrigin=actualDirectory?null:'https://sandbox-android-download.example.test';
+const app=await startTestRuntime({config:{NODE_ENV:'test',SOCKET_PUBLIC_ORIGIN:deliveryOrigin,ANDROID_PREVIEW_DIRECTORY:directory,ANDROID_PREVIEW_API_ORIGIN:metadata.apiBaseUrl,COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test',COMMUNITY_ACCESS_ENABLED:'false'}});let browser;
 try{
  browser=await chromium.launch({...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({acceptDownloads:true,viewport:{width:390,height:844}}),page=await context.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ // Exercise cross-origin delivery without contacting any external host. Only
+ // this disposable issuer's token is forwarded to its own disposable API.
+ let directDownloads=0;
+ if(deliveryOrigin)await page.route(deliveryOrigin+'/**',async route=>{
+  const headers={'access-control-allow-origin':app.origin,'access-control-allow-headers':'authorization','access-control-allow-methods':'GET,OPTIONS'};
+  if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
+  assert.equal(new URL(route.request().url()).pathname,'/v1/releases/android/apk');directDownloads++;
+  const response=await route.fetch({url:app.origin+'/v1/releases/android/apk'});
+  await route.fulfill({response,headers:{...response.headers(),...headers}});
+ });
  await page.goto(app.origin+'/install.html');await page.getByRole('button',{name:'Sign in to install Android'}).click();
  await page.getByLabel('Email').fill('alice@example.test');await page.getByLabel('Password').fill('sandbox-alice');await page.getByRole('button',{name:'Sign in',exact:true}).click();
  const download=page.getByRole('button',{name:'Download Android APK',exact:true});await download.waitFor();assert.equal(new URL(page.url()).pathname,'/install.html');
  await page.clock.install();
- const saved=page.waitForEvent('download',{timeout:90000});await download.click();const received=await saved;
- assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
+ const saved=page.waitForEvent('download',{timeout:90000}).catch(error=>({error}));await download.click({timeout:10000});const received=await saved;if(received.error)throw Error(received.error.message+'; installer alert: '+await page.getByRole('alert').allTextContents());
+ assert.equal(directDownloads,deliveryOrigin?1:0,'Configured dedicated-origin transport is used when present');assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
  const saveVerified=page.getByRole('link',{name:'Save verified APK',exact:true});await saveVerified.waitFor();
  const verifiedUrl=await saveVerified.getAttribute('href');assert(verifiedUrl.startsWith('blob:'),'the fallback must not expose an API credential or a public binary URL');
  let repeatedFetches=0;const countFetch=r=>{if(new URL(r.url()).pathname==='/v1/releases/android/apk')repeatedFetches++};page.on('request',countFetch);
