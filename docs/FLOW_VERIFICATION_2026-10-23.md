@@ -1,5 +1,7 @@
 # Attendee flow verification — 23 October 2026 (IST)
 
+This is the **before-fix** check. Public signup and pre-arrival browsing have since been implemented/deployed; use [the subsequent delivery report](PUBLIC_ENROLLMENT_2026-10-23.md) for current status. Physical/native security requirements remain separate.
+
 Source checked: `bfbbb1ac3be419b925dd8a63d89c52576b9c88bb`.
 Requested flow: anyone joins without an invitation/ticket, creates a private-by-default profile, browses before arrival, opts into 30-minute on-site Nearby, arranges a public-landmark meeting, explicitly follows through QR, and retains connections/notes/mutual chat.
 

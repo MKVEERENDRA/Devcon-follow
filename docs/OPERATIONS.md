@@ -1,14 +1,10 @@
 # Operations and permissions
 
-## Provisioning order
+## Current deployment and recovery
 
-1. Restore writable access to `MKVEERENDRA/Devcon-follow`. Current local account `Proofofaudit` has pull-only access; the connected GitHub App returned 403 for a contents write. Push the reviewed local source after repository authorization is repaired.
-2. Configure a trusted OIDC provider with separate public SPA/native clients, API audience, verified email and exact redirects. Store issuer/JWKS/audience/public client IDs in Railway; put only actual administrator subjects in `ADMIN_SUBJECTS`. Do not use ID tokens as API access tokens.
-3. Choose official organizer verification or explicitly labeled community invitations. Generate independent random HMAC keys in your secret manager. Enable neither with placeholder secrets.
-4. Establish restricted Railway-to-Atlas networking, then verify application user permissions and index bootstrap in staging. Index option repairs refuse populated collections. Back up and review populated index changes separately.
-5. Add organizer-approved venue coordinates/windows and public landmarks. Do not copy synthetic test geometry into production. Disable a venue immediately to stop on-site access. Event times are ISO instants; web admin datetime inputs use the operator's device timezone, so verify Mumbai IST explicitly.
-6. Reconcile existing Railway staged changes, attach the authorized source, deploy staging, configure HTTPS and callbacks, and run the real-provider two-account journey. Do not promote with missing release gates or dependency vulnerabilities.
-7. Build signed native previews after configuring EAS project ownership and signing. `mobile/eas.json` requests an Android APK. iOS needs Apple-authorized signing/distribution and macOS/Xcode/EAS compilation. JavaScript exports are not installable APK/IPA files.
+The 23 October owner-authorized deployment uses the existing GCE VM, reserved Atlas egress, Auth0 and Devcon Follow Vercel project. Community registration is now **public**, while native candidate delivery has a separate tester allowlist. Do not repeat old Railway provisioning, GitHub login or rotating-IP steps. See [current evidence](PUBLIC_ENROLLMENT_2026-10-23.md) and [handoff](../WORK_HANDOFF.md) for exact image, backups, source and limitations.
+
+Configure actual venue geometry/windows and public meeting landmarks through the existing authenticated administrator workflow. Do not copy synthetic fixtures into Atlas. A public address/directions link does not enable presence or Nearby. Native signing/physical verification and the independent security gate remain distinct from healthy web accounts.
 
 ## Administrator CLI
 
@@ -32,7 +28,10 @@ All `/v1/*` responses are private/no-store. All identities come from signature-,
 | `PUT /v1/profile`, `GET /v1/profiles/:userId`, follow/unfollow/following | Official or active community access; target privacy/block rules |
 | `GET/PUT /v1/connections/:targetId/note` | Approved participant with their own saved follow; owner-only note |
 | `POST /v1/presence/check-in` | Approved participant and accurate GPS inside an active approved venue |
-| `GET /v1/directory`, `/v1/venue/map`, `/v1/landmarks` | Approved participant with fresh venue presence |
+| `GET /v1/directory` (default `scope=venue`), `/v1/landmarks` | Eligible participant with fresh approved venue presence; same-venue discoverable target |
+| `GET /v1/directory?scope=event` | Eligible participant; target explicitly opted into `eventDirectory` and `discoverable`, active access, neither direction blocked; no GPS needed or returned |
+| `GET /v1/event`, `/v1/venue/map` | Eligible participant; organizer-published public event/address or enabled valid upcoming venue only; no attendance/presence grant |
+| `GET /v1/releases/android`, `/v1/releases/android/apk` | Eligible participant plus separate native tester policy in public enrollment mode; private/no-store bytes and per-part revocation check |
 | `POST /v1/location/share`, `/sample`, `GET /v1/nearby` | Fresh presence plus explicit discovery consent and valid samples as applicable |
 | `POST /v1/proximity/token`, `/resolve` | Active consent, fresh presence, HMAC configuration; target access/block/privacy rechecked |
 | `POST /v1/location/requests`, decision, `GET /v1/location/:targetId` | Same active venue; named recipient must approve exact access; every read rechecks grants/freshness |
@@ -115,3 +114,9 @@ The installer uses up to 4 MiB authenticated parts advertised by `/v1/releases/a
 The client retains completed parts in memory during the attempt, retries only a failed part (bounded retries and 90-second part timeouts), renews an expired token through the existing OIDC session when possible, and checks full size/SHA-256 before saving. Cancel/logout/account change aborts; this does not persist a resumable file across page reloads. A changed release returns 412: refresh metadata and restart rather than combining builds. Malformed/oversized ranges return 416. Never bypass 401/403 or checksum errors. The total attempt is bounded to 20 minutes. A two-minute in-memory verified-save link is a local fallback, not a new network download or public release URL.
 
 Regression: `node scripts/browser-private-install.mjs` now aborts a cross-origin second part and verifies the first part is not fetched again. Use `--release-directory=PRIVATE_DIRECTORY` for exact SDK-verified APK byte transport in a disposable sandbox. Genuine owner delivery for 0.3.7 is recorded separately in `docs/releases/android-037-live-delivery.json`; it does not establish phone installation or two-person BLE/GPS acceptance.
+
+## Pre-arrival profile directory
+
+`GET /v1/directory` accepts `scope=venue|event`, `sort=directory|recommended`, bounded literal `q`, `role`, `interest`, `openToMeet=true|false`, `limit=1..50` and encrypted `cursor`. Default scope preserves the original same-venue contract for older clients. Cursors expire after 15 minutes and bind the viewer, scope, filters and ranking preferences; tampering/scope/filter/viewer changes return 400. Every page rechecks eligibility, consent and blocks before its page limit. Queries retain a 2-second Mongo time limit and 60 requests/minute per authenticated identity. The event directory returns no coordinates, presence status, email, total account count or location grants.
+
+`PUT /v1/profile` accepts boolean `eventDirectory`; it is true only with `discoverable=true`. Missing/false values leave pre-arrival visibility off. Existing discoverable profiles are not migrated to broader visibility. New web/native controls explain that this shares a profile with signed-in participants before/after arrival, without starting Nearby. Removing event-directory consent hides the person from new browsing; it does not silently delete previously saved connections. Hiding the profile itself still invokes existing GPS/BLE revocation behavior.

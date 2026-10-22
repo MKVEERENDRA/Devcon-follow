@@ -9,8 +9,8 @@ ConditionFileNotEmpty=/etc/devcon-follow/app.env
 Restart=always
 RestartSec=5
 TimeoutStopSec=25
-ExecStartPre=/usr/bin/docker image inspect devcon-follow:6d6ae7c
-ExecStart=/usr/bin/docker run --rm --name devcon-follow --init --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m --cap-drop ALL --security-opt no-new-privileges --pids-limit 256 --memory 640m --memory-swap 1536m --cpus 1 --log-opt max-size=10m --log-opt max-file=3 --mount type=bind,source=/opt/devcon-follow/private-release,target=/app/private-release,readonly --env-file /etc/devcon-follow/app.env -p 127.0.0.1:8080:8080 devcon-follow:6d6ae7c
+ExecStartPre=/usr/bin/docker image inspect devcon-follow:d640371
+ExecStart=/usr/bin/docker run --rm --name devcon-follow --init --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m --cap-drop ALL --security-opt no-new-privileges --pids-limit 256 --memory 640m --memory-swap 1536m --cpus 1 --log-opt max-size=10m --log-opt max-file=3 --mount type=bind,source=/opt/devcon-follow/private-release,target=/app/private-release,readonly --env-file /etc/devcon-follow/app.env -p 127.0.0.1:8080:8080 devcon-follow:d640371
 ExecStop=/usr/bin/docker stop --time 15 devcon-follow
 
 [Install]

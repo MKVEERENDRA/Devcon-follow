@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-22T20:16:40.684Z",
+  "scope": "local-export-JavaScript-only",
+  "apkCorrelation": "unverified; exported bundle is not automatically identical to the signed APK",
+  "releaseApproval": false,
+  "bundles": [
+    {
+      "platform": "android",
+      "sourceCount": 1089,
+      "affectedPackages": [],
+      "mapSha256": "cbba5ea8c889dc56e340b668371085fe221e63ad9c7475b9b3b7c1a980b1126d",
+      "bundleSha256": "8b9d2380cc9ca5e4c87c4383030b31660b35b92b9e5ce7da75c758db2eb74fa2"
+    },
+    {
+      "platform": "ios",
+      "sourceCount": 1088,
+      "affectedPackages": [],
+      "mapSha256": "dc48203dccc5ade947bfc98eb01113c67227950bc7b90787b55d44095fea4328",
+      "bundleSha256": "819f16fd0621a6db733e4979be36442a0564de97b336adbf82ed40606b8459be"
+    }
+  ]
+}

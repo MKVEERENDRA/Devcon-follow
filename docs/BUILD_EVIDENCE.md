@@ -1,3 +1,7 @@
+# Current build evidence — 23 October 2026 (IST)
+
+[Public enrollment and pre-arrival delivery](PUBLIC_ENROLLMENT_2026-10-23.md) records the current 107-test suite, passing web/native source checks, live public web policy, exact source/deployments, pending 0.3.8 build and unresolved native/physical requirements. The dated records below are historical and do not override that report.
+
 > Final code `891afe0`: [test-build PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39204943552/job/117905623554), [Android/iOS compile PASS](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39204243844), [native-security FAIL](https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39204943552/job/117905623683). Overall release remains BLOCKED; see the current five-section report.
 
 > Current attendee-flow continuation: [`891afe0`](https://github.com/MKVEERENDRA/Devcon-follow/commit/891afe0), including [`e212605`](https://github.com/MKVEERENDRA/Devcon-follow/commit/e212605), adds durable meeting updates, conflict/retry protection and cancel/reproposal. [Five-section end-to-end report](END_TO_END_PRODUCT_REPORT_2026-10-19.md): **70/70 local tests**, three sandbox browser journeys; real device/push acceptance and deployments remain blocked/frozen.
