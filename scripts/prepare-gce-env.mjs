@@ -19,7 +19,7 @@ if(databaseUrl.hostname!=='devconfollow.0esz7ob.mongodb.net'||databaseUrl.userna
   throw Error('Expected the dedicated GCE staging user and existing Devcon Atlas cluster; placeholders are not credentials');
 }
 const publicSettings=JSON.parse(await readFile(new URL('../deploy/auth0/public-settings.json',import.meta.url),'utf8'));
-const config={...publicSettings,NODE_ENV:'production',PORT:'8080',MONGODB_URI:uri,MONGODB_DB:'devcon_follow_staging',
+const config={...publicSettings,NODE_ENV:'production',PORT:'8080',MONGODB_URI:uri,MONGODB_DB:'devcon_follow_staging',REQUIRE_SCOPED_DATABASE_USER:'devcon_follow_gce_staging',
   WEB_ORIGINS:origin+',https://devcon-follow.vercel.app',SOCKET_PUBLIC_ORIGIN:origin,APP_PUBLIC_URL:origin,
   TRUST_PROXY:'true',REGISTRATION_ENABLED:'false',COMMUNITY_ACCESS_ENABLED:'false',COMMUNITY_SELF_SERVICE_ENABLED:'false',
   COMMUNITY_REGISTRATION_MODE:'closed',PUSH_ENABLED:'false',OIDC_GOOGLE_CONNECTION:'google-oauth2',
