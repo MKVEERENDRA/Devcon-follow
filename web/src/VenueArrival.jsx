@@ -1,0 +1,7 @@
+import React,{useEffect,useState} from 'react';
+export function VenueArrival({api}){
+ const [venue,setVenue]=useState(null),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[loading,setLoading]=useState(true);
+ useEffect(()=>{let live=true;setLoading(true);setError('');api('/venue/map').then(r=>{if(live)setVenue(r.venue)}).catch(e=>{if(live){setVenue(null);setError(e.message)}}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[api,attempt]);
+ const date=value=>new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}).format(new Date(value));
+ return <section className="panel" aria-label="Plan your arrival"><h2>Plan your arrival</h2>{loading?<p role="status">Loading approved venue…</p>:venue?<><h3>{venue.name}</h3>{venue.startAt&&venue.endAt&&<p>{date(venue.startAt)} – {date(venue.endAt)} · India time</p>}<a className="button secondary" target="_blank" rel="noopener noreferrer" href={'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(venue.lat+','+venue.lon)}>Directions to public venue</a><p className="small">Opening directions does not check you in or enable discovery. Your location is not included in the link. Google Maps opens separately.</p></>:<><p role="status">{error||'Venue details are being prepared.'}</p><button className="button secondary" onClick={()=>setAttempt(n=>n+1)}>Refresh venue details</button></>}</section>;
+}

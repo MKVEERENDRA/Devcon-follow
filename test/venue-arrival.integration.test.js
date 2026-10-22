@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {startTestRuntime} from './support/runtime.js';
+const config={COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test'};
+test('approved public venue directions work before arrival without granting attendee or discovery access',async t=>{
+ const app=await startTestRuntime({config});t.after(()=>app.close());
+ assert.equal((await fetch(app.origin+'/v1/venue/map')).status,401);
+ assert.equal((await app.request('eve','/v1/venue/map')).status,403);
+ assert.equal((await app.request('alice','/v1/venue/map')).status,404);
+ const startAt=new Date(Date.now()+3600000).toISOString(),endAt=new Date(Date.now()+7200000).toISOString();
+ const publicVenue={venueId:'future-public',name:'SANDBOX approved public venue',center:{lat:19.01,lon:72.85},radiusMeters:200,startAt,endAt,enabled:true};
+ await app.db.collection('venues').insertMany([{...publicVenue,venueId:'disabled',name:'PRIVATE draft',enabled:false},{...publicVenue,venueId:'invalid',center:{lat:999,lon:72}},{...publicVenue,venueId:'expired',startAt:new Date(Date.now()-7200000).toISOString(),endAt:new Date(Date.now()-1000).toISOString()},{...publicVenue,privateAdminNote:'must never be returned'}]);
+ await app.db.collection('locations').insertOne({userId:'bob',lat:18.5,lon:73.2,expiresAt:new Date(Date.now()+100000)});
+ const map=await app.request('alice','/v1/venue/map');assert.equal(map.status,200);assert.equal(map.body.kind,'public_venue_only');assert.equal(map.body.checkInAvailable,false);
+ assert.deepEqual(map.body.venue,{venueId:publicVenue.venueId,name:publicVenue.name,lat:19.01,lon:72.85,radiusMeters:200,startAt,endAt});
+ assert(!JSON.stringify(map.body).includes('PRIVATE'));assert(!JSON.stringify(map.body).includes('bob'));assert(!JSON.stringify(map.body).includes('privateAdminNote'));
+ assert.equal(await app.db.collection('presence').countDocuments({}),0);assert.equal(await app.db.collection('shares').countDocuments({}),0);
+ assert.equal((await app.request('alice','/v1/directory')).status,403);assert.equal((await app.request('alice','/v1/nearby')).status,403);
+ await app.db.collection('venues').updateOne({venueId:publicVenue.venueId},{$set:{enabled:false}});assert.equal((await app.request('alice','/v1/venue/map')).status,404);
+ await app.db.collection('presence').insertOne({userId:'alice',venueId:publicVenue.venueId,expiresAt:new Date(Date.now()+60000),lastConfirmedAt:new Date(),revoked:false});
+ assert.equal((await app.request('alice','/v1/me')).body.onSite,false,'A still-fresh check-in cannot keep a disabled venue active in the UI');
+});

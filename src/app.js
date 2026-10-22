@@ -135,7 +135,9 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     ]);
     const allowed=!access.selfService||access.canJoin(actor);
     const community=allowed?await access.community(actor.userId):null;
-    return {accessEligible:allowed&&(ticket?.status==='verified'||Boolean(community)),accessTier:ticket?.status==='verified'?'official':community?'community':'pending',officiallyVerified:ticket?.status==='verified',userId:actor.userId,ticketVerified:ticket?.status==='verified',profile:publicProfile(profile),onSite:activePresence(presence),locationSharing:activeShare(share),sharingExpiresAt:activeShare(share)?share.expiresAt:null};
+    let onSite=false;
+    if(activePresence(presence)){try{await currentVenue(actor.userId);onSite=true}catch(error){if(error.statusCode!==403)throw error}}
+    return {accessEligible:allowed&&(ticket?.status==='verified'||Boolean(community)),accessTier:ticket?.status==='verified'?'official':community?'community':'pending',officiallyVerified:ticket?.status==='verified',userId:actor.userId,ticketVerified:ticket?.status==='verified',profile:publicProfile(profile),onSite,locationSharing:activeShare(share),sharingExpiresAt:activeShare(share)?share.expiresAt:null};
   });
   // No reviewed Devcon DKIM blueprint or signed per-ticket field is available.
   // Never accept an upload/asserted proof, issue a badge, or gate membership on it.
@@ -192,9 +194,21 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   // Only public organizer-approved venue coordinates appear on the map.
   // Individual attendee coordinates are never returned through this endpoint.
   app.get('/v1/venue/map',async(req)=>{
-    const actor=await requireOnSite(req);
-    const {venue}=actor;
-    return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters},kind:'public_venue_only'};
+    const actor=await requireUser(req);
+    // Directions to a public event must work before arrival. This does not
+    // grant presence, directory access, discovery or attendee location access.
+    try{
+      const {venue}=await currentVenue(actor.userId);
+      return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters},kind:'public_venue_only'};
+    }catch(error){if(error.statusCode!==403)throw error}
+    const now=Date.now();
+    const venues=(await col('venues').find({enabled:true},{projection:{_id:0,venueId:1,name:1,center:1,radiusMeters:1,startAt:1,endAt:1}}).limit(1000).toArray()).filter(v=>
+      typeof v.venueId==='string'&&v.venueId&&typeof v.name==='string'&&v.name.trim()&&validLocation({...v.center,accuracyMeters:0})&&
+      Number.isFinite(v.radiusMeters)&&v.radiusMeters>=50&&v.radiusMeters<=2500&&Number.isFinite(Date.parse(v.startAt))&&Date.parse(v.endAt)>now&&Date.parse(v.startAt)<Date.parse(v.endAt)
+    ).sort((a,b)=>Date.parse(a.startAt)-Date.parse(b.startAt));
+    const venue=venues.find(v=>Date.parse(v.startAt)<=now)||venues[0];
+    if(!venue)throw jsonError(404,'No approved upcoming venue has been published. You can still edit your profile and keep existing connections.');
+    return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters,startAt:venue.startAt,endAt:venue.endAt},kind:'public_venue_only',checkInAvailable:Date.parse(venue.startAt)<=now};
   });
   registerDirectory(app,{col,requireOnSite,communityEnabled:access.enabled,selfService:access.selfService,memberFilter:access.memberFilter});
   async function requireProfileAudience(actor,id){
