@@ -1,5 +1,5 @@
 {
-  "status": "review-only-not-provisioned",
+  "status": "vm-provisioned-api-blocked-on-database-credential",
   "project": "proof-of-audits-production",
   "account": "founderproof@gmail.com",
   "instanceName": "devcon-follow-api",
@@ -9,6 +9,9 @@
   "network": "devcon-follow-network",
   "subnet": "devcon-follow-subnet",
   "reservedAddress": "devcon-follow-ip",
+  "reservedIpv4": "35.206.98.214",
+  "temporaryHttpsOrigin": "https://devcon-follow.35-206-98-214.sslip.io",
+  "applicationImageSource": "77264e9",
   "labels": {"app": "devcon-follow", "cost-owner": "devcon-follow"},
   "cloudApiAccessFromVm": "none",
   "ssh": "operator-address-only; dedicated key; no project-wide metadata changes",
@@ -18,6 +21,6 @@
   "registration": "closed until separate release acceptance",
   "existingPoaResourceChanges": "none",
   "excludedServices": ["Cloud NAT", "load balancer", "Cloud SQL", "Cloud DNS", "GPU", "Marketplace images", "additional VM", "additional disks"],
-  "budget": {"cashLimit": 0, "creditAllocationUsd": null, "estimatedMonthlyIpv4Usd": 3.65, "hardSpendCapEstablished": false},
-  "unresolved": ["bounded owner credit allocation", "credit-specific applicability and cash/tax exposure", "free-tier billing-month usage", "capacity and application load verification", "operator HTTPS domain", "release security and physical-device acceptance"]
+  "budget": {"cashLimit": 0, "monthlyCreditTargetUsd": 5, "ownerApproved": true, "estimatedMonthlyIpv4Usd": 3.65, "hardSpendCapEstablished": false},
+  "unresolved": ["dedicated database credential", "free-tier billing-month usage", "capacity and application load verification", "operator HTTPS domain", "release security and physical-device acceptance"]
 }
