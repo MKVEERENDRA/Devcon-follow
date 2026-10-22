@@ -3,5 +3,5 @@
   "android": null,
   "ios": null,
   "androidStatus": "restricted-testing",
-  "privateInstallUrl": "https://devcon-follow-api-staging.up.railway.app/install.html"
+  "privateInstallUrl": "https://devcon-follow.vercel.app/install.html"
 }

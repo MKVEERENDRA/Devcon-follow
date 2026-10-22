@@ -13,14 +13,14 @@ const directory=actualDirectory||await mkdtemp(join(tmpdir(),'devcon-browser-apk
 const bytes=actualDirectory?await readFile(join(directory,'devcon-follow.apk')):Buffer.concat([Buffer.from('PK'),Buffer.alloc(10000,7)]);
 const metadata=actualDirectory?JSON.parse(await readFile(join(directory,'android.json'),'utf8')):{kind:'apk',packageId:'com.proofofaudits.devconfollow',version:'0.3.1',versionCode:2,buildId:'6583ca87-7174-4907-8c8b-df10c38ceee9',sourceCommit:'a'.repeat(40),sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:'b'.repeat(64),sizeBytes:bytes.length,standaloneBundle:true,debuggable:false,apiBaseUrl:'https://devcon-follow-api-staging.up.railway.app'};
 if(!actualDirectory){await writeFile(join(directory,'devcon-follow.apk'),bytes);await writeFile(join(directory,'android.json'),JSON.stringify(metadata))}
-const app=await startTestRuntime({config:{NODE_ENV:'test',ANDROID_PREVIEW_DIRECTORY:directory,COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test',COMMUNITY_ACCESS_ENABLED:'false'}});let browser;
+const app=await startTestRuntime({config:{NODE_ENV:'test',ANDROID_PREVIEW_DIRECTORY:directory,ANDROID_PREVIEW_API_ORIGIN:metadata.apiBaseUrl,COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test',COMMUNITY_ACCESS_ENABLED:'false'}});let browser;
 try{
  browser=await chromium.launch({...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({acceptDownloads:true,viewport:{width:390,height:844}}),page=await context.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(app.origin+'/install.html');await page.getByRole('button',{name:'Sign in for private Android testing'}).click();
+ await page.goto(app.origin+'/install.html');await page.getByRole('button',{name:'Sign in to install Android'}).click();
  await page.getByLabel('Email').fill('alice@example.test');await page.getByLabel('Password').fill('sandbox-alice');await page.getByRole('button',{name:'Sign in',exact:true}).click();
- const download=page.getByRole('button',{name:'Download private Android APK',exact:true});await download.waitFor();assert.equal(new URL(page.url()).pathname,'/install.html');
+ const download=page.getByRole('button',{name:'Download Android APK',exact:true});await download.waitFor();assert.equal(new URL(page.url()).pathname,'/install.html');
  await page.clock.install();
  const saved=page.waitForEvent('download',{timeout:90000});await download.click();const received=await saved;
  assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
