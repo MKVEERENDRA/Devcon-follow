@@ -33,8 +33,14 @@ export async function registerAndroidPreview(app,{config,requireUser,authenticat
         rangeChunkBytes:4*1024*1024,securityStatus:'blocked-public-release',downloadPath:'/v1/releases/android/apk'};
     }catch{/* Missing or inconsistent artifacts fail closed without logging local paths. */}
   }
-  // Both routes recheck the existing verified-email cohort and revocation.
-  const authorize=async req=>{await requireUser(req);if(!release)throw unavailable()};
+  // Account enrollment and distribution of a security-blocked native candidate
+  // are separate policies. Opening web signup must not silently publish the APK.
+  const previewEmails=new Set((config.ANDROID_PREVIEW_EMAILS||config.COMMUNITY_PILOT_EMAILS||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean));
+  const authorize=async req=>{
+    const actor=await requireUser(req);
+    if(config.COMMUNITY_REGISTRATION_MODE==='public'&&(!actor.email||!previewEmails.has(actor.email)))throw Object.assign(new Error('This Android candidate is limited to its approved testers. You can use the web app with your account.'),{statusCode:403});
+    if(!release)throw unavailable();
+  };
   app.get('/v1/releases/android',{preHandler:authorize},async()=>release);
   app.get('/v1/releases/android/apk',{preHandler:authorize,config:{rateLimit:{max:req=>req.headers.range?60:3,timeWindow:'1 minute',keyGenerator:async req=>{let actor;try{actor=await authenticate(req);req.authActor=actor}catch{}return JSON.stringify([actor?.userId||req.ip,req.headers.range?'part':'full'])}}}},async(req,reply)=>{
     reply.header('Content-Type','application/vnd.android.package-archive');

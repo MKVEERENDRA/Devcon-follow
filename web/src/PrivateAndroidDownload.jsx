@@ -17,7 +17,7 @@ export function PrivateAndroidDownload({apiOrigin}){
   if(!token||!subject){setRelease(null);return}
   const abort=new AbortController();setChecking(true);setError('');setRelease(null);
   fetch('/v1/releases/android',{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.any([abort.signal,AbortSignal.timeout(15000)])})
-   .then(async r=>{if(!r.ok)throw Error(r.status===403?'This account does not have community beta access yet.':r.status===401?'Your session expired. Sign in again.':'The Android download could not be loaded. Please try again.');const data=await r.json();if(data.downloadPath!=='/v1/releases/android/apk'||data.distribution!=='restricted-staging'||!/^[a-f0-9]{64}$/.test(data.sha256))throw Error('Build metadata could not be verified.');return data})
+   .then(async r=>{if(!r.ok)throw Error(r.status===403?'This Android candidate is limited to approved testers. Your account can use the web app.':r.status===401?'Your session expired. Sign in again.':'The Android download could not be loaded. Please try again.');const data=await r.json();if(data.downloadPath!=='/v1/releases/android/apk'||data.distribution!=='restricted-staging'||!/^[a-f0-9]{64}$/.test(data.sha256))throw Error('Build metadata could not be verified.');return data})
    .then(setRelease).catch(e=>{if(!abort.signal.aborted)setError(e.message)}).finally(()=>{if(!abort.signal.aborted)setChecking(false)});
   return()=>abort.abort();
  },[token,subject,attempt]);

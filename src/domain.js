@@ -61,5 +61,5 @@ export function safeText(value,max){return typeof value==='string'?value.trim().
 export function validMinutes(input){return Number.isInteger(input)&&input>=1&&input<=1440;}
 export function publicProfile(profile){
   if (!profile)return null;
-  return {userId:profile.userId,handle:profile.handle,displayName:profile.displayName,roles:profile.roles,bio:profile.bio,lookingFor:safeText(profile.lookingFor,280),openToMeet:profile.openToMeet===true,interests:profile.interests,socials:profile.socials||{},avatar:safeAvatar(profile.avatar),discoverable:profile.discoverable===true};
+  return {userId:profile.userId,handle:profile.handle,displayName:profile.displayName,roles:profile.roles,bio:profile.bio,lookingFor:safeText(profile.lookingFor,280),openToMeet:profile.openToMeet===true,interests:profile.interests,socials:profile.socials||{},avatar:safeAvatar(profile.avatar),eventDirectory:profile.eventDirectory===true,discoverable:profile.discoverable===true};
 }

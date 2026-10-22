@@ -47,6 +47,7 @@ jobs:
           node scripts/browser-admin-places.mjs
           node scripts/browser-photography.mjs
           node scripts/browser-venue-arrival.mjs
+          node scripts/browser-event-directory.mjs
           npm run test:browser:parity
           npm run test:browser:install
           npm run test:browser:private-install
@@ -79,6 +80,7 @@ jobs:
             artifacts/admin/
             artifacts/photography/
             artifacts/arrival/
+            artifacts/event-directory/
   native-security:
     runs-on: ubuntu-latest
     timeout-minutes: 35

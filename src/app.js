@@ -12,6 +12,7 @@ import {createTicketVerifier} from './tickets.js';
 import {registerSocialRoutes} from './social.js';
 import {createAccess} from './access.js';
 import {registerDirectory} from './directory.js';
+import {EVENT_INFO} from './event.js';
 import {registerMeetups,cancelPlaceMeetups} from './meetups.js';
 import {registerAndroidPreview} from './android-preview.js';
 import {createMeetingNotifications} from './meeting-notifications.js';
@@ -177,7 +178,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
       catch{throw jsonError(400,`Invalid ${key} link`)}
     }
     if(b.avatar&& !safeAvatar(b.avatar))throw jsonError(400,'Invalid avatar image. Use a small JPEG, PNG or WebP.');
-    const update={handle,displayName,bio,lookingFor:safeText(b.lookingFor,280),openToMeet:b.openToMeet===true,roles,interests,socials,avatar:safeAvatar(b.avatar),discoverable:b.discoverable===true,updatedAt:DATE()};
+    const update={handle,displayName,bio,lookingFor:safeText(b.lookingFor,280),openToMeet:b.openToMeet===true,roles,interests,socials,avatar:safeAvatar(b.avatar),discoverable:b.discoverable===true,eventDirectory:b.discoverable===true&&b.eventDirectory===true,updatedAt:DATE()};
     try{await col('profiles').updateOne({userId:actor.userId},{$set:update,$setOnInsert:{userId:actor.userId,createdAt:DATE()}},{upsert:true});}
     catch(e){if(e.code===11000)throw jsonError(409,'Handle already taken');throw e;}
     if(!update.discoverable){
@@ -210,9 +211,11 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     if(!venue)throw jsonError(404,'No approved upcoming venue has been published. You can still edit your profile and keep existing connections.');
     return {venue:{venueId:venue.venueId,name:venue.name,lat:venue.center.lat,lon:venue.center.lon,radiusMeters:venue.radiusMeters,startAt:venue.startAt,endAt:venue.endAt},kind:'public_venue_only',checkInAvailable:Date.parse(venue.startAt)<=now};
   });
-  registerDirectory(app,{col,requireOnSite,communityEnabled:access.enabled,selfService:access.selfService,memberFilter:access.memberFilter});
+  app.get('/v1/event',async req=>{await requireUser(req);return {...EVENT_INFO,kind:'published_event_information',grantsPresence:false}});
+  registerDirectory(app,{col,requireUser,requireOnSite,communityEnabled:access.enabled,selfService:access.selfService,memberFilter:access.memberFilter});
   async function requireProfileAudience(actor,id){
     if(await col('follows').findOne({followerId:actor.userId,followedId:id}))return;
+    if(await col('profiles').findOne({userId:id,discoverable:true,eventDirectory:true}))return;
     try{const [self,target]=await Promise.all([currentVenue(actor.userId),currentVenue(id)]);if(self.venue.venueId===target.venue.venueId)return}catch{}
     throw jsonError(404,'Profile unavailable');
   }
