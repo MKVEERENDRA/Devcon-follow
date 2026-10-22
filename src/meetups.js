@@ -3,19 +3,41 @@ import {safeText,validLocation,insideVenue} from './domain.js';
 import {meetingCalendar} from './meeting-calendar.js';
 
 const fail=(statusCode,message)=>Object.assign(new Error(message),{statusCode});
+export async function cancelPlaceMeetups({col,notify,filter}){
+ let count=0,batch=[];
+ const cursor=col('meetups').find({...filter,status:{$in:['pending','accepted']}},{projection:{meetupId:1,requesterId:1,targetId:1}}).batchSize(50);
+ const cancel=async()=>{if(!batch.length)return;const ids=batch.map(m=>m.meetupId);const changed=await col('meetups').updateMany({meetupId:{$in:ids},status:{$in:['pending','accepted']}},{$set:{status:'cancelled',notificationPending:true,decidedAt:new Date()}});count+=changed.modifiedCount;const cancelled=await col('meetups').find({meetupId:{$in:ids},status:'cancelled'},{projection:{meetupId:1,requesterId:1,targetId:1}}).toArray();await col('meetingBookings').deleteMany({_id:{$in:cancelled.map(m=>m.meetupId)}});for(const m of cancelled)for(const userId of [m.requesterId,m.targetId])notify(userId,'meetup:decision',{meetupId:m.meetupId,status:'cancelled'});batch=[]};
+ for await(const meeting of cursor){batch.push(meeting);if(batch.length===50)await cancel()}await cancel();return count;
+}
 export function registerMeetups(app,{col,authenticate,admins,requireUser,requireOnSite,requireAllowedPerson,currentVenue,isBlocked,notify,audit,meetingNotifications}){
   app.post('/v1/admin/landmarks',async(req,reply)=>{
     const actor=await authenticate(req);
     if(!admins.has(actor.userId))throw fail(403,'Administrator authorization required');
     const b=req.body||{},point={lat:b.lat,lon:b.lon,accuracyMeters:0};
+    if(b.enabled!==undefined&&typeof b.enabled!=='boolean')throw fail(400,'enabled boolean required');
     if(typeof b.venueId!=='string'||!validLocation(point)||typeof b.name!=='string'||!safeText(b.name,80))throw fail(400,'Valid public landmark required');
     const venue=await col('venues').findOne({venueId:b.venueId});
     // Validate geofence separately from event time, so operators can prepare before the event.
     if(!venue||!insideVenue(point,{...venue,enabled:true,startAt:new Date(Date.now()-1000),endAt:new Date(Date.now()+1000)}))throw fail(400,'Landmark must be inside its approved venue');
-    const landmark={landmarkId:randomUUID(),venueId:b.venueId,name:safeText(b.name,80),lat:b.lat,lon:b.lon,enabled:true,createdAt:new Date()};
+    const landmark={landmarkId:randomUUID(),venueId:b.venueId,name:safeText(b.name,80),lat:b.lat,lon:b.lon,enabled:b.enabled!==false,createdAt:new Date()};
     await col('landmarks').insertOne(landmark);
     await audit(actor.userId,'public_landmark_created',{landmarkId:landmark.landmarkId});
     return reply.code(201).send({landmark});
+  });
+  app.get('/v1/admin/landmarks',async req=>{
+    const actor=await authenticate(req);if(!admins.has(actor.userId))throw fail(403,'Administrator authorization required');
+    const venueId=req.query?.venueId;
+    if(typeof venueId!=='string'||!venueId||venueId.length>128||Object.keys(req.query).some(k=>k!=='venueId'))throw fail(400,'A venue is required');
+    if(!await col('venues').findOne({venueId}))throw fail(404,'Venue unavailable');
+    return {landmarks:await col('landmarks').find({venueId},{projection:{_id:0}}).sort({createdAt:1}).limit(1000).toArray()};
+  });
+  app.patch('/v1/admin/landmarks/:id',async req=>{
+    const actor=await authenticate(req);if(!admins.has(actor.userId))throw fail(403,'Administrator authorization required');
+    if(typeof req.body?.enabled!=='boolean')throw fail(400,'enabled boolean required');
+    const result=await col('landmarks').updateOne({landmarkId:req.params.id},{$set:{enabled:req.body.enabled,updatedAt:new Date()}});
+    if(!result.matchedCount)throw fail(404,'Landmark unavailable');
+    const cancelledMeetups=req.body.enabled?0:await cancelPlaceMeetups({col,notify,filter:{landmarkId:req.params.id}});
+    await audit(actor.userId,'public_landmark_toggled',{landmarkId:req.params.id,enabled:req.body.enabled,cancelledMeetups});return {enabled:req.body.enabled,cancelledMeetups};
   });
   app.get('/v1/landmarks',async req=>{
     const actor=await requireOnSite(req);
@@ -57,8 +79,8 @@ export function registerMeetups(app,{col,authenticate,admins,requireUser,require
       try{await requireAllowedPerson(actor,otherId)}catch{continue}
       const [person,landmark,venue]=await Promise.all([
         col('profiles').findOne({userId:otherId,discoverable:true}),
-        col('landmarks').findOne({landmarkId:m.landmarkId,enabled:true},{projection:{_id:0}}),
-        col('venues').findOne({venueId:m.venueId,enabled:true})
+        col('landmarks').findOne({landmarkId:m.landmarkId},{projection:{_id:0}}),
+        col('venues').findOne({venueId:m.venueId})
       ]);
       if(!person||!landmark||!venue)continue;
       delete m.fingerprint;delete m.notificationSyncedStatus;delete m.notificationPending;

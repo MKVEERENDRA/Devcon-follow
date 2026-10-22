@@ -75,3 +75,21 @@ test('calendar exports recheck participant, acceptance, blocks and revocation wi
  await db.collection('tickets').updateOne({userId:'bob'},{$set:{status:'revoked'}});await call('alice',path,'GET',undefined,404);await db.collection('tickets').updateOne({userId:'bob'},{$set:{status:'verified'}});
  await call('alice','/meetups/'+meeting.meetupId+'/decision','POST',{decision:'cancelled'});await call('alice',path,'GET',undefined,404);
 });
+test('admin landmark preparation is disabled until approved and isolated from attendees',async t=>{
+ const app=await fixture(t),{call,db}=app;
+ await call('alice','/admin/landmarks?venueId=sandbox','GET',undefined,403);
+ await call('admin','/admin/landmarks','GET',undefined,400);
+ await call('admin','/admin/landmarks?venueId=unknown','GET',undefined,404);
+ const created=await call('admin','/admin/landmarks','POST',{venueId:'sandbox',name:'Sandbox reviewed meeting point',lat:19.01,lon:72.85,enabled:false},201);
+ assert.equal(created.landmark.enabled,false);
+ assert((await call('admin','/admin/landmarks?venueId=sandbox')).landmarks.some(p=>p.landmarkId===created.landmark.landmarkId&&!p.enabled));
+ assert(!(await call('alice','/landmarks')).landmarks.some(p=>p.landmarkId===created.landmark.landmarkId));
+ const path='/admin/landmarks/'+created.landmark.landmarkId;
+ await call('alice',path,'PATCH',{enabled:true},403);await call('admin',path,'PATCH',{enabled:'true'},400);
+ await call('admin',path,'PATCH',{enabled:true});assert((await call('alice','/landmarks')).landmarks.some(p=>p.landmarkId===created.landmark.landmarkId));
+ const arranged=await call('alice','/meetups','POST',{...app.invite(),landmarkId:created.landmark.landmarkId},201);await call('bob','/meetups/'+arranged.meetupId+'/decision','POST',{decision:'accepted'});
+ await call('admin',path,'PATCH',{enabled:false});assert.equal((await db.collection('meetups').findOne({meetupId:arranged.meetupId})).status,'cancelled');assert.equal(await db.collection('meetingBookings').countDocuments({_id:arranged.meetupId}),0);assert((await call('alice','/meetups')).meetups.some(m=>m.meetupId===arranged.meetupId&&m.status==='cancelled'));assert((await call('bob','/meeting-notifications')).notifications.some(n=>n.meetupId===arranged.meetupId&&n.type==='cancelled'));assert(!(await call('alice','/landmarks')).landmarks.some(p=>p.landmarkId===created.landmark.landmarkId));
+ await call('admin','/admin/landmarks','POST',{venueId:'sandbox',name:'Out of bounds',lat:20,lon:73,enabled:false},400);
+ assert.equal(await db.collection('landmarks').countDocuments({landmarkId:created.landmark.landmarkId}),1,'disable preserves history rather than purging data');
+ const venueMeeting=await call('alice','/meetups','POST',app.invite(),201);await call('bob','/meetups/'+venueMeeting.meetupId+'/decision','POST',{decision:'accepted'});await call('admin','/admin/venues/sandbox','PATCH',{enabled:false});assert.equal(await db.collection('meetingBookings').countDocuments(),0);assert((await call('alice','/meetups')).meetups.some(m=>m.meetupId===venueMeeting.meetupId&&m.status==='cancelled'));
+});

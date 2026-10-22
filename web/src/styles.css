@@ -19,3 +19,4 @@
 .install-main h1{overflow-wrap:anywhere}
 
 .match-reasons{font-size:.75rem;line-height:1.5;overflow-wrap:anywhere;color:var(--muted)}.match-reasons ul{margin:6px 0 12px;padding-left:18px}
+.venue-landmarks{flex-basis:100%;min-width:0;overflow-wrap:anywhere}.venue-landmarks summary{cursor:pointer;min-height:44px;padding:12px 0;color:var(--blue)}.person-list-item:has(>.venue-landmarks){flex-wrap:wrap}.venue-landmarks .profile-form{margin-bottom:18px}

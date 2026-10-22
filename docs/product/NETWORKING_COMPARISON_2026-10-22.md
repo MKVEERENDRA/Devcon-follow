@@ -77,3 +77,24 @@ gamification, lead resale or organizer ticketing would dilute that scope.
 - Native TypeScript, both platform Hermes exports and Expo Doctor **20/20** PASS.
 - Signed candidate, exact-source Android/iOS compilation, updated deployment and
   physical calendar import are separate checks; these bullets do not claim them.
+
+## Completed operator setup flow
+
+Me → Venue admin now includes per-venue public meeting places. Administrators can
+create disabled places, inspect their coordinates and explicitly enable/disable
+them. The server validates the venue boundary; ordinary attendees cannot list or
+change admin configuration. Venue and landmark setup remains a human approval,
+not automatic population from guessed map coordinates.
+
+Disabling a venue/place requires a confirmation and cancels its pending/confirmed
+meetings, releases booking conflicts and marks durable cancellation notifications.
+History is retained even when the place/venue is disabled. Re-enabling a place does
+not silently restore old appointments. Imported calendar snapshots remain outside
+the app's control. No public ticket-verification claim is created.
+
+Additional routes: administrator-only `GET /v1/admin/landmarks?venueId=...` and
+`PATCH /v1/admin/landmarks/:id` (`enabled` boolean). The existing creation endpoint
+accepts `enabled:false` for reviewed preparation. Disabling places never purges
+stored attendee/meeting records. The new operator browser journey runs in CI with a
+disposable venue, actual sandbox PKCE sign-in, explicit activation, cancellation
+checks, axe and 200% text. Nothing from this fixture is installed in the live DB.

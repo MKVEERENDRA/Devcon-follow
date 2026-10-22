@@ -44,6 +44,7 @@ jobs:
           node scripts/browser-journey.mjs --community
           node scripts/browser-qr-login.mjs
           npm run test:browser:reliability
+          node scripts/browser-admin-places.mjs
           npm run test:browser:parity
           npm run test:browser:install
           npm run test:browser:private-install
@@ -73,6 +74,7 @@ jobs:
             artifacts/browser-reliability/
             artifacts/browser-parity/
             artifacts/install/
+            artifacts/admin/
   native-security:
     runs-on: ubuntu-latest
     timeout-minutes: 35

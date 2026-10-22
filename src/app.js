@@ -12,7 +12,7 @@ import {createTicketVerifier} from './tickets.js';
 import {registerSocialRoutes} from './social.js';
 import {createAccess} from './access.js';
 import {registerDirectory} from './directory.js';
-import {registerMeetups} from './meetups.js';
+import {registerMeetups,cancelPlaceMeetups} from './meetups.js';
 import {registerAndroidPreview} from './android-preview.js';
 import {createMeetingNotifications} from './meeting-notifications.js';
 import {
@@ -526,7 +526,8 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     if(typeof req.body?.enabled!=='boolean')throw jsonError(400,'enabled boolean required');
     const result=await col('venues').updateOne({venueId:req.params.venueId},{$set:{enabled:req.body.enabled,updatedAt:DATE()}});
     if(result.matchedCount===0)throw jsonError(404,'Venue not found');
-    await audit(actor.userId,'venue_toggled',{venueId:req.params.venueId,enabled:req.body.enabled});
+    const cancelledMeetups=req.body.enabled?0:await cancelPlaceMeetups({col,notify,filter:{venueId:req.params.venueId}});
+    await audit(actor.userId,'venue_toggled',{venueId:req.params.venueId,enabled:req.body.enabled,cancelledMeetups});
     publishRefresh();return {enabled:req.body.enabled};
   });
   app.post('/v1/admin/venues',async(req,reply)=>{
