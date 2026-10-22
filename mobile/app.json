@@ -63,6 +63,7 @@
         }
       ],
       "expo-secure-store",
+      "expo-status-bar",
       "./plugins/withBluetoothPermissions",
       "expo-font",
       [
