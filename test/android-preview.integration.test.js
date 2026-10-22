@@ -35,3 +35,15 @@ test('private APK fails closed for missing/tampered files and production environ
  const broken=await startTestRuntime({config});t.after(()=>broken.close());assert.equal((await broken.request('alice','/v1/releases/android')).status,503);
  const fresh=await fixture(t);const production=await startTestRuntime({config:{...config,NODE_ENV:'production',ANDROID_PREVIEW_DIRECTORY:fresh.directory}});t.after(()=>production.close());assert.equal((await production.request('alice','/v1/releases/android')).status,503);
 });
+
+test('private staging APK must match the explicitly configured migrated HTTPS API origin',async t=>{
+ const {directory,metadata}=await fixture(t);
+ const origin='https://migration.example.test';
+ const config={NODE_ENV:'production',APP_ENVIRONMENT:'staging',ANDROID_PREVIEW_DIRECTORY:directory,ANDROID_PREVIEW_API_ORIGIN:origin,COMMUNITY_SELF_SERVICE_ENABLED:'true',COMMUNITY_REGISTRATION_MODE:'pilot',COMMUNITY_PILOT_EMAILS:'alice@example.test'};
+ const wrong=await startTestRuntime({config});t.after(()=>wrong.close());
+ assert.equal((await wrong.request('alice','/v1/releases/android')).status,503);
+ await writeFile(join(directory,'android.json'),JSON.stringify({...metadata,apiBaseUrl:origin}));
+ const matching=await startTestRuntime({config});t.after(()=>matching.close());
+ assert.equal((await matching.request('alice','/v1/releases/android')).status,200);
+ assert.equal((await matching.request('bob','/v1/releases/android')).status,403);
+});

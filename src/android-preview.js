@@ -10,8 +10,11 @@ const digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 // a request-supplied file path or redirect to an unprotected artifact CDN.
 export async function registerAndroidPreview(app,{config,requireUser}){
   let release=null,file;
-  if(config.RAILWAY_ENVIRONMENT_NAME==='staging'||config.NODE_ENV==='test'){
+  if(config.APP_ENVIRONMENT==='staging'||config.RAILWAY_ENVIRONMENT_NAME==='staging'||config.NODE_ENV==='test'){
     try{
+      const expectedApi=config.ANDROID_PREVIEW_API_ORIGIN||'https://devcon-follow-api-staging.up.railway.app';
+      const origin=new URL(expectedApi);
+      if(origin.protocol!=='https:'||origin.origin!==expectedApi||origin.username||origin.password)throw unavailable();
       const directory=resolve(config.ANDROID_PREVIEW_DIRECTORY||'private-release');
       const data=JSON.parse(await readFile(resolve(directory,'android.json'),'utf8'));
       file=resolve(directory,'devcon-follow.apk');
@@ -19,7 +22,7 @@ export async function registerAndroidPreview(app,{config,requireUser}){
         !digest(data.sha256)||!digest(data.signingCertificateSha256)||!/^\d+\.\d+\.\d+$/.test(data.version)||
         !Number.isInteger(data.versionCode)||data.versionCode<1||!Number.isInteger(data.sizeBytes)||data.sizeBytes<10000||
         !/^[a-f0-9]{40}$/.test(data.sourceCommit)||!/^[a-f0-9-]{36}$/.test(data.buildId)||
-        data.apiBaseUrl!=='https://devcon-follow-api-staging.up.railway.app')throw unavailable();
+        data.apiBaseUrl!==expectedApi)throw unavailable();
       if((await stat(file)).size!==data.sizeBytes)throw unavailable();
       const hash=createHash('sha256');for await(const chunk of createReadStream(file))hash.update(chunk);
       if(hash.digest('hex')!==data.sha256)throw unavailable();
