@@ -1,5 +1,6 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {safeText,validLocation,insideVenue} from './domain.js';
+import {meetingCalendar} from './meeting-calendar.js';
 
 const fail=(statusCode,message)=>Object.assign(new Error(message),{statusCode});
 export function registerMeetups(app,{col,authenticate,admins,requireUser,requireOnSite,requireAllowedPerson,currentVenue,isBlocked,notify,audit,meetingNotifications}){
@@ -64,6 +65,18 @@ export function registerMeetups(app,{col,authenticate,admins,requireUser,require
       meetups.push({...m,durationMinutes:30,incoming:m.targetId===actor.userId,otherName:person.displayName,landmark});
     }
     return {meetups};
+  });
+  app.get('/v1/meetups/:id/calendar',async req=>{
+    const actor=await requireUser(req);
+    const meeting=await col('meetups').findOne({meetupId:req.params.id,status:'accepted',expiresAt:{$gt:new Date()},$or:[{requesterId:actor.userId},{targetId:actor.userId}]});
+    if(!meeting)throw fail(404,'Confirmed meeting unavailable');
+    const otherId=meeting.requesterId===actor.userId?meeting.targetId:meeting.requesterId;
+    await requireAllowedPerson(actor,otherId,'Confirmed meeting unavailable');
+    const [person,landmark,venue]=await Promise.all([col('profiles').findOne({userId:otherId,discoverable:true}),col('landmarks').findOne({landmarkId:meeting.landmarkId,venueId:meeting.venueId,enabled:true}),col('venues').findOne({venueId:meeting.venueId,enabled:true})]);
+    if(!person||!landmark||!venue||!validLocation({...landmark,accuracyMeters:0}))throw fail(404,'Confirmed meeting unavailable');
+    // Only the public meeting point, title and time are exported. No attendee
+    // GPS, reason, private notes, chat, email or calendar-account access.
+    return meetingCalendar(meeting,person.displayName,landmark);
   });
   app.post('/v1/meetups/:id/decision',async req=>{
     const actor=await requireUser(req),decision=req.body?.decision;await meetingNotifications.reconcile(actor.userId);

@@ -1,3 +1,4 @@
+import {clearCalendarExport} from './calendar-export';
 import {TOKEN_KEY,SESSION_KEY,clearStoredSession,restoreStoredSession,renewActiveSession} from './session';
 import {fetchWithTimeout as fetchApi} from './http';
 import {profileUrl,profileId} from './profile-links';
@@ -41,7 +42,7 @@ export default function App(){
   useEffect(()=>{if(!token)return;let alive=true;const open=(r:Notifications.NotificationResponse|null)=>{if(alive&&r&&r.notification.request.identifier!==lastNotificationId.current){lastNotificationId.current=r.notification.request.identifier;setTab('meetups')}};void Notifications.getLastNotificationResponseAsync().then(open).catch(()=>{});const subscription=Notifications.addNotificationResponseReceivedListener(open);return()=>{alive=false;subscription.remove()}},[token]);
   const identityToken=useRef<string|null>(null);
   const refreshCredential=useRef<string|null>(null),tokenExpiresAt=useRef(0),processedCode=useRef<string|null>(null);
-  const clearSession=useCallback(()=>clearStoredSession(SecureStore,()=>{refreshCredential.current=null;identityToken.current=null;tokenExpiresAt.current=0;clearLocalState()}),[clearLocalState]);
+  const clearSession=useCallback(()=>clearStoredSession(SecureStore,()=>{clearCalendarExport();refreshCredential.current=null;identityToken.current=null;tokenExpiresAt.current=0;clearLocalState()}),[clearLocalState]);
   const radioRef=useRef<ProximityRadio|null>(null),pendingTokens=useRef(new Map<string,number>()),lastNearbyResolvedAt=useRef(0),radioFailure=useRef<string|null>(null),discoveryExpiresAt=useRef(0);
   const discovery=AuthSession.useAutoDiscovery(config?.issuer||'https://issuer-not-configured.invalid');
   const redirectUri=AuthSession.makeRedirectUri({scheme:'devconfollow',path:'callback'});
@@ -68,6 +69,7 @@ export default function App(){
   },[token]);
 
   const refreshRef=useRef(refresh);
+  useEffect(()=>{clearCalendarExport()},[]);
   useEffect(()=>{refreshRef.current=refresh},[refresh]);
   useEffect(()=>{let alive=true;setLoading(true);setBootError('');(async()=>{
     try{

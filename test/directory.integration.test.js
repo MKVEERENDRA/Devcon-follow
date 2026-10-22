@@ -6,7 +6,7 @@ import {startTestRuntime} from './support/runtime.js';
 import {directoryParams,directoryPipeline} from '../src/directory.js';
 const digest=s=>createHash('sha256').update(s).digest('hex');
 test('directory validates bounded literal filters, never accepts query operators',()=>{
- for(const q of [{q:'x'.repeat(81)},{role:'admin'},{interest:'x'.repeat(33)},{limit:'51'},{limit:'0'},{limit:'NaN'},{openToMeet:'yes'},{q:{$ne:''}},{offset:'1000'}])assert.throws(()=>directoryParams(q),{statusCode:400});
+ for(const q of [{q:'x'.repeat(81)},{role:'admin'},{interest:'x'.repeat(33)},{limit:'51'},{limit:'0'},{limit:'NaN'},{openToMeet:'yes'},{q:{$ne:''}},{offset:'1000'},{sort:'paid'}])assert.throws(()=>directoryParams(q),{statusCode:400});
  assert.equal(directoryParams({q:'  protocol  security '}).q,'protocol security');
 });
 test('secure paginated directory: 5,000 synthetic profiles, complete traversal, filters and audience isolation',async t=>{
@@ -30,6 +30,21 @@ test('secure paginated directory: 5,000 synthetic profiles, complete traversal, 
  do{const start=performance.now();const page=await request('/v1/directory?limit=50'+(cursor?'&cursor='+encodeURIComponent(cursor):''));durations.push(performance.now()-start);assert(page.attendees.length<=50);assert(!/coordinates|"lat"|"lon"|totalCount/.test(JSON.stringify(page)));seen.push(...page.attendees.map(p=>p.userId));cursor=page.nextCursor;if(!first)first=page;}while(cursor);
  assert.deepEqual(seen,expected);assert.equal(new Set(seen).size,1000);
  assert.equal((await request('/v1/directory?q=Unique%20needle')).attendees[0].userId,'attendee04990');
+ // Give unauthorized/off-venue/blocked candidates equally strong matches.
+ await app.db.collection('profiles').updateMany({userId:{$in:['attendee00004','attendee00005','attendee00006','attendee00007','attendee00008','attendee00009']}},{$set:{interests:['Ethereum','Zero knowledge'],roles:['Founder'],openToMeet:true}});
+ // Ranking considers the whole authorized venue, not just the first loaded page.
+ await app.db.collection('profiles').insertOne({userId:'alice',handle:'alice',displayName:'Sandbox alice',roles:['Builder'],interests:['Zero knowledge'],lookingFor:'Founders',discoverable:true});
+ await app.db.collection('profiles').updateOne({userId:'attendee04990'},{$set:{interests:['Ethereum','Zero knowledge'],roles:['Founder']}});
+ const rankedStart=performance.now(),ranked=await request('/v1/directory?sort=recommended&limit=2');
+ t.diagnostic(JSON.stringify({rankedSyntheticProfiles:5000,rankedFirstPageMs:Math.round(performance.now()-rankedStart)}));assert.equal(ranked.attendees[0].userId,'attendee04990');assert.deepEqual(ranked.attendees[0].match,{sharedInterests:['Zero knowledge'],matchingRoles:['Founder'],openToMeet:true});
+ assert(!/matchScore|coordinates|"lat"|"lon"/.test(JSON.stringify(ranked)));
+ const rankedNext=await request('/v1/directory?sort=recommended&limit=2&cursor='+encodeURIComponent(ranked.nextCursor));assert(!rankedNext.attendees.some(p=>ranked.attendees.some(first=>first.userId===p.userId)));
+ await request('/v1/directory?sort=recommended&limit=2&cursor='+encodeURIComponent(ranked.nextCursor),'bob',400);
+ await request('/v1/directory?sort=directory&limit=2&cursor='+encodeURIComponent(ranked.nextCursor),'alice',400);
+ await app.db.collection('profiles').updateOne({userId:'alice'},{$set:{lookingFor:'Investors'}});await request('/v1/directory?sort=recommended&limit=2&cursor='+encodeURIComponent(ranked.nextCursor),'alice',400);
+ assert(performance.now()-rankedStart<10000,'bounded ranked queries and cursor checks stay within ten seconds');
+ await app.db.collection('profiles').updateOne({userId:'alice'},{$set:{lookingFor:'Founders'}});
+ const rankedFilter=await request('/v1/directory?sort=recommended&role=Founder&openToMeet=true');assert(rankedFilter.attendees.every(p=>p.roles.includes('Founder')&&p.openToMeet));
  const crossFields=await request('/v1/directory?q=Ethereum%20protocol');assert(crossFields.attendees.length>0,'words may match interests and meeting goals across separate fields');assert(crossFields.attendees.every(p=>p.interests.includes('Ethereum')&&p.lookingFor.includes('Protocol')));
  const closed=await request('/v1/directory?openToMeet=false');assert(closed.attendees.every(p=>p.openToMeet===false));
  const filters=await request('/v1/directory?role=Founder&interest=ethereum&openToMeet=true');assert(filters.attendees.length>0);assert(filters.attendees.every(p=>p.roles.includes('Founder')&&p.openToMeet));
@@ -55,4 +70,20 @@ test('secure paginated directory: 5,000 synthetic profiles, complete traversal, 
  await app.db.collection('presence').deleteOne({userId:'alice'});
  await request('/v1/directory','alice',403);await request('/v1/profiles/attendee00000');await request('/v1/profiles/attendee00010','alice',404);
  await app.db.collection('tickets').updateOne({userId:'bob'},{$set:{status:'revoked'}});await request('/v1/directory','bob',403);
+});
+test('ranked pagination traverses every score/tie once and rechecks blocks between pages',async t=>{
+ const app=await startTestRuntime();t.after(()=>app.close());const expiresAt=new Date(Date.now()+3600000);
+ await app.db.collection('venues').insertOne({venueId:'ranked',name:'Sandbox only',center:{lat:19,lon:72},radiusMeters:100,startAt:new Date(Date.now()-1000),endAt:expiresAt,enabled:true});
+ const ids=['alice',...Array.from({length:150},(_,i)=>'rank'+String(i).padStart(3,'0'))];
+ await app.db.collection('profiles').insertMany(ids.map((userId,i)=>({userId,handle:userId,displayName:userId,discoverable:true,roles:[i%2?'Founder':'Builder'],interests:i%3?['Ethereum']:['Privacy'],lookingFor:userId==='alice'?'Founders':'',openToMeet:i%2===1})));
+ await app.db.collection('presence').insertMany(ids.map(userId=>({userId,venueId:'ranked',expiresAt})));
+ await app.db.collection('tickets').insertMany(ids.map(userId=>({userId,status:'verified',ticketDigest:digest(userId)})));
+ const all=[];let cursor;
+ do{const page=await app.request('alice','/v1/directory?sort=recommended&limit=17'+(cursor?'&cursor='+encodeURIComponent(cursor):''));assert.equal(page.status,200,JSON.stringify(page.body));all.push(...page.body.attendees);cursor=page.body.nextCursor;}while(cursor);
+ assert.equal(all.length,150);assert.equal(new Set(all.map(p=>p.userId)).size,150);
+ const score=p=>p.match.sharedInterests.length*3+(p.match.matchingRoles.length?4:0)+(p.match.openToMeet?1:0);
+ for(let i=1;i<all.length;i++)assert(score(all[i-1])>score(all[i])||score(all[i-1])===score(all[i])&&all[i-1].userId<all[i].userId);
+ const page=await app.request('alice','/v1/directory?sort=recommended&limit=1');
+ await app.db.collection('blocks').insertOne({blockerId:all[1].userId,blockedId:'alice'});
+ const next=await app.request('alice','/v1/directory?sort=recommended&limit=1&cursor='+encodeURIComponent(page.body.nextCursor));assert.equal(next.status,200);assert.notEqual(next.body.attendees[0].userId,all[1].userId);
 });

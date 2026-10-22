@@ -61,3 +61,17 @@ test('real sandbox JWTs bind opt-in push tokens to their owner and allow revoked
  await app.call('alice','/push-devices','DELETE');assert.equal(await app.db.collection('pushDevices').countDocuments(),0);
  await app.call('bob','/push-devices','POST',{token});await app.call('bob','/account','DELETE');assert.equal(await app.db.collection('pushDevices').countDocuments(),0);assert.equal(calls.length,0);
 });
+
+test('calendar exports recheck participant, acceptance, blocks and revocation without requiring GPS',async t=>{
+ const app=await fixture(t),{call,invite,db}=app;
+ const meeting=await call('alice','/meetups','POST',invite(),201),path='/meetups/'+meeting.meetupId+'/calendar';
+ await call('alice',path,'GET',undefined,404);
+ await call('bob','/meetups/'+meeting.meetupId+'/decision','POST',{decision:'accepted'});
+ await call('charlie',path,'GET',undefined,404);
+ await db.collection('presence').deleteMany({});
+ const exported=await call('alice',path);assert.match(exported.content,/SUMMARY:Meet bob/);assert.match(exported.content,/LOCATION:Sandbox coffee/);assert(!exported.content.includes('Sandbox conversation'));assert.equal(exported.snapshot,true);
+ assert.match((await call('bob',path)).content,/SUMMARY:Meet alice/);
+ await db.collection('blocks').insertOne({blockerId:'bob',blockedId:'alice'});await call('alice',path,'GET',undefined,403);await db.collection('blocks').deleteMany({});
+ await db.collection('tickets').updateOne({userId:'bob'},{$set:{status:'revoked'}});await call('alice',path,'GET',undefined,404);await db.collection('tickets').updateOne({userId:'bob'},{$set:{status:'verified'}});
+ await call('alice','/meetups/'+meeting.meetupId+'/decision','POST',{decision:'cancelled'});await call('alice',path,'GET',undefined,404);
+});
