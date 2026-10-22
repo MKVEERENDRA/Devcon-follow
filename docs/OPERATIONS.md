@@ -82,3 +82,28 @@ The existing staging service/domain is used; production is untouched. When savin
 `MONGODB_URI`, use Railway's secret input (or CLI `variable set MONGODB_URI --stdin`)
 without echoing the value. No URI belongs in source, shell history, screenshots,
 logs or chat. Staging uses `devcon_follow_staging`, not the production database.
+
+## October 22 product additions
+
+- `GET /v1/directory?sort=recommended`: existing eligible on-site audience only.
+  Ranking reasons are shared interests, role words in the viewer's own goal and
+  declared openness to meetings. `sort=directory` preserves ordinary traversal.
+  Filters, page-size bounds, query timeout and encrypted actor/venue/preference-bound
+  cursors remain enforced. No attendee coordinates, hidden profiles or scores leak.
+- `GET /v1/meetups/:id/calendar`: current eligible participant, accepted meeting,
+  no blocks, current target access/visibility and enabled public meeting place.
+  Returns a one-time ICS snapshot in JSON, never a bearer URL. No private notes,
+  chat, reason, attendee GPS or email fields. Account calendar access is not used.
+- Administrator-only `GET /v1/admin/landmarks?venueId=...` includes disabled public
+  places for preparation. Attendees cannot use this route. The existing creation
+  endpoint accepts an explicit `enabled:false`; coordinates must be inside the
+  venue. `PATCH /v1/admin/landmarks/:id` accepts an `enabled` boolean.
+- Me → Venue admin exposes this approval flow without needing separate credentials.
+  Disabling a venue/place cancels pending/accepted meetings, marks durable
+  notifications, and releases booking slots in bounded batches. Historical meeting
+  data remains; disabled places are not purged. Calendar copies cannot be revoked
+  or auto-updated. The operator must review coordinates and permission; no live
+  venue is auto-created by deployment or tests.
+
+Synthetic end-to-end operator verification: `node scripts/browser-admin-places.mjs`.
+Use only its disposable database/test issuer. Never run it against real attendees.

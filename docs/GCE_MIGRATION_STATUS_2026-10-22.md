@@ -1,3 +1,5 @@
+> Latest product source/API/website: [Android 0.3.6 candidate and comparison-driven improvements](ANDROID_036_CANDIDATE_2026-10-22.md). This file records the earlier 0.3.5 migration/delivery evidence.
+
 # Devcon Follow delivery — 22 October 2026
 
 The new API and database are healthy, and the existing public website now routes to
