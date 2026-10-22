@@ -26,8 +26,14 @@ test('private APK transport rechecks verified cohort and revocation; streams byt
  const headers={Authorization:'Bearer '+await app.sign('alice')};
  const response=await fetch(app.origin+'/v1/releases/android/apk',{headers});assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/^application\/vnd.android.package-archive/);assert.match(response.headers.get('content-disposition'),/^attachment; filename="devcon-follow-0.3.1-2.apk"$/);assert.match(response.headers.get('cache-control'),/no-store/);assert.equal(response.headers.get('location'),null);assert.deepEqual(Buffer.from(await response.arrayBuffer()),bytes);
  assert.equal((await fetch(app.origin+'/private-release/devcon-follow.apk')).status,404);
+ const match={'If-Match':'"'+metadata.sha256+'"'};
+ const part=await fetch(app.origin+'/v1/releases/android/apk',{headers:{...headers,...match,Range:'bytes=0-4095'}});assert.equal(part.status,206);assert.equal(part.headers.get('content-range'),'bytes 0-4095/'+bytes.length);assert.equal(part.headers.get('etag'),'"'+metadata.sha256+'"');assert.deepEqual(Buffer.from(await part.arrayBuffer()),bytes.subarray(0,4096));assert.match(part.headers.get('cache-control'),/no-store/);
+ for(const range of ['bytes=0-10000000','bytes=1-0','bytes=-2','bytes=1-2,5-6','bytes=NaN-99'])assert.equal((await fetch(app.origin+'/v1/releases/android/apk',{headers:{...headers,...match,Range:range}})).status,416);
+ assert.equal((await fetch(app.origin+'/v1/releases/android/apk',{headers:{...headers,'If-Match':'"wrong"',Range:'bytes=0-99'}})).status,412);
+ assert.equal((await fetch(app.origin+'/v1/releases/android/apk',{headers:{...match,Range:'bytes=0-99'}})).status,401);
  await app.db.collection('communityMembers').updateOne({userId:'alice'},{$set:{status:'revoked'}});
  assert.equal((await fetch(app.origin+'/v1/releases/android/apk',{headers})).status,403);
+ assert.equal((await fetch(app.origin+'/v1/releases/android/apk',{headers:{...headers,...match,Range:'bytes=4096-8191'}})).status,403);
 });
 test('private APK fails closed for missing/tampered files and production environments',async t=>{
  const {directory}=await fixture(t);await writeFile(join(directory,'devcon-follow.apk'),'corrupted');

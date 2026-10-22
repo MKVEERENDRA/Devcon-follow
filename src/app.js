@@ -33,7 +33,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
   const ticketVerifier=createTicketVerifier({url:config.TICKET_VERIFY_URL,token:config.TICKET_VERIFY_TOKEN,hmacKey:config.TICKET_BINDING_HMAC_KEY});
   const admins=new Set((config.ADMIN_SUBJECTS||'').split(',').map(s=>s.trim()).filter(Boolean));
   const app=Fastify({logger:{level:config.LOG_LEVEL||'info',redact:['req.headers.authorization','req.headers.cookie','req.body.ticketSecret','req.body.token','req.body.lat','req.body.lon']},bodyLimit:200_000,trustProxy:config.TRUST_PROXY==='true'});
-  await app.register(cors,{origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),methods:['GET','POST','PATCH','PUT','DELETE'],allowedHeaders:['Authorization','Content-Type']});
+  await app.register(cors,{origin:(origin,callback)=>callback(null,!origin||allowedOrigins.includes(origin)),methods:['GET','POST','PATCH','PUT','DELETE'],allowedHeaders:['Authorization','Content-Type','Range','If-Match'],exposedHeaders:['Content-Range','Accept-Ranges','ETag']});
   // Background reads must not exhaust the budget for an explicit Stop/meeting
   // response. Keep separate authenticated read/write budgets; route-specific
   // invitation, directory and abuse limits remain independently enforced.
@@ -83,7 +83,7 @@ export async function buildServer({db,config,notificationFetch=fetch}){
     const {presence,venue}=await currentVenue(user.userId);
     return {...user,presence,venue};
   }
-  await registerAndroidPreview(app,{config,requireUser});
+  await registerAndroidPreview(app,{config,requireUser,authenticate});
   async function isBlocked(a,b){
     return !!(await col('blocks').findOne({$or:[{blockerId:a,blockedId:b},{blockerId:b,blockedId:a}]}));
   }

@@ -8,7 +8,7 @@ const digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 
 // The operator packages SDK-verified bytes outside the web root. Never accept
 // a request-supplied file path or redirect to an unprotected artifact CDN.
-export async function registerAndroidPreview(app,{config,requireUser}){
+export async function registerAndroidPreview(app,{config,requireUser,authenticate}){
   let release=null,file;
   if(config.APP_ENVIRONMENT==='staging'||config.RAILWAY_ENVIRONMENT_NAME==='staging'||config.NODE_ENV==='test'){
     try{
@@ -30,17 +30,25 @@ export async function registerAndroidPreview(app,{config,requireUser}){
         buildId:data.buildId,sha256:data.sha256,signingCertificateSha256:data.signingCertificateSha256,
         sourceCommit:data.sourceCommit,sizeBytes:data.sizeBytes,distribution:'restricted-staging',
         filename:`devcon-follow-${data.version}-${data.versionCode}.apk`,
-        securityStatus:'blocked-public-release',downloadPath:'/v1/releases/android/apk'};
+        rangeChunkBytes:4*1024*1024,securityStatus:'blocked-public-release',downloadPath:'/v1/releases/android/apk'};
     }catch{/* Missing or inconsistent artifacts fail closed without logging local paths. */}
   }
   // Both routes recheck the existing verified-email cohort and revocation.
   const authorize=async req=>{await requireUser(req);if(!release)throw unavailable()};
   app.get('/v1/releases/android',{preHandler:authorize},async()=>release);
-  app.get('/v1/releases/android/apk',{preHandler:authorize,config:{rateLimit:{max:3,timeWindow:'1 minute'}}},async(req,reply)=>{
+  app.get('/v1/releases/android/apk',{preHandler:authorize,config:{rateLimit:{max:req=>req.headers.range?60:3,timeWindow:'1 minute',keyGenerator:async req=>{let actor;try{actor=await authenticate(req);req.authActor=actor}catch{}return JSON.stringify([actor?.userId||req.ip,req.headers.range?'part':'full'])}}}},async(req,reply)=>{
     reply.header('Content-Type','application/vnd.android.package-archive');
     reply.header('Content-Disposition',`attachment; filename="${release.filename}"`);
-    reply.header('Content-Length',release.sizeBytes);
     reply.header('Cache-Control','private, no-store');
+    reply.header('Accept-Ranges','bytes');reply.header('ETag','"'+release.sha256+'"');
+    if(req.headers['if-match']&&req.headers['if-match']!=='"'+release.sha256+'"')return reply.code(412).type('application/json').send({error:'Android release changed. Refresh the installer.'});
+    if(req.headers.range){
+      const match=/^bytes=(\d+)-(\d+)$/.exec(req.headers.range),start=Number(match?.[1]),end=Number(match?.[2]);
+      if(!match||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>=release.sizeBytes||end-start+1>release.rangeChunkBytes){reply.header('Content-Range','bytes */'+release.sizeBytes);return reply.code(416).type('application/json').send({error:'A single bounded APK byte range is required'});}
+      reply.code(206).header('Content-Range',`bytes ${start}-${end}/${release.sizeBytes}`).header('Content-Length',end-start+1);
+      return reply.send(createReadStream(file,{start,end}));
+    }
+    reply.header('Content-Length',release.sizeBytes);
     return reply.send(createReadStream(file));
   });
 }

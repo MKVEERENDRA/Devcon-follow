@@ -25,7 +25,7 @@ try{
  // this disposable issuer's token is forwarded to its own disposable API.
  let directDownloads=0;
  if(deliveryOrigin)await page.route(deliveryOrigin+'/**',async route=>{
-  const headers={'access-control-allow-origin':app.origin,'access-control-allow-headers':'authorization','access-control-allow-methods':'GET,OPTIONS'};
+  const headers={'access-control-allow-origin':app.origin,'access-control-allow-headers':'authorization,range,if-match','access-control-expose-headers':'content-range,etag,accept-ranges','access-control-allow-methods':'GET,OPTIONS'};
   if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
   assert.equal(new URL(route.request().url()).pathname,'/v1/releases/android/apk');directDownloads++;
   const response=await route.fetch({url:app.origin+'/v1/releases/android/apk'});

@@ -1,11 +1,12 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {useAuth} from 'react-oidc-context';
 import {Download} from 'lucide-react';
-import {androidDownloadUrl,readAndroidDownload} from './android-download.js';
+import {androidDownloadUrl,readAndroidDownload,downloadAndroidParts} from './android-download.js';
 
 export function PrivateAndroidDownload({apiOrigin}){
  const auth=useAuth(),[release,setRelease]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[checking,setChecking]=useState(false),[attempt,setAttempt]=useState(0),[verifiedFile,setVerifiedFile]=useState(null),[progress,setProgress]=useState(0);
- const active=useRef(null),subject=auth.user?.profile?.sub,token=auth.user?.access_token;
+ const latestToken=useRef(null);
+ const active=useRef(null),subject=auth.user?.profile?.sub,token=auth.user?.access_token;latestToken.current=token;
  useEffect(()=>{setVerifiedFile(null);return()=>active.current?.abort()},[subject,auth.isAuthenticated]);
  useEffect(()=>{
   if(!verifiedFile)return;
@@ -22,12 +23,16 @@ export function PrivateAndroidDownload({apiOrigin}){
  },[token,subject,attempt]);
  const download=async()=>{
   if(!release||busy)return;
-  const abort=new AbortController();active.current=abort;let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;abort.abort()},600000);setProgress(0);setBusy(true);setError('');setVerifiedFile(null);
+  const abort=new AbortController();active.current=abort;let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;abort.abort()},1200000);setProgress(0);setBusy(true);setError('');setVerifiedFile(null);
   try{
-   const response=await fetch(androidDownloadUrl(release.downloadPath,apiOrigin),{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:abort.signal});
-   if(!response.ok)throw Error(response.status===401?'Your session expired. Sign in again.':response.status===403?'This account does not have download access.':'Download failed. Please try again.');
-   if(response.headers.get('content-type')?.split(';')[0]!=='application/vnd.android.package-archive')throw Error('The server did not return an APK.');
-   const blob=await readAndroidDownload(response,release.sizeBytes,setProgress);
+   let blob;
+   if(release.rangeChunkBytes)blob=await downloadAndroidParts(release,{apiOrigin,getToken:()=>latestToken.current,refreshToken:async()=>{const user=await auth.signinSilent();latestToken.current=user?.access_token;return latestToken.current},signal:abort.signal,onProgress:setProgress});
+   else{
+    const response=await fetch(androidDownloadUrl(release.downloadPath,apiOrigin),{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:abort.signal});
+    if(!response.ok)throw Error(response.status===401?'Your session expired. Sign in again.':response.status===403?'This account does not have download access.':'Download failed. Please try again.');
+    if(response.headers.get('content-type')?.split(';')[0]!=='application/vnd.android.package-archive')throw Error('The server did not return an APK.');
+    blob=await readAndroidDownload(response,release.sizeBytes,setProgress);
+   }
    if(blob.size!==release.sizeBytes)throw Error('Download was incomplete. Please try again.');
    const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(b=>b.toString(16).padStart(2,'0')).join('');
    if(hash!==release.sha256)throw Error('Download checksum did not match. No file was saved.');
