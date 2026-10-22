@@ -1,3 +1,5 @@
+> **22 October delivery:** the existing [website/Android installer](https://devcon-follow.vercel.app/install.html) now routes to the healthy reserved-IP GCE API. Signed Android **0.3.5/build 6** is installed on the private download service. **96/96 local tests** and exact-source Android/iOS compilation pass; native security/public release remain blocked. [Current delivery evidence](docs/GCE_MIGRATION_STATUS_2026-10-22.md) supersedes the older Railway outage and credential notes below.
+
 # Devcon Follow
 
 Latest delivery: [Android 0.3.3 / exact APK evidence / staging status](docs/ANDROID_033_DELIVERY_2026-10-20.md). Current CI: **86/86 tests**, web/container and sandbox journeys PASS; Android/iOS compilation PASS. Native security gate remains FAIL. Staging database readiness has recovered to 200 after the owner added the exact observed /32; private installer metadata shows 0.3.3/build 4. Authorized staging delivery is separate from unapproved production/public distribution.

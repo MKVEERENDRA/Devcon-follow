@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-22T12:55:33.464187+00:00",
+  "websiteSourceCommit": "db408b13de32c14bde2501e7f302b5b3f51b2c45",
+  "apkSourceCommit": "b669585647c05ae2619238aa77b33c0dc6f08356",
+  "buildId": "96f487ef-3dd6-48a8-bfcf-b0e7ae2d972a",
+  "version": "0.3.5",
+  "versionCode": 6,
+  "installerUrl": "https://devcon-follow.vercel.app/install.html",
+  "deploymentId": "dpl_J73TdLiLFG9yMFLgDfxxE5piVR3h",
+  "apiOrigin": "https://devcon-follow.35-206-98-214.sslip.io",
+  "genuineExistingOwnerSso": "pass",
+  "authenticatedMetadata": "pass",
+  "directAuthenticatedApkDownload": "pass",
+  "downloadedSizeBytes": 99364984,
+  "sha256": "35b61e08a6d4df1dff2a9cb9361aaeaa636009263e85a3b3bb5078a207736dd9",
+  "independentFileChecksumMatch": true,
+  "publicApkDistribution": false,
+  "physicalInstallation": "unverified",
+  "twoPersonPhysicalAcceptance": "blocked",
+  "scope": "existing approved owner cohort only"
+}
