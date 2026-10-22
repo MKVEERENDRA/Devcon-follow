@@ -1,0 +1,11 @@
+# Real photography — 22 October 2026
+
+The web and native welcome screens now use three locally bundled, real event photographs in place of the generated welcome illustration. The first image introduces in-person conversations; two supporting cards explain shared interests and public meetups. Existing attendee actions and sign-in remain intact. Photography is never used to fabricate profiles, attendance or endorsement.
+
+Sources: Headway [F2KRf_QfCqw](https://unsplash.com/photos/F2KRf_QfCqw), Evangeline Shaw [xRlI-L-kvrw](https://unsplash.com/photos/xRlI-L-kvrw), and Jakob Dalbjörn [cuKJre3nyYc](https://unsplash.com/photos/cuKJre3nyYc). Retrieved on 22 October 2026 under the [Unsplash License](https://unsplash.com/license), which permits downloading and commercial distribution. These are free Unsplash photographs, not Unsplash+ assets. Credits and the illustrative-use statement are visible in both clients; `/photo-credits.html` lists source links. File hashes, dimensions and license links are in both photography directories' `credits.json`.
+
+All three JPEGs total 424,894 bytes per client. Native assets are bundled for offline use; web assets use same-origin paths with fixed dimensions, lazy loading below the hero and no third-party image requests. Text uses solid surfaces, descriptive image labels and scalable layout. No new dependency, account, paid image service or location permission is introduced.
+
+Android source is version 0.3.7 / build 8. An existing 0.3.6 APK does not include this visual update. Publishing a web update does not update an installed APK; the next signed build must be verified before replacing the private download.
+
+Verification: Vite build and native TypeScript pass; both Android/iOS Hermes exports pass. `scripts/browser-photography.mjs` verifies all three images decode at the expected dimensions, no third-party welcome requests, credits, mobile/desktop screenshots, axe WCAG checks and 200% text without horizontal scrolling. The new browser check is included in CI. The existing admin-page 200% font regression was repaired with bounded grid/input sizing and verified with bundled Playwright Chromium. The welcome footer contrast and wrapping header were also corrected without weakening accessibility assertions.

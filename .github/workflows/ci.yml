@@ -45,6 +45,7 @@ jobs:
           node scripts/browser-qr-login.mjs
           npm run test:browser:reliability
           node scripts/browser-admin-places.mjs
+          node scripts/browser-photography.mjs
           npm run test:browser:parity
           npm run test:browser:install
           npm run test:browser:private-install
