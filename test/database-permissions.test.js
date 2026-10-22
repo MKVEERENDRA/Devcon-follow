@@ -13,3 +13,10 @@ test('dedicated database guard accepts only the named user and a single database
     status('another_user',[scoped]),status('devcon_follow_gce_staging',[]),{},
   ])assert.throws(()=>assertScopedDatabaseIdentity(unsafe,'devcon_follow_gce_staging','devcon_follow_staging'),/only readWrite/);
 });
+
+test('accepted extra read access does not permit admin or cross-database writes',()=>{
+  const status=role=>({authInfo:{authenticatedUsers:[{user:'gce'}],authenticatedUserRoles:[{role:'readWrite',db:'staging'},{role,db:'admin'}]}});
+  assert.doesNotThrow(()=>assertScopedDatabaseIdentity(status('readAnyDatabase'),'gce','staging',{allowReadAnyDatabase:true}));
+  for(const role of ['atlasAdmin','readWriteAnyDatabase','root'])assert.throws(()=>assertScopedDatabaseIdentity(status(role),'gce','staging',{allowReadAnyDatabase:true}));
+  assert.throws(()=>assertScopedDatabaseIdentity(status('readAnyDatabase'),'gce','staging'));
+});

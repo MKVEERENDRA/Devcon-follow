@@ -30,7 +30,7 @@ if(env.RAILWAY_ENVIRONMENT_NAME==='staging'&&env.STAGING_EGRESS_DIAGNOSTIC==='tr
   }catch{console.warn(JSON.stringify({event:'staging_egress_probe_unavailable'}))}
 }
 while(!stopping&&!database){
-  try{database=await openDatabase(env.MONGODB_URI,env.MONGODB_DB||'devcon_follow',{expectedUser:env.REQUIRE_SCOPED_DATABASE_USER})}
+  try{database=await openDatabase(env.MONGODB_URI,env.MONGODB_DB||'devcon_follow',{expectedUser:env.REQUIRE_SCOPED_DATABASE_USER,allowReadAnyDatabase:env.ALLOW_DATABASE_READ_ANY==='true'})}
   catch{
     // Driver errors can contain connection details. Never log raw URI/error.
     console.warn(JSON.stringify({event:'database_not_ready',retrySeconds:10}));
