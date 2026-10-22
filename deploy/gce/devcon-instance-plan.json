@@ -1,0 +1,23 @@
+{
+  "status": "review-only-not-provisioned",
+  "project": "proof-of-audits-production",
+  "account": "founderproof@gmail.com",
+  "instanceName": "devcon-follow-api",
+  "zone": "us-central1-a",
+  "machineType": "e2-micro",
+  "bootDisk": {"type": "pd-standard", "sizeGb": 30},
+  "network": "devcon-follow-network",
+  "subnet": "devcon-follow-subnet",
+  "reservedAddress": "devcon-follow-ip",
+  "labels": {"app": "devcon-follow", "cost-owner": "devcon-follow"},
+  "cloudApiAccessFromVm": "none",
+  "ssh": "operator-address-only; dedicated key; no project-wide metadata changes",
+  "publicPorts": [80, 443],
+  "appPort": "8080 on loopback only, behind HTTPS reverse proxy",
+  "database": "existing Atlas; only verified reserved outbound IPv4 /32",
+  "registration": "closed until separate release acceptance",
+  "existingPoaResourceChanges": "none",
+  "excludedServices": ["Cloud NAT", "load balancer", "Cloud SQL", "Cloud DNS", "GPU", "Marketplace images", "additional VM", "additional disks"],
+  "budget": {"cashLimit": 0, "creditAllocationUsd": null, "estimatedMonthlyIpv4Usd": 3.65, "hardSpendCapEstablished": false},
+  "unresolved": ["bounded owner credit allocation", "credit-specific applicability and cash/tax exposure", "free-tier billing-month usage", "capacity and application load verification", "operator HTTPS domain", "release security and physical-device acceptance"]
+}
