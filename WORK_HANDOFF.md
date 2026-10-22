@@ -25,6 +25,8 @@ The existing five-section application is implemented and sandbox tested. Local s
 
 ## Access and remaining release work
 
+Latest product instruction: the owner explicitly requested everyone be able to join without an invitation/email cohort, then requested a full flow check before implementation. This is an explicit change from the earlier pilot-only direction, not a generic “continue.” The deployed policy is still pilot; do not confuse the new intended flow with completed configuration. [Fresh flow check and exact gaps](docs/FLOW_VERIFICATION_2026-10-23.md) also records that Discover currently requires on-site presence, unlike the requested pre-arrival browsing. No public policy or distribution changes were applied during verification.
+
 The verified owner-email pilot is enabled for `veer@proofofaudits.com`. Broad public registration is not enabled. Official ticket verification remains disconnected. No real attendee or event location was invented. No approved venue/landmark exists yet; `/health/release` correctly fails those configuration checks. `/health/ready` tests database/service readiness, not complete release approval.
 
 Native audit still fails on two upstream advisories (15 propagated high package findings), with no published patched braces/node-forge versions. Keep the audit gate visible. Exact signed bundle correlation shows neither implementation in its JavaScript inventory; this does not repair or certify build tooling/native libraries. Physical two-person GPS/BLE/QR/push acceptance remains unverified; the owner said the second tester and test venue were unavailable. No Apple Developer membership exists, so native iPhone distribution remains blocked. Do not invent approval or passing device tests.
