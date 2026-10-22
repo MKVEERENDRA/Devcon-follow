@@ -14,13 +14,17 @@ The review-only status in the earlier shared-project report is superseded here.
   address was independently observed to match it.
 - SSH limited to the observed operator /32 and a dedicated local key; project SSH
   keys are blocked on this new instance. Only HTTP/HTTPS are public. Application
-  port 8080 is to be published on loopback only. Operator SSH has shown intermittent
-  connection timeouts and needs continued investigation before claiming reliability.
+  port 8080 is to be published on loopback only. Direct operator SSH showed
+  intermittent timeouts. Added `devcon-follow-iap-ssh`, scoped to this new VM tag
+  and Google's authenticated IAP range only. The IAP API was already enabled;
+  no project IAM permissions were changed. An actual IAP SSH session succeeded.
 - Docker, Caddy, automatic security-update package, 2 GiB swap on the existing disk,
   and bounded journal configuration installed by `deploy/gce/bootstrap.sh`.
 - Clean archive of source `77264e9` uploaded and Docker build completed, including
   the actual Vite build (1,702 modules). No environment secrets or APKs were placed
   in the build context. Docker build logs are private operator artifacts on the VM.
+  Verified image ID:
+  `sha256:e5c3961ec4d8a9ef33da908169e9f262b9cef6b43cd0a6871046cf14140aef77`.
 - Temporary DNS hostname `devcon-follow.35-206-98-214.sslip.io` resolves to the VM;
   Caddy's configuration validates and a normal TLS-verified request reaches it.
   Current response is **502**, because the API has not started. This is NOT an app
@@ -58,8 +62,9 @@ without printing its contents, and refuses to overwrite an established file. It
 sets database `devcon_follow_staging` and keeps enrollment/push closed. Its synthetic
 tests prove private handling and fail-closed behavior without touching Atlas.
 
-The systemd unit is prepared in `deploy/gce/devcon-follow.service`; remote
-installation must be verified because one install attempt timed out after upload.
+The systemd unit is prepared in `deploy/gce/devcon-follow.service`; installation
+and `systemd-analyze verify` succeeded through the authenticated IAP session after
+the direct SSH install attempt timed out. The application service is inactive.
 It requires a nonempty `/etc/devcon-follow/app.env`, publishes only loopback, uses
 the existing non-root Docker image, drops capabilities, limits resources/logs and
 supports restart. No API service is running and no live database read/write has
