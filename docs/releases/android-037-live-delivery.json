@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-22T19:40:37.825164+00:00",
+  "scope": "genuine-approved-owner-browser-download-not-phone-installation",
+  "installerUrl": "https://devcon-follow.vercel.app/install.html",
+  "apiOrigin": "https://devcon-follow.35-206-98-214.sslip.io",
+  "version": "0.3.7",
+  "versionCode": 8,
+  "buildId": "6acaaa7c-da0b-4d37-a3be-4b6c8ddcebc7",
+  "nativeSourceCommit": "3bd19225f24d275b80b32774104d2e0c5cedb154",
+  "deliverySourceCommit": "6d6ae7cfc63c0a7dcd1db400105659f88f0a5e8b",
+  "sizeBytes": 98840104,
+  "sha256": "3e39b62e5f190a34eb8d4ffd834bbec52f1dca178b60e92aaf8c6b1b81c92317",
+  "existingOwnerSsoRestored": true,
+  "browserIntegrityChecksPassed": true,
+  "automaticAndExplicitSaveHashesMatch": true,
+  "physicalDeviceAcceptance": "unverified",
+  "publicEnrollment": "disabled",
+  "nativeSecurityGate": "fail",
+  "completedHttp206Parts": 24,
+  "containerRestarts": 0,
+  "containerOomKilled": false
+}

@@ -14,7 +14,7 @@
   "reservedAddress": "devcon-follow-ip",
   "reservedIpv4": "35.206.98.214",
   "temporaryHttpsOrigin": "https://devcon-follow.35-206-98-214.sslip.io",
-  "applicationImageSource": "f22859206e40bac55a7716ee7b7c4652a4635870",
+  "applicationImageSource": "6d6ae7cfc63c0a7dcd1db400105659f88f0a5e8b",
   "labels": {
     "app": "devcon-follow",
     "cost-owner": "devcon-follow"

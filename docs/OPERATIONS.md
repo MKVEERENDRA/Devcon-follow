@@ -107,3 +107,11 @@ logs or chat. Staging uses `devcon_follow_staging`, not the production database.
 
 Synthetic end-to-end operator verification: `node scripts/browser-admin-places.mjs`.
 Use only its disposable database/test issuer. Never run it against real attendees.
+
+### Interrupted private Android downloads
+
+The installer uses up to 4 MiB authenticated parts advertised by `/v1/releases/android` as `rangeChunkBytes`. Each `GET /v1/releases/android/apk` part includes a single bounded `Range: bytes=START-END` and `If-Match: "SHA256"`. The API rechecks verified cohort/revocation and returns 206 with exact `Content-Range`, private/no-store and an ETag bound to the release bytes. Separate per-identity limits allow 60 part requests/minute while legacy full requests remain limited to three/minute. No credential is included in a URL. CORS exposes range/ETag headers only to existing allowed origins.
+
+The client retains completed parts in memory during the attempt, retries only a failed part (bounded retries and 90-second part timeouts), renews an expired token through the existing OIDC session when possible, and checks full size/SHA-256 before saving. Cancel/logout/account change aborts; this does not persist a resumable file across page reloads. A changed release returns 412: refresh metadata and restart rather than combining builds. Malformed/oversized ranges return 416. Never bypass 401/403 or checksum errors. The total attempt is bounded to 20 minutes. A two-minute in-memory verified-save link is a local fallback, not a new network download or public release URL.
+
+Regression: `node scripts/browser-private-install.mjs` now aborts a cross-origin second part and verifies the first part is not fetched again. Use `--release-directory=PRIVATE_DIRECTORY` for exact SDK-verified APK byte transport in a disposable sandbox. Genuine owner delivery for 0.3.7 is recorded separately in `docs/releases/android-037-live-delivery.json`; it does not establish phone installation or two-person BLE/GPS acceptance.

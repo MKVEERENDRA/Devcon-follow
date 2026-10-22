@@ -1,67 +1,38 @@
-> **Latest, 22 October:** [GCE/API and Android 0.3.5 delivery](docs/GCE_MIGRATION_STATUS_2026-10-22.md). API image/source `b669585`; website source `db408b1`, deployment `dpl_J73TdLiLFG9yMFLgDfxxE5piVR3h`, canonical domain promoted. HTTPS and database readiness pass, owner-cohort sign-in enabled. APK build `96f487ef-3dd6-48a8-bfcf-b0e7ae2d972a` verified and served privately. **96/96 tests**, Android+iOS compilation pass; native audit fails. No public registration or official ticket verification. Owner accepted extra DB readAnyDatabase role; do not ask again or change it. Existing POA resources untouched. Old Railway outage/login/credential blockers below are history.
+# Devcon Follow — current handoff, 23 October 2026 (IST)
 
-> Public-user preparation: owner Google console showed Testing with incomplete Branding. Saved only the existing app homepage and branding domain; no credentials/scopes/audience publication changed. Public privacy page is still an engineering draft. Asked for public operator name and privacy/support contact; do not invent them or request another login. A further upload remained blocked by the Railway platform incident. Readiness 200; release 503 for missing admin/approved venue/landmark. See updated 0.3.4 report and public-only Auth0 review JSON.
+## Read this state first
 
-> Latest deployment attempt: Railway rejected the isolated 0.3.4/5 upload with **Deploys have been paused temporarily**. Official platform incident https://status.railway.com/incident/QH8L8B3E confirms builds paused in all regions. No new deployment; staging remains `f65929a7` and readiness 200. Installer still serves 0.3.3/4. Resume the prepared targeted upload after recovery; no login/account reset is needed. See [candidate report](docs/ANDROID_034_CANDIDATE_2026-10-21.md).
+Current API/web source: `6d6ae7cfc63c0a7dcd1db400105659f88f0a5e8b`.
+Signed native source: `3bd19225f24d275b80b32774104d2e0c5cedb154`.
+Android 0.3.7/build 8: EAS `6acaaa7c-da0b-4d37-a3be-4b6c8ddcebc7`.
+APK SHA-256: `3e39b62e5f190a34eb8d4ffd834bbec52f1dca178b60e92aaf8c6b1b81c92317`.
+[Current delivery evidence](docs/ANDROID_037_DELIVERY_2026-10-23.md).
 
-> Latest signed candidate: **0.3.4/build 5**, source `e3d2b41`, EAS `d3c56bee-bbce-4f0e-9b55-36a4d322014d` FINISHED. SDK signature/package checks, same-build bundle correlation and actual-byte sandbox download PASS. Android/iOS compilation and full test/build CI PASS. Native audit remains FAIL. New APK is local only; live private installer still serves 0.3.3/4. No production rollout occurred. See [candidate report](docs/ANDROID_034_CANDIDATE_2026-10-21.md).
+The real owner browser download of 0.3.7 now passes: automatic and explicit saves match the exact SDK-verified size/SHA-256. The single large-response transfer failed late; source `6d6ae7c` fixed delivery with authenticated 4 MiB parts, bounded retries, release-bound If-Match and full final checksum validation. A browser regression aborts the second part and verifies only that part is retried. No new owner login was required.
 
-> Latest source: `8014714` fixes native foreground renewal losing sessions on transient outages. **89/89 tests**, two-account sandbox browser journey, native types and Android/iOS exports PASS. New CI/native compilation runs are pending; do not reuse an old compile result as this source’s result. Existing APK 0.3.3/4 does not contain the fix. See [core-flow verification](docs/CORE_FLOW_VERIFICATION_2026-10-21.md).
+The existing five-section application is implemented and sandbox tested. Local suite: 104/104, no failures/skips. Arrival directions now work before check-in; disabled/expired venues cannot keep the account UI marked on-site. Previous recommendations, privacy, calendar, notes, QR, mutual chat, 30-minute Stop/expiry and admin place-closure regressions remain covered. Three licensed real photographs are in the signed APK and published web welcome.
 
-> 21 October: owner reports Google OAuth credentials configured in Auth0 and **Try Connection successful**. Do not request another provider/dashboard login or repeat client creation. This is an owner-reported provider test, not independent Android app login acceptance. Google project `devcon-follow-2026` exists; no billing authorized. Earlier account/profile-access notes below are historical. See `deploy/auth0/review-2026-10-20.json`. Production/public enrollment remains held for an exact candidate and release approval.
+## Infrastructure — use existing resources
 
-> Latest Auth0 access: the correct tenant is signed in in **Chrome** (browser 3), not the separate in-app browser. Use that existing authorized session; expired MCP authorization is not a reason to repeat dashboard login. Existing web/native settings were reviewed read-only; Google development keys still need owner credentials. The owner specified a different Google Cloud account; the earlier other-account 2SV block is superseded. The owner reported Google sign-in complete. Only the other Google account is visible in the connected Chrome profile; connect/share the already signed-in owner profile/tab, rather than requesting another login. See [live public configuration review](deploy/auth0/review-2026-10-20.json).
+- Website / private installer: https://devcon-follow.vercel.app/install.html . Existing Vercel project `prj_eOSHP6OdmTSBzqAyAyHv10QA0mEO`, scope `mkveerendras-projects`, org `team_zQh42eOLP91cK4hK4MHjyLaP`.
+- API: https://devcon-follow.35-206-98-214.sslip.io . Dedicated GCE VM `devcon-follow-api`, `us-central1-a`, in owner-authorized project `proof-of-audits-production`. Only this dedicated Devcon VM was changed. Existing POA services/resources/IAM/domains stay untouched.
+- Reserved outbound IPv4 `35.206.98.214/32` is already allowed in Atlas. Do not repeat changing-IP allowlist work or create another database/VM.
+- API image `devcon-follow:6d6ae7c`, image ID `sha256:61f4bbbdefd41d3f7a71eb90c0cf33f5862c3e46c153629cb13144b7baac8c91`.
+- Protected VM environment remains `/etc/devcon-follow/app.env`; never print it. Private APK pair at `/opt/devcon-follow/private-release`; prior 0.3.6 pair at `.036`, old service unit at `/etc/systemd/system/devcon-follow.service.pre037` for rollback. `/etc/systemd/system/devcon-follow.service.pre037parts` restores the prior a619b4a image with the same 0.3.7 APK pair.
+- Atlas project `6ad3a66940fbb40c43d65f78`, cluster `DevconFollow`, database `devcon_follow_staging`. Owner accepted the extra `readAnyDatabase` role. Do not ask about or change that role again. Existing credentials are private files outside Git.
+- Auth0 tenant `dev-xs1kh1yit6q5g3ph`, separate web/native public clients and real Google sign-in already configured. The existing owner browser SSO restored successfully; do not request repeated dashboard logins.
+- Old Railway outage/login/redeploy instructions are superseded by GCE delivery. Do not touch Railway merely to recover old credentials.
 
-> Auth0 management diagnosis: global Codex MCP is already configured; the stored management access token expired 19 October and has no refresh token. Repeating dashboard login does not renew that MCP credential. The owner has objected to repeated login requests; do not ask the same generic dashboard-login question again. App SSO works independently. See the latest section of [0.3.3 delivery](docs/ANDROID_033_DELIVERY_2026-10-20.md).
+## Access and remaining release work
 
-> Latest continuation: read [Android 0.3.3 delivery](docs/ANDROID_033_DELIVERY_2026-10-20.md) first. The current execution brief authorizes existing staging source/APK delivery, superseding historical deployment freezes below. Production, public enrollment and broad APK distribution remain unapproved. Preserve exact pending network authorization and real-device limits; do not repeat completed builds.
+The verified owner-email pilot is enabled for `veer@proofofaudits.com`. Broad public registration is not enabled. Official ticket verification remains disconnected. No real attendee or event location was invented. No approved venue/landmark exists yet; `/health/release` correctly fails those configuration checks. `/health/ready` tests database/service readiness, not complete release approval.
 
-> Current continuation (20 October): read [production delivery](docs/PRODUCTION_DELIVERY_2026-10-20.md) and [verified installer delivery](docs/INSTALLER_DELIVERY_2026-10-20.md) first. The owner authorized production preparation, source changes and local verification, with a consolidated approval required before public release. Historical blanket freezes below are dated history, not current authorization. No production rollout or public APK has been approved.
+Native audit still fails on two upstream advisories (15 propagated high package findings), with no published patched braces/node-forge versions. Keep the audit gate visible. Exact signed bundle correlation shows neither implementation in its JavaScript inventory; this does not repair or certify build tooling/native libraries. Physical two-person GPS/BLE/QR/push acceptance remains unverified; the owner said the second tester and test venue were unavailable. No Apple Developer membership exists, so native iPhone distribution remains blocked. Do not invent approval or passing device tests.
 
-> Continue from code `891afe0`. Current source has 70 passing tests and Android/iOS compilation; native-security remains red. Live accounts, infrastructure, public registration, deployment and pilot execution remain prohibited. [Current flow report](docs/END_TO_END_PRODUCT_REPORT_2026-10-19.md) is authoritative over historical infrastructure instructions below.
+The owner wants autonomous implementation and delivery, with minimal spend. Existing private-cohort website/API/APK delivery is authorized. Do not open public enrollment by treating a generic “continue” as an exact security-risk decision. Credits are shared with POA; the approximate $5/month credit target is not a hard billing cap. No paid upgrades or duplicate infrastructure were purchased.
 
-> Current attendee-flow continuation: [`891afe0`](https://github.com/MKVEERENDRA/Devcon-follow/commit/891afe0), including [`e212605`](https://github.com/MKVEERENDRA/Devcon-follow/commit/e212605), adds durable meeting updates, conflict/retry protection and cancel/reproposal. [Five-section end-to-end report](docs/END_TO_END_PRODUCT_REPORT_2026-10-19.md): **70/70 local tests**, three sandbox browser journeys; real device/push acceptance and deployments remain blocked/frozen.
+## Working rules
 
-> Latest source continuation: [`791c906`](https://github.com/MKVEERENDRA/Devcon-follow/commit/791c906) and [`38eb754`](https://github.com/MKVEERENDRA/Devcon-follow/commit/38eb754) adds secure paginated discovery, refresh-safe private notes, native editing/QR parity and accessibility coverage. [Current evidence](docs/DIRECTORY_PARITY_EVIDENCE_2026-10-19.md) supersedes earlier counts: **67/67 local tests**, three sandbox browser journeys. Live testing and deployment remain prohibited.
+Work in place; use AGENTS.md. Keep the five sections and privacy contracts. Use Node 24, lockfiles, disposable MongoDB and the independent sandbox OIDC issuer for tests. Do not fabricate real users, venue coordinates or organizer verification. Finish source, build and local verification before asking for irreducible human input.
 
-> Latest continuation: source fixes `b48b3fd` and `c1f7d3e` are on main. [V1 reliability evidence](docs/V1_RELIABILITY_EVIDENCE_2026-10-19.md) supersedes older test counts and lists parity/security limits. The explicit freeze on live account/data access, infrastructure changes and deployment remains in force.
-
-> Current status (19 October): staging database readiness recovered; one real pending Auth0 identity was validated before the owner stopped live testing. New product changes are local source, not a deployment. See [current build report](docs/PRODUCT_BUILD_2026-10-19.md) and [restricted networking](docs/RESTRICTED_NETWORKING.md). Older entries below are historical, not instructions to repeat completed setup.
-
-# Devcon Follow — Work mode engineering handoff (2026-10-17)
-
-## Mission
-Build, test, and launch a real Devcon Mumbai 2026 attendee networking product, not a fake demo. The attached repository is the current source of truth. Inspect the actual files before changing anything. Do not throw away working code or regenerate the frontend from a generic template. Preserve MongoDB and Railway work already completed.
-
-## Already provisioned in connected accounts
-- MongoDB Atlas organization contains a dedicated project: `Devcon Follow`, project ID `6ad3a66940fbb40c43d65f78`.
-- Atlas cluster: `DevconFollow` on AWS `AP_SOUTH_1` (Mumbai), free tier.
-- Database `devcon_follow` has 12 empty collections, including profiles, tickets, presence, locations, shares, requests, follows, venues, blocks, reports, audit, peerTokens.
-- MongoDB user `devcon_follow_api` has database-scoped `readWrite`; its secret is **already staged** as encrypted Railway variable `MONGODB_URI` and must never be pasted into chat, version control or client JavaScript.
-- Railway project `Devcon Follow` ID `2bc6b37c-697d-4077-a23b-503ee588d595`, `production` env ID `0f293625-f62e-461d-a2e0-59b9e5124f26`.
-- Railway service `devcon-follow-api` ID `a9000893-59e1-48d7-8c0e-bf0b9a1c6c88` **exists only as STAGED**, with environment variables and DB secret, but NO code source or running instance. Do not deploy it until a valid source and its required secrets are configured.
-- Atlas IP allowlist currently empty. Configure secure Railway→Atlas access. Avoid unrestricted global IP access without explicit informed user approval.
-- Original Atlas indexes were created through MCP without uniqueness or TTL options. The revised `src/indexes.js` safely repairs mismatched indexes only for empty collections. Run initial bootstrap against Atlas and verify **unique, TTL, geo** indexes. Do not silently mutate indexes on populated collections.
-
-## Current source and tests
-- Source: `web/` React Vite PWA, `src/` Fastify/Socket.IO/MongoDB API, `Dockerfile`, tests, docs, and `mobile/` specs.
-- 23/23 dependency-free Node tests pass. JS syntax and JSX parse pass. React Vite production build was NOT run because registry.npmjs.org could not be resolved in chat container.
-- No official ticket-verification API connected. Login provider not connected. No approved venue record configured. No real cross-platform native Bluetooth/Wi-Fi transport exists; backend ephemeral peer token protocol only.
-- Never describe staging or source files as a live, production-ready system.
-
-## Priority order — continue autonomously
-1. Unpack the attached ZIP; inspect all files, tests and docs. Create a writable private GitHub repository under the user account using connected GitHub/browser Work tool, preserving full source tree. Commit source (exclude all `.env`, tokens, user data).
-2. Run npm ci/install with available network, npm tests, full Vite production build, backend integration tests, then Docker build. Fix failures with minimal changes.
-3. Configure OIDC sign-in using an actual trusted issuer (e.g. Auth0/Clerk) after obtaining required connection/approval. Enforce validated JWTs server-side and passkey/PKCE where applicable; never substitute a self-declared user ID.
-4. Obtain **official organizer-authorized, READ-ONLY ticket ownership verification**, or keep sign-up blocked and explicitly label this blocker. An uploaded photo/QR must never become verified without authentic ownership verification; never redeem Pretix check-ins.
-5. Configure verified venues and time windows; require GPS accuracy and fresh presence; test false GPS/spoof handling. No invented location data.
-6. Integrate deployment source into the EXISTING staged Railway service. Ensure database auth, network access, migrations, health endpoints, HTTPS domain, rotation of secrets, logs, alerts, backup choices, rate limiting, CORS and CSP. Before activating live deployment, ensure external actions/approvals are allowed in Work.
-7. Test all website flows using cloud browser/real API: mobile install, signup, ticket, profile, filtering, public QR generation, scan, following, requests, approval, timers, location revocation, blocking, account deletion. Do not claim full E2E until tested.
-8. Build native Android/iPhone applications (React Native with dedicated native modules as needed) and test BLE/Wi-Fi via compatible Android/iPhone physical devices. Do not represent iPhone Safari PWA as capable of BLE discovery. Require ephemeral rotating tokens and consent. Check app distribution requirements and request developer account actions when unavoidable.
-9. Produce a release report: code URL, tested web URL, API URL, evidence/logs, blocking dependencies, feature matrix, privacy/security notes, and real install instructions.
-
-## Product constraints
-Devcon Mumbai and permitted side events only; searchable verified profile can remain visible even with location OFF; location and navigation only for explicitly opted-in durations and scopes; recipient-specific exact coordinates only after approval; no movement history; no public ticket QR; no fake verification or live status; do not claim that radio RSSI is an exact distance. Retain connections after event, disable venue-based discovery outside events.
-
-## Required behavior
-Do the work in Work mode using cloud browser, computer and available connectors. Avoid additional planning-only responses. Ask the user only for necessary human approvals, billing, identities, missing organizer access or native signing requirements. Never paste account secrets in chat. Stay within documented API and terms. Do not deploy a misleading public demo with fake verified attendees.
+Older status and instructions are preserved only as [historical snapshots](docs/history/HANDOFF_BEFORE_2026-10-23.md); they are not current execution instructions.

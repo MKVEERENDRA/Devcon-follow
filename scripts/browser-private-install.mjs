@@ -10,7 +10,7 @@ import {startTestRuntime} from '../test/support/runtime.js';
 // not APK installation or genuine provider acceptance.
 const actualDirectory=process.argv.find(v=>v.startsWith('--release-directory='))?.slice('--release-directory='.length);
 const directory=actualDirectory||await mkdtemp(join(tmpdir(),'devcon-browser-apk-'));
-const bytes=actualDirectory?await readFile(join(directory,'devcon-follow.apk')):Buffer.concat([Buffer.from('PK'),Buffer.alloc(10000,7)]);
+const bytes=actualDirectory?await readFile(join(directory,'devcon-follow.apk')):Buffer.concat([Buffer.from('PK'),Buffer.alloc(5*1024*1024+10000,7)]);
 const metadata=actualDirectory?JSON.parse(await readFile(join(directory,'android.json'),'utf8')):{kind:'apk',packageId:'com.proofofaudits.devconfollow',version:'0.3.1',versionCode:2,buildId:'6583ca87-7174-4907-8c8b-df10c38ceee9',sourceCommit:'a'.repeat(40),sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:'b'.repeat(64),sizeBytes:bytes.length,standaloneBundle:true,debuggable:false,apiBaseUrl:'https://devcon-follow-api-staging.up.railway.app'};
 if(!actualDirectory){await writeFile(join(directory,'devcon-follow.apk'),bytes);await writeFile(join(directory,'android.json'),JSON.stringify(metadata))}
 // Keep full APK bytes streaming over localhost; route interception buffers them
@@ -23,11 +23,12 @@ try{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  // Exercise cross-origin delivery without contacting any external host. Only
  // this disposable issuer's token is forwarded to its own disposable API.
- let directDownloads=0;
+ let directDownloads=0,interruptedPart=false;const requestedParts=[];
  if(deliveryOrigin)await page.route(deliveryOrigin+'/**',async route=>{
   const headers={'access-control-allow-origin':app.origin,'access-control-allow-headers':'authorization,range,if-match','access-control-expose-headers':'content-range,etag,accept-ranges','access-control-allow-methods':'GET,OPTIONS'};
   if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers});
   assert.equal(new URL(route.request().url()).pathname,'/v1/releases/android/apk');directDownloads++;
+  const range=route.request().headers().range;requestedParts.push(range);if(range?.startsWith('bytes=4194304-')&&!interruptedPart){interruptedPart=true;return route.abort('failed')}
   const response=await route.fetch({url:app.origin+'/v1/releases/android/apk'});
   await route.fulfill({response,headers:{...response.headers(),...headers}});
  });
@@ -36,7 +37,7 @@ try{
  const download=page.getByRole('button',{name:'Download Android APK',exact:true});await download.waitFor();assert.equal(new URL(page.url()).pathname,'/install.html');
  await page.clock.install();
  const saved=page.waitForEvent('download',{timeout:90000}).catch(error=>({error}));await download.click({timeout:10000});const received=await saved;if(received.error)throw Error(received.error.message+'; installer alert: '+await page.getByRole('alert').allTextContents());
- assert.equal(directDownloads,deliveryOrigin?1:0,'Configured dedicated-origin transport is used when present');assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
+ assert.equal(directDownloads,deliveryOrigin?3:0,'Dedicated-origin parts retry only the interrupted second part');if(deliveryOrigin){assert.equal(interruptedPart,true);assert.equal(requestedParts[0],'bytes=0-4194303');assert.equal(requestedParts[1],requestedParts[2]);}assert.equal(received.suggestedFilename(),`devcon-follow-${metadata.version}-${metadata.versionCode}.apk`);assert.deepEqual(await readFile(await received.path()),bytes);
  const saveVerified=page.getByRole('link',{name:'Save verified APK',exact:true});await saveVerified.waitFor();
  const verifiedUrl=await saveVerified.getAttribute('href');assert(verifiedUrl.startsWith('blob:'),'the fallback must not expose an API credential or a public binary URL');
  let repeatedFetches=0;const countFetch=r=>{if(new URL(r.url()).pathname==='/v1/releases/android/apk')repeatedFetches++};page.on('request',countFetch);
@@ -51,5 +52,5 @@ try{
  const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[]);
  await page.evaluate(()=>document.documentElement.style.fontSize='200%');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
  await mkdir('artifacts/install',{recursive:true});await page.screenshot({path:'artifacts/install/private-sandbox-large-text.png',fullPage:true});assert.deepEqual(errors,[]);
- console.log(actualDirectory?`PASS: actual ${metadata.version}/${metadata.versionCode} signed APK bytes downloaded through authenticated sandbox browser transport; SHA-256 ${metadata.sha256}. Not genuine-provider or physical-device acceptance.`:'PASS: sandbox PKCE sign-in returns to installer; authenticated binary download and checksum, HTML/tamper rejection, session restoration, axe and large text. Synthetic transport evidence only.');
+ console.log(actualDirectory?`PASS: actual ${metadata.version}/${metadata.versionCode} signed APK bytes downloaded through authenticated sandbox browser transport; SHA-256 ${metadata.sha256}. Not genuine-provider or physical-device acceptance.`:'PASS: sandbox PKCE sign-in returns to installer; cross-origin parts recover from an aborted second request without refetching the first; full checksum, HTML/tamper rejection, session restoration, axe and large text. Synthetic transport evidence only.');
 }finally{await browser?.close();await app.close();if(!actualDirectory)await rm(directory,{recursive:true,force:true})}

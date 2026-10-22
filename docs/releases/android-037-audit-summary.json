@@ -1,0 +1,30 @@
+{
+  "checkedOn": "2026-10-23 Asia/Kolkata",
+  "sourceCommit": "3bd19225f24d275b80b32774104d2e0c5cedb154",
+  "auditSha256": "83750c480f63b7b23ab54c1fd0f2b4f053abface9b6698e9337d158836485f82",
+  "counts": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 15,
+    "critical": 0,
+    "total": 15
+  },
+  "advisories": [
+    {
+      "package": "braces",
+      "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "range": "<=3.0.3",
+      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns"
+    },
+    {
+      "package": "node-forge",
+      "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+      "range": "<=1.4.0",
+      "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements"
+    }
+  ],
+  "gatePassed": false,
+  "publicReleaseApproved": false,
+  "scope": "locked native dependency graph; not a claim of delivered APK exploitability"
+}

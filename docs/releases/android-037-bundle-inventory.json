@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-22T18:56:55.108Z",
+  "scope": "signed-apk-embedded-JavaScript-only",
+  "buildId": "6acaaa7c-da0b-4d37-a3be-4b6c8ddcebc7",
+  "version": "0.3.7",
+  "versionCode": 8,
+  "apkSha256": "3e39b62e5f190a34eb8d4ffd834bbec52f1dca178b60e92aaf8c6b1b81c92317",
+  "signingCertificateSha256": "c62bcd71781c56566f5b4b748765bc27f6b08e3677e9c7adcd52fa8430c042c9",
+  "sourceCount": 1089,
+  "affectedPackages": [],
+  "embeddedBundleSha256": "f917003e9713e1e3a44001b3eb532a5af1d2d6a7d9b5cb9f9860f78406540225",
+  "mapSha256": "f15f305fbd2a9af6dc4aa9c9639296d62bdddb77a1322f2b3754bea8d372bd0c",
+  "releaseApproval": false,
+  "limitations": "Matching EAS build artifacts are required. This inventories the two known npm advisory implementations only, not native libraries or build/certificate tooling. The independent npm audit gate is unchanged."
+}

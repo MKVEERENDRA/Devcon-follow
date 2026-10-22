@@ -1,3 +1,5 @@
+> **Current, 23 October (IST):** [Android 0.3.7 and arrival/check-in delivery](ANDROID_037_DELIVERY_2026-10-23.md). Signed APK, exact photograph/bundle checks, 104 passing local tests and test/build CI. Older versions and pending build states below are historical; native security/public release remain blocked.
+
 > Current continuation: [release-security decision packet](RELEASE_SECURITY_DECISION_2026-10-20.md) and [production delivery](PRODUCTION_DELIVERY_2026-10-20.md). The high gate remains red. A bounded owner decision can now be represented honestly by the installer; no real decision or public release has been created. Fresh exported-bundle inventories do not certify the different embedded APK bundle.
 
 > Rechecked 20 October 2026 (IST): supported SDK compatibility updates now resolve

@@ -1,3 +1,5 @@
+> **Current, 23 October (IST):** [Android 0.3.7 and arrival/check-in delivery](ANDROID_037_DELIVERY_2026-10-23.md). Signed APK, exact photograph/bundle checks, 104 passing local tests and test/build CI. Older versions and pending build states below are historical; native security/public release remain blocked.
+
 # Real photography — 22 October 2026
 
 The web and native welcome screens now use three locally bundled, real event photographs in place of the generated welcome illustration. The first image introduces in-person conversations; two supporting cards explain shared interests and public meetups. Existing attendee actions and sign-in remain intact. Photography is never used to fabricate profiles, attendance or endorsement.

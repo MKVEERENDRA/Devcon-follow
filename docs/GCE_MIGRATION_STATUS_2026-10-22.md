@@ -1,3 +1,5 @@
+> **Current, 23 October (IST):** [Android 0.3.7 and arrival/check-in delivery](ANDROID_037_DELIVERY_2026-10-23.md). Signed APK, exact photograph/bundle checks, 104 passing local tests and test/build CI. Older versions and pending build states below are historical; native security/public release remain blocked.
+
 > Latest product source/API/website: [Android 0.3.6 candidate and comparison-driven improvements](ANDROID_036_CANDIDATE_2026-10-22.md). This file records the earlier 0.3.5 migration/delivery evidence.
 
 # Devcon Follow delivery — 22 October 2026
