@@ -20,7 +20,7 @@ The current 0.3.8 real owner download also PASSES: installer integrity message, 
 
 ## Launch copy and venue draft
 
-The owner requested a launch post, user instructions and Devcon venue setup. [Current launch copy and user guide](docs/LAUNCH_COPY_AND_USER_GUIDE_2026-10-23.md) distinguishes public web early access from restricted native delivery. A **disabled** official-location venue draft now exists: `73500a03-2e72-40e9-a573-5f27935357ed`, Jio World Centre, published Plus Code center, proposed 250 m radius, official event interval 3 November 09:30 IST–6 November 17:00 IST. This is no organizer approval, enabled geofence or confirmed meeting point; do not claim venue release readiness. No social post was sent.
+The owner requested a launch post, user instructions and Devcon venue setup. [Current launch copy and user guide](docs/LAUNCH_COPY_AND_USER_GUIDE_2026-10-23.md) distinguishes public web early access from restricted native delivery. The official-location venue was initially saved disabled; the owner then explicitly confirmed the community-app configuration and it is now **enabled**: `73500a03-2e72-40e9-a573-5f27935357ed`, Jio World Centre, published Plus Code center, proposed 250 m radius, official event interval 3 November 09:30 IST–6 November 17:00 IST. This is owner approval for an independent community geofence, not organizer endorsement or a confirmed meeting point. Live release checks now pass approvedVenue but still fail approvedLandmark; do not claim full release readiness. No social post was sent.
 
 ## Infrastructure — use existing resources
 
@@ -52,3 +52,7 @@ The owner wants autonomous implementation and delivery, with minimal spend. Exis
 Work in place; use AGENTS.md. Keep the five sections and privacy contracts. Use Node 24, lockfiles, disposable MongoDB and the independent sandbox OIDC issuer for tests. Do not fabricate real users, venue coordinates or organizer verification. Finish source, build and local verification before asking for irreducible human input.
 
 Older status and instructions are preserved only as [historical snapshots](docs/history/HANDOFF_BEFORE_2026-10-23.md); they are not current execution instructions.
+
+## Owner venue confirmation — 23 October 2026
+
+Venue `73500a03-2e72-40e9-a573-5f27935357ed` enabled following explicit owner confirmation. Database records approval scope `independent-community-app-owner` and `organizerEndorsement=false`; audit action `venue_enabled_owner_approval`. Existing center/radius and event interval unchanged. No landmark invented; no attendee presence or location created. Exact-source native CI for `af542c5` completed successfully for Android and iOS simulator: https://github.com/MKVEERENDRA/Devcon-follow/actions/runs/39955502608 . CI test-build passed; native-security remains failed.

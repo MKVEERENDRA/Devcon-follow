@@ -72,3 +72,7 @@ Lead with whom someone can meet, not Bluetooth or test counts. Ask joining peopl
 - Actual device acceptance for advertised native GPS/Bluetooth behavior; software cases and native compilation do not establish RF operation.
 
 This document is copy and instructions only; no social post or message was sent.
+
+## Subsequent owner confirmation
+
+The owner explicitly confirmed this configuration on 23 October. Venue `73500a03-2e72-40e9-a573-5f27935357ed` is now enabled under independent community-app owner approval; it is not organizer-endorsed. Its event interval remains future-dated, so this does not grant pre-event presence. A real public meeting point remains unconfigured. No named security-risk acceptance or physical-device pass is inferred from the confirmation. Android/iOS source compilation for `af542c5` both passed.
