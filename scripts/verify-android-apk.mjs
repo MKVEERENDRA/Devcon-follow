@@ -16,6 +16,8 @@ if(!certificate||certificate.length!==64)throw Error('A verified signing certifi
 if(/CN=Android Debug/i.test(signature))throw Error('Refusing a standard Android debug certificate as the private preview signer');
 const tool=process.env.APKANALYZER||'apkanalyzer';
 const packageId=run(tool,['manifest','application-id',apk]).trim(),version=run(tool,['manifest','version-name',apk]).trim(),versionCode=Number(run(tool,['manifest','version-code',apk]).trim());
+const minSdkVersion=Number(run(tool,['manifest','min-sdk',apk]).trim()),targetSdkVersion=Number(run(tool,['manifest','target-sdk',apk]).trim());
+if(!Number.isInteger(minSdkVersion)||!Number.isInteger(targetSdkVersion)||minSdkVersion<1||targetSdkVersion<minSdkVersion)throw Error('Invalid Android SDK compatibility metadata');
 if(packageId!=='com.proofofaudits.devconfollow')throw Error('APK package does not match Devcon Follow');
 const associations=JSON.parse(await readFile(new URL('../web/public/.well-known/assetlinks.json',import.meta.url),'utf8'));
 const fingerprints=associations.filter(a=>a.target?.package_name===packageId).flatMap(a=>a.target.sha256_cert_fingerprints||[]).map(v=>v.replaceAll(':','').toLowerCase());
@@ -28,5 +30,5 @@ if(!entries.split('\n').includes('assets/index.android.bundle'))throw Error('No 
 const bundle=execFileSync('unzip',['-p',apk,'assets/index.android.bundle'],{maxBuffer:50*1024*1024});
 if(!bundle.includes(Buffer.from(apiBaseUrl)))throw Error('Expected API URL not found in embedded bundle');
 if(args['api-origin']&&apiBaseUrl!=='https://devcon-follow-api-staging.up.railway.app'&&bundle.includes(Buffer.from('https://devcon-follow-api-staging.up.railway.app')))throw Error('Production candidate still contains the staging API endpoint');
-const evidence={kind:'apk',filename:basename(apk),packageId,version,versionCode,buildId:args['build-id']||null,sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:certificate,sizeBytes:bytes.length,apiBaseUrl,standaloneBundle:true,debuggable:false,signatureVerified:true,appLinkCertificateMatch:true,verifiedAt:new Date().toISOString(),deviceInstallation:'unverified',nativeSecurity:'Not assessed by package verifier; consult the current native audit gate'};
+const evidence={kind:'apk',filename:basename(apk),packageId,version,versionCode,minSdkVersion,targetSdkVersion,buildId:args['build-id']||null,sha256:createHash('sha256').update(bytes).digest('hex'),signingCertificateSha256:certificate,sizeBytes:bytes.length,apiBaseUrl,standaloneBundle:true,debuggable:false,signatureVerified:true,appLinkCertificateMatch:true,verifiedAt:new Date().toISOString(),deviceInstallation:'unverified',nativeSecurity:'Not assessed by package verifier; consult the current native audit gate'};
 const output=resolve(args.output||'artifacts/android-preview/apk-verification.json');await mkdir(resolve(output,'..'),{recursive:true});await writeFile(output,JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence,null,2));
