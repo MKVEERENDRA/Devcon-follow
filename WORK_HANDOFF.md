@@ -2,6 +2,8 @@
 
 ## Read this state first
 
+Latest source-only work: [executable discovery software verification](docs/DISCOVERY_SOFTWARE_VERIFICATION_2026-10-23.md). Native radio cleanup fixes pass 12 new behavioral tests; full suite now **121/121**, complete two-account browser journey, TypeScript and both Hermes exports PASS. These new native fixes are not in the existing signed 0.3.8 APK; next build must include them. No live deployment or venue change occurred for this work.
+
 Current API/web source: `d64037122be51337b2d96ef8cc18dd905a07c1f6`.
 Latest evidence: [public enrollment and pre-arrival fixes](docs/PUBLIC_ENROLLMENT_2026-10-23.md).
 Signed native source: `d64037122be51337b2d96ef8cc18dd905a07c1f6`.
@@ -12,7 +14,7 @@ Fresh exact-source Android/iOS compilation PASS. SDK minimum 24, target 36; phys
 
 Historical 0.3.7 delivery passed: automatic and explicit saves match the exact SDK-verified size/SHA-256. The single large-response transfer failed late; source `6d6ae7c` fixed delivery with authenticated 4 MiB parts, bounded retries, release-bound If-Match and full final checksum validation. A browser regression aborts the second part and verifies only that part is retried. No new owner login was required.
 
-The existing five-section application is implemented and sandbox tested. Local suite: 107/107, no failures/skips. Arrival directions now work before check-in; disabled/expired venues cannot keep the account UI marked on-site. Previous recommendations, privacy, calendar, notes, QR, mutual chat, 30-minute Stop/expiry and admin place-closure regressions remain covered. Three licensed real photographs are in the signed APK and published web welcome.
+The existing five-section application is implemented and sandbox tested. Prior baseline: 107/107; latest suite: 121/121, no failures/skips. Arrival directions now work before check-in; disabled/expired venues cannot keep the account UI marked on-site. Previous recommendations, privacy, calendar, notes, QR, mutual chat, 30-minute Stop/expiry and admin place-closure regressions remain covered. Three licensed real photographs are in the signed APK and published web welcome.
 
 The current 0.3.8 real owner download also PASSES: installer integrity message, saved file size/SHA independently checked, 24 successful 206 parts and 24 CORS preflights. Existing SSO restored without another credential entry. Local saved APK: `/home/vamshi/Downloads/devcon-follow-0.3.8-9.apk`. No physical phone test is implied.
 

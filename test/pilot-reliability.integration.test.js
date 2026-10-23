@@ -72,3 +72,57 @@ test('socket reconnect authenticates again and rejected identities receive no co
  socket.auth={token:'not-a-token'};
  const failure=new Promise(resolve=>socket.once('connect_error',e=>resolve(e.message)));socket.connect();assert.equal(await failure,'Authentication required');
 });
+
+test('GPS fallback works without Bluetooth and rejects uncertain, stale and off-venue samples',async t=>{
+ const {app,call}=await fixture(t);
+ // Permission denied / no sample cannot establish presence for a third user.
+ await call('eve','/v1/presence/check-in','POST',{},400);
+ await call('eve','/v1/location/share','POST',{durationMinutes:30,audience:'verified'},403);
+ for(const id of ['alice','bob'])await call(id,'/v1/location/share','POST',{durationMinutes:30,audience:'verified'});
+ for(const accuracyMeters of [-1,101,null])await call('bob','/v1/location/sample','POST',{...point,accuracyMeters},400);
+ await call('bob','/v1/location/sample','POST',{...point,lat:point.lat+0.01},403);
+ // Uncertainty overlaps the 300m boundary even though the center reading is inside.
+ await call('eve','/v1/presence/check-in','POST',{...point,lat:point.lat+0.002,accuracyMeters:100},403);
+ for(const id of ['alice','bob'])await call(id,'/v1/location/sample','POST',{...point,accuracyMeters:90});
+ assert.equal(await app.db.collection('peerTokens').countDocuments(),0);
+ const nearby=await call('alice','/v1/nearby');
+ assert.equal(nearby.attendees.length,1);
+ assert.equal(nearby.attendees[0].distanceBand,'same venue · GPS distance uncertain');
+ assert.equal(nearby.attendees[0].kind,'approximate_gps');
+ assert(!/"(?:lat|lon|coordinates|geo)":/.test(JSON.stringify(nearby)));
+ await app.db.collection('locations').updateOne({userId:'bob'},{$set:{observedAt:new Date(Date.now()-76000)}});
+ assert.equal((await call('alice','/v1/nearby')).attendees.length,0);
+ await call('bob','/v1/location/sample','POST',point);
+ await app.db.collection('presence').updateOne({userId:'bob'},{$set:{expiresAt:new Date(Date.now()-1)}});
+ assert.equal((await call('alice','/v1/nearby')).attendees.length,0);
+ await call('bob','/v1/location/sample','POST',point,403);
+ // Venue disable/closure is enforced on every operation, not just initial check-in.
+ await app.db.collection('venues').updateMany({},{$set:{enabled:false}});
+ await call('alice','/v1/proximity/token','POST',{},403);
+ await call('alice','/v1/nearby','GET',undefined,403);
+});
+
+test('BLE token resolution enforces expiry, venue isolation, blocks and explicit departure',async t=>{
+ const {app,call}=await fixture(t);
+ for(const id of ['alice','bob'])await call(id,'/v1/location/share','POST',{durationMinutes:30,audience:'verified'});
+ const first=await call('bob','/v1/proximity/token','POST',{});
+ const next=await call('bob','/v1/proximity/token','POST',{});
+ assert.notEqual(first.token,next.token);
+ const resolved=await call('alice','/v1/proximity/resolve','POST',{tokens:[first.token,next.token,next.token]});
+ assert.equal(resolved.attendees.length,1);assert.equal(resolved.attendees[0].distanceMeters,null);
+ assert(!/"(?:lat|lon|coordinates|geo)":/.test(JSON.stringify(resolved)));
+ await call('alice','/v1/proximity/resolve','POST',{tokens:['malformed']},400);
+ await call('alice','/v1/proximity/resolve','POST',{tokens:Array(31).fill(first.token)},400);
+ await app.db.collection('peerTokens').updateMany({userId:'bob'},{$set:{expiresAt:new Date(Date.now()-1)}});
+ assert.equal((await call('alice','/v1/proximity/resolve','POST',{tokens:[first.token,next.token]})).attendees.length,0);
+ const fresh=await call('bob','/v1/proximity/token','POST',{});
+ await app.db.collection('presence').updateOne({userId:'bob'},{$set:{venueId:'different-sandbox-venue'}});
+ assert.equal((await call('alice','/v1/proximity/resolve','POST',{tokens:[fresh.token]})).attendees.length,0);
+ await call('bob','/v1/presence/check-in','POST',point);
+ await call('bob','/v1/blocks/alice','POST');
+ assert.equal((await call('alice','/v1/proximity/resolve','POST',{tokens:[fresh.token]})).attendees.length,0);
+ await call('bob','/v1/presence','DELETE');
+ assert.equal(await app.db.collection('peerTokens').countDocuments({userId:'bob'}),0);
+ for(const collection of ['shares','locations','presence'])assert.equal(await app.db.collection(collection).countDocuments({userId:'bob'}),0);
+ await call('bob','/v1/proximity/token','POST',{},403);
+});
