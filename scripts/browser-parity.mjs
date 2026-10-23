@@ -31,5 +31,16 @@ try{
  const current=await page.getByRole('button',{name:'Discover',exact:true}).getAttribute('aria-current');assert.equal(current,'page');const unnamed=await page.locator('button').evaluateAll(nodes=>nodes.filter(n=>!n.disabled&&!(n.getAttribute('aria-label')||n.textContent||'').trim()).length);assert.equal(unnamed,0);
  await page.evaluate(()=>document.documentElement.style.fontSize='100%');await page.setViewportSize({width:390,height:844});
  const audits=[];for(const label of ['Discover','Nearby','Meetups','Connections','Me']){await page.getByRole('button',{name:label,exact:true}).click();if(label==='Discover')await page.getByText('Loading attendees…',{exact:true}).waitFor({state:'hidden'});const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).exclude('iframe').analyze();audits.push({screen:label,violations:result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>n.target)}))});}await writeFile(new URL('accessibility.json',evidence),JSON.stringify(audits,null,2));assert.deepEqual(audits.filter(r=>r.violations.length),[],JSON.stringify(audits));
+ await page.getByRole('button',{name:'Nearby',exact:true}).click();
+ await page.getByRole('radio',{name:'Nearby role: Founder',exact:true}).check();
+ await page.getByRole('radio',{name:'Nearby role: Founder',exact:true}).focus();await page.keyboard.press('ArrowRight');
+ assert.equal(await page.getByRole('radio',{name:'Nearby role: Builder',exact:true}).isChecked(),true,'Nearby role selection supports arrow keys');
+ for(const width of [320,390,768]){
+  await page.setViewportSize({width,height:900});await page.evaluate(()=>document.documentElement.style.fontSize='200%');
+  const clipped=await page.locator('.role-filter label').evaluateAll(labels=>labels.filter(label=>{const box=label.getBoundingClientRect();return [...label.childNodes].some(node=>{if(node.nodeType!==Node.TEXT_NODE||!node.textContent.trim())return false;const range=document.createRange();range.selectNodeContents(node);const text=range.getBoundingClientRect();return text.right>box.right+1||text.left<box.left-1})}).map(label=>label.textContent));
+  assert.deepEqual(clipped,[],'Nearby role labels remain inside their controls at '+width);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,'Nearby fits at '+width);
+  await page.screenshot({path:new URL('nearby-'+width+'.png',evidence).pathname,fullPage:true});
+ }
  assert.deepEqual(errors,[]);console.log('PASS: real local refresh grant preserves unsaved note, explicit save, photo/social edits, role filters, keyboard recovery, named navigation, and narrow/large-text reflow');
 }finally{await browser?.close();await app.close()}

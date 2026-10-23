@@ -35,3 +35,9 @@
 
 .landing .privacy-caption,.landing footer{color:var(--muted)}
 .landing .topbar{height:auto;min-height:66px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+
+.role-filter{border:0;padding:0;margin:0;min-width:0}
+.role-filter legend{padding:0;font-size:0.75rem;line-height:1.4;color:var(--ink);font-weight:550}
+.role-filter .chips{margin:9px 0 12px;flex-wrap:wrap;overflow:visible}
+.role-filter .chip{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.role-filter .chip input[type=radio]{width:15px;height:15px;flex-shrink:0;padding:0;margin:0;border:1px solid #b9c2cc;border-radius:50%;background:white;accent-color:#173c63}
