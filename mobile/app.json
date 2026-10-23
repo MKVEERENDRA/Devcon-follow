@@ -3,7 +3,7 @@
     "name": "Devcon Follow",
     "slug": "veer",
     "scheme": "devconfollow",
-    "version": "0.3.8",
+    "version": "0.3.9",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
@@ -14,7 +14,7 @@
         "NSLocationWhenInUseUsageDescription": "Check in to an organizer-approved Devcon venue and share an optional, temporary location reading.",
         "NSBluetoothAlwaysUsageDescription": "Share a short-lived anonymous Bluetooth token with nearby opted-in Devcon Follow attendees while discovery is on."
       },
-      "buildNumber": "9"
+      "buildNumber": "10"
     },
     "android": {
       "package": "com.proofofaudits.devconfollow",
@@ -28,7 +28,7 @@
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN"
       ],
-      "versionCode": 9,
+      "versionCode": 10,
       "intentFilters": [
         {
           "action": "VIEW",
