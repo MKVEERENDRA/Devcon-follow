@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title description">
+<title id="title">Devcon Follow — find your people, meet in person</title>
+<desc id="description">Conference networking built around thirty-minute, opt-in Nearby discovery. Five sections: Discover, Nearby, Meetups, Connections, Me.</desc>
+<rect width="1200" height="360" rx="20" fill="#faf9f6"/>
+<g font-family="Arial, Helvetica, sans-serif" fill="#172d3d">
+<text x="48" y="47" font-size="19" font-weight="700">Devcon<tspan font-weight="400">Follow</tspan></text>
+<text x="1152" y="45" text-anchor="end" font-size="12" letter-spacing="2" fill="#52616c">MUMBAI · 2026</text>
+<text x="48" y="132" font-size="59" font-weight="700" letter-spacing="-2">Find your people.</text>
+<text x="48" y="199" font-size="59" font-weight="700" letter-spacing="-2">Meet in person.</text>
+<text x="50" y="243" font-size="19" fill="#52616c">Nearby when you choose. Connected after you leave.</text>
+<rect x="777" y="96" width="375" height="151" rx="14" fill="#fff" stroke="#dbe1e3"/>
+<circle cx="802" cy="125" r="4" fill="#356385"/>
+<text x="816" y="130" font-size="12" font-weight="700" letter-spacing="1">OPT-IN NEARBY</text>
+<text x="1128" y="130" text-anchor="end" font-size="12" fill="#52616c">30 minutes</text>
+<text x="799" y="168" font-size="17" font-weight="700">Who do you want to meet?</text>
+<g font-size="12" fill="#356385">
+<rect x="799" y="188" width="73" height="30" rx="15" fill="#edf3f6"/><text x="835" y="207" text-anchor="middle">Founder</text>
+<rect x="880" y="188" width="83" height="30" rx="15" fill="#edf3f6"/><text x="921" y="207" text-anchor="middle">Developer</text>
+<rect x="971" y="188" width="158" height="30" rx="15" fill="#edf3f6"/><text x="1050" y="207" text-anchor="middle">Security Researcher</text>
+</g>
+<path d="M48 289H1152" stroke="#dbe1e3"/>
+<g font-size="14" fill="#52616c">
+<text x="48" y="326">Discover</text><text x="281" y="326" fill="#356385" font-weight="700">Nearby</text><text x="512" y="326">Meetups</text><text x="742" y="326">Connections</text><text x="1129" y="326">Me</text>
+</g></g></svg>
