@@ -1,5 +1,7 @@
 # Nearby attendee role filter — 23 October 2026 (IST)
 
+**Subsequent delivery:** [Android 0.3.9 and live Nearby evidence](ANDROID_039_DELIVERY_2026-10-23.md) supersedes the source-only distribution/deployment/venue status below. The new signed candidate includes the filter and is verified through the live installer; the web filter is published. Native security and physical-device acceptance remain unresolved.
+
 Source commit range: `8f8e141..8f38204` (plus the sign-out state cleanup in this change).
 
 ## What shipped

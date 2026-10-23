@@ -1,5 +1,7 @@
 # Devcon Follow — public invitation and user guide
 
+**Latest delivery update:** [Android 0.3.9 evidence](ANDROID_039_DELIVERY_2026-10-23.md). The new signed APK includes the cleanup and Nearby role filters and is available through the restricted installer. The owner-approved venue and researched public-area anchor now pass service configuration. The earlier draft/0.3.8 status below records the preparation sequence, not current delivery. Public native release remains gated by security and device acceptance.
+
 ## What can be shared today
 
 Public web URL: https://devcon-follow.vercel.app/
