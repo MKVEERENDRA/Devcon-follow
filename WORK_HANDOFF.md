@@ -18,6 +18,10 @@ The existing five-section application is implemented and sandbox tested. Prior b
 
 The current 0.3.8 real owner download also PASSES: installer integrity message, saved file size/SHA independently checked, 24 successful 206 parts and 24 CORS preflights. Existing SSO restored without another credential entry. Local saved APK: `/home/vamshi/Downloads/devcon-follow-0.3.8-9.apk`. No physical phone test is implied.
 
+## Launch copy and venue draft
+
+The owner requested a launch post, user instructions and Devcon venue setup. [Current launch copy and user guide](docs/LAUNCH_COPY_AND_USER_GUIDE_2026-10-23.md) distinguishes public web early access from restricted native delivery. A **disabled** official-location venue draft now exists: `73500a03-2e72-40e9-a573-5f27935357ed`, Jio World Centre, published Plus Code center, proposed 250 m radius, official event interval 3 November 09:30 IST–6 November 17:00 IST. This is no organizer approval, enabled geofence or confirmed meeting point; do not claim venue release readiness. No social post was sent.
+
 ## Infrastructure — use existing resources
 
 - Website / private installer: https://devcon-follow.vercel.app/install.html . Existing Vercel project `prj_eOSHP6OdmTSBzqAyAyHv10QA0mEO`, scope `mkveerendras-projects`, org `team_zQh42eOLP91cK4hK4MHjyLaP`.
