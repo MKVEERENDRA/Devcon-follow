@@ -1,0 +1,7 @@
+{
+  "buildId": "ec01d175-d038-4010-9ae6-01a04cd7e087",
+  "zipalign16Kb": true,
+  "modernAbiElfLibrariesChecked": 42,
+  "allLoadSegmentsAligned16Kb": true,
+  "scope": "static packaging only; no device/kernel compatibility test"
+}
