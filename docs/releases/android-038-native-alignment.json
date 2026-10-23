@@ -1,0 +1,53 @@
+{
+  "scope": "signed-APK static 64-bit native alignment, not device execution",
+  "apkSha256": "b20f38740bd0da4e8e82ff1537b79eaa3afd633c081cb5c7d586dfa9aaef6e39",
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "zipAlignmentPassed": true,
+  "checked64BitLibraries": 42,
+  "unalignedLoadLibraries": [],
+  "relroEndAlignmentDiagnostics": [
+    "lib/arm64-v8a/libappmodules.so",
+    "lib/arm64-v8a/libc++_shared.so",
+    "lib/arm64-v8a/libdatastore_shared_counter.so",
+    "lib/arm64-v8a/libexpo-modules-jsi.so",
+    "lib/arm64-v8a/libexpo-modules-v2.so",
+    "lib/arm64-v8a/libfbjni.so",
+    "lib/arm64-v8a/libgifimage.so",
+    "lib/arm64-v8a/libhermestooling.so",
+    "lib/arm64-v8a/libimagepipeline.so",
+    "lib/arm64-v8a/libjsi.so",
+    "lib/arm64-v8a/libnative-imagetranscoder.so",
+    "lib/arm64-v8a/libstatic-webp.so",
+    "lib/arm64-v8a/libsurface_util_jni.so",
+    "lib/arm64-v8a/libzstd-kmp.so",
+    "lib/x86_64/libappmodules.so",
+    "lib/x86_64/libbarhopper_v3.so",
+    "lib/x86_64/libc++_shared.so",
+    "lib/x86_64/libdatastore_shared_counter.so",
+    "lib/x86_64/libexpo-modules-jsi.so",
+    "lib/x86_64/libexpo-modules-v2.so",
+    "lib/x86_64/libfbjni.so",
+    "lib/x86_64/libgifimage.so",
+    "lib/x86_64/libhermestooling.so",
+    "lib/x86_64/libhermesvm.so",
+    "lib/x86_64/libimagepipeline.so",
+    "lib/x86_64/libjsi.so",
+    "lib/x86_64/libnative-filters.so",
+    "lib/x86_64/libreact_codegen_rnsvg.so",
+    "lib/x86_64/libreactnative.so",
+    "lib/x86_64/libstatic-webp.so",
+    "lib/x86_64/libsurface_util_jni.so",
+    "lib/x86_64/libzstd-kmp.so"
+  ],
+  "relroPageReview": {
+    "method": "Check allocated writable ELF sections against rounded 16-KB RELRO pages; section ranges outside RELRO are flagged for review",
+    "segmentsReviewed": 42,
+    "issues": [],
+    "deviceRuntimeVerified": false
+  }
+}

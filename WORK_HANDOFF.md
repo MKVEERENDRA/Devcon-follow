@@ -4,15 +4,17 @@
 
 Current API/web source: `d64037122be51337b2d96ef8cc18dd905a07c1f6`.
 Latest evidence: [public enrollment and pre-arrival fixes](docs/PUBLIC_ENROLLMENT_2026-10-23.md).
-New native parity source is the same commit; EAS 0.3.8/build 9 is queued as `325db82c-9c34-4edf-996c-7d59f362f35a`. Do not claim it is the downloadable 0.3.7 APK until SDK verification and delivery complete.
-Signed native source: `3bd19225f24d275b80b32774104d2e0c5cedb154`.
-Android 0.3.7/build 8: EAS `6acaaa7c-da0b-4d37-a3be-4b6c8ddcebc7`.
-APK SHA-256: `3e39b62e5f190a34eb8d4ffd834bbec52f1dca178b60e92aaf8c6b1b81c92317`.
-[Current delivery evidence](docs/ANDROID_037_DELIVERY_2026-10-23.md).
+Signed native source: `d64037122be51337b2d96ef8cc18dd905a07c1f6`.
+Android **0.3.8/build 9**, EAS `325db82c-9c34-4edf-996c-7d59f362f35a`, FINISHED.
+APK SHA-256: `b20f38740bd0da4e8e82ff1537b79eaa3afd633c081cb5c7d586dfa9aaef6e39`, 98,841,320 bytes.
+[Current signed artifact and live delivery evidence](docs/ANDROID_038_DELIVERY_2026-10-23.md).
+Fresh exact-source Android/iOS compilation PASS. SDK minimum 24, target 36; physical installation still unverified.
 
-The real owner browser download of 0.3.7 now passes: automatic and explicit saves match the exact SDK-verified size/SHA-256. The single large-response transfer failed late; source `6d6ae7c` fixed delivery with authenticated 4 MiB parts, bounded retries, release-bound If-Match and full final checksum validation. A browser regression aborts the second part and verifies only that part is retried. No new owner login was required.
+Historical 0.3.7 delivery passed: automatic and explicit saves match the exact SDK-verified size/SHA-256. The single large-response transfer failed late; source `6d6ae7c` fixed delivery with authenticated 4 MiB parts, bounded retries, release-bound If-Match and full final checksum validation. A browser regression aborts the second part and verifies only that part is retried. No new owner login was required.
 
 The existing five-section application is implemented and sandbox tested. Local suite: 107/107, no failures/skips. Arrival directions now work before check-in; disabled/expired venues cannot keep the account UI marked on-site. Previous recommendations, privacy, calendar, notes, QR, mutual chat, 30-minute Stop/expiry and admin place-closure regressions remain covered. Three licensed real photographs are in the signed APK and published web welcome.
+
+The current 0.3.8 real owner download also PASSES: installer integrity message, saved file size/SHA independently checked, 24 successful 206 parts and 24 CORS preflights. Existing SSO restored without another credential entry. Local saved APK: `/home/vamshi/Downloads/devcon-follow-0.3.8-9.apk`. No physical phone test is implied.
 
 ## Infrastructure — use existing resources
 
@@ -20,7 +22,7 @@ The existing five-section application is implemented and sandbox tested. Local s
 - API: https://devcon-follow.35-206-98-214.sslip.io . Dedicated GCE VM `devcon-follow-api`, `us-central1-a`, in owner-authorized project `proof-of-audits-production`. Only this dedicated Devcon VM was changed. Existing POA services/resources/IAM/domains stay untouched.
 - Reserved outbound IPv4 `35.206.98.214/32` is already allowed in Atlas. Do not repeat changing-IP allowlist work or create another database/VM.
 - API image `devcon-follow:d640371`, image ID `sha256:6986b4430ab2fab1ee133732ff3bdb9daaadf3b6c72a58ddaf3f6cb406e1633b`. Previous image/unit and private env backup are `.pre-public-d640371`; restore the unit and matching env together if rolling back enrollment.
-- Protected VM environment remains `/etc/devcon-follow/app.env`; never print it. Private APK pair at `/opt/devcon-follow/private-release`; prior 0.3.6 pair at `.036`, old service unit at `/etc/systemd/system/devcon-follow.service.pre037` for rollback. `/etc/systemd/system/devcon-follow.service.pre037parts` restores the prior a619b4a image with the same 0.3.7 APK pair.
+- Protected VM environment remains `/etc/devcon-follow/app.env`; never print it. Private 0.3.8 pair at `/opt/devcon-follow/private-release`; 0.3.7 rollback pair at `.037`; prior 0.3.6 pair at `.036`, old service unit at `/etc/systemd/system/devcon-follow.service.pre037` for rollback. `/etc/systemd/system/devcon-follow.service.pre037parts` restores the prior a619b4a image with the same 0.3.7 APK pair.
 - Atlas project `6ad3a66940fbb40c43d65f78`, cluster `DevconFollow`, database `devcon_follow_staging`. Owner accepted the extra `readAnyDatabase` role. Do not ask about or change that role again. Existing credentials are private files outside Git.
 - Auth0 tenant `dev-xs1kh1yit6q5g3ph`, separate web/native public clients and real Google sign-in already configured. The existing owner browser SSO restored successfully; do not request repeated dashboard logins.
 - Old Railway outage/login/redeploy instructions are superseded by GCE delivery. Do not touch Railway merely to recover old credentials.
@@ -34,6 +36,10 @@ The live public-account policy is separate from the signed security-blocked nati
 Native audit still fails on two upstream advisories (15 propagated high package findings), with no published patched braces/node-forge versions. Keep the audit gate visible. Exact signed bundle correlation shows neither implementation in its JavaScript inventory; this does not repair or certify build tooling/native libraries. Physical two-person GPS/BLE/QR/push acceptance remains unverified; the owner said the second tester and test venue were unavailable. No Apple Developer membership exists, so native iPhone distribution remains blocked. Do not invent approval or passing device tests.
 
 The owner wants autonomous implementation and delivery, with minimal spend. Existing private-cohort website/API/APK delivery is authorized. The explicit public-enrollment instruction has been applied. It is not a fabricated native security-risk waiver; keep the independent native gate visible. Credits are shared with POA; the approximate $5/month credit target is not a hard billing cap. No paid upgrades or duplicate infrastructure were purchased.
+
+## Fresh continuous journey
+
+[End-to-end verification](docs/END_TO_END_2026-10-23.md) passes public signup → pre-arrival directory → explicit check-in/Nearby → meetup/reschedule → QR follow → private notes/chat → Stop → departure → retained connection/chat, using two separate browser identities and disposable MongoDB. Fresh Android and iOS simulator CI compilation both PASS for `d640371`. Physical phones remain unverified.
 
 ## Working rules
 

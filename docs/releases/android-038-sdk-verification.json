@@ -1,0 +1,21 @@
+{
+  "kind": "apk",
+  "filename": "2964c665-7d80-4491-b6e1-10c2fdfb61ac.apk",
+  "packageId": "com.proofofaudits.devconfollow",
+  "version": "0.3.8",
+  "versionCode": 9,
+  "minSdkVersion": 24,
+  "targetSdkVersion": 36,
+  "buildId": "325db82c-9c34-4edf-996c-7d59f362f35a",
+  "sha256": "b20f38740bd0da4e8e82ff1537b79eaa3afd633c081cb5c7d586dfa9aaef6e39",
+  "signingCertificateSha256": "c62bcd71781c56566f5b4b748765bc27f6b08e3677e9c7adcd52fa8430c042c9",
+  "sizeBytes": 98841320,
+  "apiBaseUrl": "https://devcon-follow.35-206-98-214.sslip.io",
+  "standaloneBundle": true,
+  "debuggable": false,
+  "signatureVerified": true,
+  "appLinkCertificateMatch": true,
+  "verifiedAt": "2026-10-23T04:26:15.884Z",
+  "deviceInstallation": "unverified",
+  "nativeSecurity": "Not assessed by package verifier; consult the current native audit gate"
+}

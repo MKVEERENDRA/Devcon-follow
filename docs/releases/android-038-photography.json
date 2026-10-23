@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-23T04:26:16.074Z",
+  "scope": "exact-bundled-photography-bytes",
+  "photos": [
+    {
+      "file": "conference-hall.jpg",
+      "sha256": "6688e779c148f3bce252968f73fa93e1dc1dd9a259ee5263b0d0e9145c7aee67",
+      "apkEntry": "res/Hd.jpg"
+    },
+    {
+      "file": "conference-conversations.jpg",
+      "sha256": "ca4271c8841629c9dc192f2ea3933ef951daecfb36975d5f22f396e874243d0d",
+      "apkEntry": "res/30.jpg"
+    },
+    {
+      "file": "conference-gathering.jpg",
+      "sha256": "a8753a04e3e7f5d513824ce00502667066f8a5b4f19c586a48b9c1f1def3dfd2",
+      "apkEntry": "res/i1.jpg"
+    }
+  ]
+}

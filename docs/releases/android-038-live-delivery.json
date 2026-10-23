@@ -1,0 +1,23 @@
+{
+  "version": "0.3.8",
+  "versionCode": 9,
+  "buildId": "325db82c-9c34-4edf-996c-7d59f362f35a",
+  "sourceCommit": "d64037122be51337b2d96ef8cc18dd905a07c1f6",
+  "sizeBytes": 98841320,
+  "sha256": "b20f38740bd0da4e8e82ff1537b79eaa3afd633c081cb5c7d586dfa9aaef6e39",
+  "signedBuildMatch": true,
+  "actualInstallerUrl": "https://devcon-follow.vercel.app/install.html",
+  "identityProvider": "existing genuine owner Auth0 SSO restored through normal UI",
+  "sessionCredentialsEnteredByAgent": false,
+  "physicalPhoneInstallation": "unverified",
+  "verifiedAt": "2026-10-23T12:28:08.273306+00:00",
+  "serverObservation": {
+    "window": "15 minutes after activation",
+    "successfulApkParts": 24,
+    "successfulCorsPreflights": 24,
+    "image": "devcon-follow:d640371",
+    "containerState": "running",
+    "oomKilled": false,
+    "restarts": 0
+  }
+}
