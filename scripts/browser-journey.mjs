@@ -53,6 +53,26 @@ try{
   await alice.getByRole('button',{name:'Refresh nearby'}).click();await alice.getByRole('radio',{name:'Nearby role: Investor',exact:true}).check();await alice.getByText('No matching nearby sharing profiles',{exact:true}).waitFor();await alice.getByRole('radio',{name:'Nearby role: Founder',exact:true}).check();await alice.getByRole('button').filter({hasText:'bob'}).last().click();console.log('Nearby Founder role filter includes active founder; Investor filter excludes nonmatches PASS');
   await alice.getByText('Looking to meet:',{exact:false}).waitFor();await alice.getByText('Open to meetup requests',{exact:true}).waitFor();
   await alice.screenshot({path:new URL('profile-intent.png',evidence).pathname,fullPage:true});
+  // Capture the requested URL locally; never send synthetic coordinates to Maps.
+  await alice.evaluate(()=>{window.__sandboxRoutes=[];window.open=url=>{window.__sandboxRoutes.push(url);return null}});
+  await alice.getByRole('button',{name:'Navigate if permitted',exact:true}).click();
+  assert.equal(await alice.evaluate(()=>window.__sandboxRoutes.length),0,'No route before individual consent');
+  await alice.getByRole('button',{name:'Request location',exact:true}).click();
+  await bob.getByRole('button',{name:'Meetups',exact:true}).click();
+  await bob.getByText('Optional location requests',{exact:true}).click();
+  await bob.bringToFront();
+  await bob.context().setGeolocation({latitude:point.lat,longitude:point.lon,accuracy:10});
+  await Promise.all([bob.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/decision')&&r.request().method()==='POST'&&r.ok()),bob.getByRole('button',{name:'Allow 15 min',exact:true}).click()]);
+  await bob.getByText('Location available to this attendee for up to 15 minutes',{exact:true}).waitFor();
+  await alice.getByRole('button',{name:'Navigate if permitted',exact:true}).click();
+  await alice.waitForFunction(()=>window.__sandboxRoutes.length===1);
+  const approvedRoute=new URL(await alice.evaluate(()=>window.__sandboxRoutes[0]));
+  assert.equal(approvedRoute.origin,'https://www.google.com');assert.equal(approvedRoute.searchParams.get('destination'),point.lat+','+point.lon);assert.equal(approvedRoute.searchParams.get('travelmode'),'walking');
+  await bob.bringToFront();await bob.getByRole('button',{name:'Nearby',exact:true}).click();await bob.getByRole('button',{name:'Stop location sharing',exact:true}).click();await bob.getByText('Location hidden',{exact:true}).waitFor();
+  await alice.getByRole('button',{name:'Navigate if permitted',exact:true}).click();
+  assert.equal(await alice.evaluate(()=>window.__sandboxRoutes.length),1,'Stop revokes the route grant');
+  await bob.getByRole('button',{name:'Enable sharing',exact:true}).click();await bob.getByRole('button',{name:'Stop location sharing',exact:true}).waitFor();
+  console.log('Individual GPS request → explicit 15-minute approval → walking route → Stop revokes route PASS');
   await alice.getByRole('button',{name:'Arrange a meetup'}).click();await alice.getByLabel('Why would you like to meet?').fill('Compare protocol audit evidence over coffee?');await alice.getByLabel('Meeting place').selectOption(landmark.body.landmark.landmarkId);
   const future=await alice.evaluate(()=>{const d=new Date(Date.now()+600000);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)});await alice.getByLabel(/^Time/).fill(future);await alice.getByRole('button',{name:'Send meeting invitation'}).click();
   await bob.getByRole('button',{name:'Meetups',exact:true}).click();await Promise.all([bob.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/read')&&r.request().method()==='POST'),bob.getByRole('button',{name:'New meeting invitation',exact:true}).click()]);assert((await app.db.collection('meetingNotifications').findOne({userId:'bob',type:'pending'})).readAt,'persisted meeting alert is acknowledged only explicitly');await bob.getByText('Compare protocol audit evidence over coffee?',{exact:true}).waitFor();await bob.screenshot({path:new URL('meetup-reason.png',evidence).pathname,fullPage:true});await bob.getByRole('button',{name:'Accept meeting'}).click();await bob.getByRole('link',{name:'Directions to public landmark'}).waitFor();
@@ -88,5 +108,6 @@ try{
     console.log('After departure: no presence/sharing, saved connection and mutual chat remain usable PASS');
   }
   if(community){assert.equal(await app.db.collection('invitations').countDocuments(),0);assert.equal(await app.db.collection('tickets').countDocuments(),0)}
+  assert.equal(await alice.evaluate(()=>window.__sandboxRoutes.length),1,'No late route can appear after consent revocation');
   assert.deepEqual(errors,[]);console.log('Two browser contexts: landmark meetup, explicit QR-link follow, mutual private chat, Stop, saved connection PASS');
 }catch(error){if(browser){for(const [i,page] of browser.contexts().flatMap(c=>c.pages()).entries()){await page.screenshot({path:new URL('failure-'+i+'.png',evidence).pathname,fullPage:true}).catch(()=>{});console.log((await page.locator('body').innerText().catch(()=>'' )).slice(-1800))}}throw error}finally{await browser?.close();await app.close()}
