@@ -40,6 +40,7 @@ jobs:
       - name: Browser journey with two sandbox identities and real MongoDB
         run: |
           npx playwright install --with-deps chromium
+          npm run test:browser:google
           npm run test:browser
           node scripts/browser-journey.mjs --community
           node scripts/browser-qr-login.mjs

@@ -13,6 +13,7 @@
     "check": "node scripts/check.mjs",
     "build": "npm --prefix web ci --no-audit --no-fund && npm run build:web",
     "build:web": "npm --prefix web run build",
+    "test:browser:google": "node scripts/browser-google-login.mjs",
     "test:browser": "node scripts/browser-journey.mjs",
     "preview:staging": "node scripts/staging-preview.mjs",
     "test:browser:reliability": "node scripts/browser-reliability.mjs",
